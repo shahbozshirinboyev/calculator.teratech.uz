@@ -1,0 +1,103 @@
+from decimal import Decimal
+import json
+
+from django.http import JsonResponse
+from django.shortcuts import render
+from django.views.decorators.http import require_POST
+
+from products.models import CPU, RAM, KeyboardMouse, MonoblockBase, Storage
+
+from .models import BuildQuote
+
+
+def calculator(request):
+    bases = MonoblockBase.objects.filter(is_active=True)
+    base_data = [
+        {
+            "id": item.id,
+            "name": str(item),
+            "motherboard_type": item.motherboard_type,
+            "ram_type": item.ram_type,
+            "ram_type_label": item.get_ram_type_display(),
+            "ram_slots": item.ram_slots,
+            "sata_ports": item.sata_ports,
+            "supports_nvme": item.supports_nvme,
+            "price": float(item.price),
+        }
+        for item in bases
+    ]
+    cpu_data = [
+        {
+            "id": item.id,
+            "name": item.name,
+            "price": float(item.price),
+            "bases": list(item.compatible_bases.values_list("id", flat=True)),
+        }
+        for item in CPU.objects.filter(is_active=True).prefetch_related("compatible_bases")
+    ]
+    ram_data = [
+        {"id": item.id, "name": item.name, "price": float(item.price), "ram_type": item.ram_type, "capacity_gb": item.capacity_gb}
+        for item in RAM.objects.filter(is_active=True)
+    ]
+    storage_data = [
+        {
+            "id": item.id,
+            "name": item.name,
+            "price": float(item.price),
+            "kind": item.kind,
+            "interface": item.interface,
+            "capacity_gb": item.capacity_gb,
+        }
+        for item in Storage.objects.filter(is_active=True)
+    ]
+    keyboard_mouse_data = [
+        {"id": item.id, "name": item.name, "price": float(item.price)}
+        for item in KeyboardMouse.objects.filter(is_active=True)
+    ]
+    return render(
+        request,
+        "calculator/calculator.html",
+        {
+            "base_data": json.dumps(base_data),
+            "cpu_data": json.dumps(cpu_data),
+            "ram_data": json.dumps(ram_data),
+            "storage_data": json.dumps(storage_data),
+            "keyboard_mouse_data": json.dumps(keyboard_mouse_data),
+        },
+    )
+
+
+@require_POST
+def save_quote(request):
+    monoblock_base = MonoblockBase.objects.get(pk=request.POST["monoblock_base"])
+    cpu = CPU.objects.get(pk=request.POST["cpu"])
+    keyboard_mouse = None
+    ram_ids = [value for value in request.POST.getlist("ram_slots") if value]
+    storage_ids = [value for value in request.POST.getlist("storage_slots") if value]
+    ram_map = RAM.objects.in_bulk(ram_ids)
+    storage_map = Storage.objects.in_bulk(storage_ids)
+    rams = [ram_map[int(pk)] for pk in ram_ids if int(pk) in ram_map]
+    storages = [storage_map[int(pk)] for pk in storage_ids if int(pk) in storage_map]
+
+    if request.POST.get("keyboard_mouse"):
+        keyboard_mouse = KeyboardMouse.objects.get(pk=request.POST["keyboard_mouse"])
+
+    ram_items = [{"id": item.id, "name": item.name, "price": str(item.price)} for item in rams]
+    storage_items = [{"id": item.id, "name": item.name, "price": str(item.price)} for item in storages]
+    total = (
+        monoblock_base.price
+        + cpu.price
+        + sum((item.price for item in rams), Decimal("0"))
+        + sum((item.price for item in storages), Decimal("0"))
+        + (keyboard_mouse.price if keyboard_mouse else Decimal("0"))
+    )
+
+    quote = BuildQuote.objects.create(
+        monoblock_base=monoblock_base,
+        cpu=cpu,
+        ram_items=ram_items,
+        storage_items=storage_items,
+        keyboard_mouse=keyboard_mouse,
+        total_price=total,
+    )
+    return JsonResponse({"id": quote.id, "total_price": f"{quote.total_price:.2f}"})
