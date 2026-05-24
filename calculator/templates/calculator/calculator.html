@@ -1,494 +1,607 @@
 <!doctype html>
 <html lang="uz">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>AIO Calculator</title>
-  <style>
-    :root {
-      color-scheme: light;
-      --bg: #f5f7f8;
-      --panel: #ffffff;
-      --line: #d9e0e5;
-      --text: #172026;
-      --muted: #60707c;
-      --accent: #0f766e;
-      --accent-dark: #0a5f59;
-      --danger: #b42318;
-    }
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AIO Calculator</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f5f7f8;
+        --panel: #ffffff;
+        --line: #d9e0e5;
+        --text: #172026;
+        --muted: #60707c;
+        --accent: #0f766e;
+        --accent-dark: #0a5f59;
+        --danger: #b42318;
+      }
 
-    * { box-sizing: border-box; }
+      * {
+        box-sizing: border-box;
+      }
 
-    body {
-      margin: 0;
-      background: var(--bg);
-      color: var(--text);
-      font-family: Arial, Helvetica, sans-serif;
-    }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: Arial, Helvetica, sans-serif;
+      }
 
-    .shell {
-      width: min(1180px, calc(100% - 32px));
-      margin: 24px auto;
-    }
+      .shell {
+        width: min(1180px, calc(100% - 32px));
+        margin: 24px auto;
+      }
 
-    .topbar {
-      display: flex;
-      align-items: end;
-      justify-content: space-between;
-      gap: 16px;
-      margin-bottom: 16px;
-    }
+      .topbar {
+        display: flex;
+        align-items: end;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 16px;
+      }
 
-    h1 {
-      margin: 0;
-      font-size: clamp(24px, 4vw, 34px);
-      line-height: 1.1;
-    }
+      h1 {
+        margin: 0;
+        font-size: clamp(24px, 4vw, 34px);
+        line-height: 1.1;
+      }
 
-    .admin-link {
-      color: var(--accent);
-      font-weight: 700;
-      text-decoration: none;
-      white-space: nowrap;
-    }
+      .admin-link {
+        color: var(--accent);
+        font-weight: 700;
+        text-decoration: none;
+        white-space: nowrap;
+      }
 
-    .layout {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) 360px;
-      gap: 16px;
-      align-items: start;
-    }
+      .layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 360px;
+        gap: 16px;
+        align-items: start;
+      }
 
-    .panel {
-      background: var(--panel);
-      border: 1px solid var(--line);
-      border-radius: 8px;
-    }
+      .panel {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+      }
 
-    .form-grid {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 14px;
-      padding: 18px;
-    }
+      .form-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 14px;
+        padding: 18px;
+      }
 
-    .field,
-    .group {
-      display: grid;
-      gap: 7px;
-      min-width: 0;
-    }
+      .field,
+      .group {
+        display: grid;
+        gap: 7px;
+        min-width: 0;
+      }
 
-    .full { grid-column: 1 / -1; }
+      .full {
+        grid-column: 1 / -1;
+      }
 
-    .group-grid {
-      display: grid;
-      gap: 12px;
-    }
+      .group-grid {
+        display: grid;
+        gap: 12px;
+      }
 
-    .group-grid.ram-grid {
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    }
+      .group-grid.ram-grid {
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      }
 
-    .group-grid.storage-grid {
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    }
+      .group-grid.storage-grid {
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      }
 
-    .group-grid.storage-grid.three-cols {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
+      .group-grid.storage-grid.three-cols {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
 
-    .group-grid.storage-grid.two-cols {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
+      .group-grid.storage-grid.two-cols {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
 
-    .group-grid.storage-grid.one-col {
-      grid-template-columns: 1fr;
-    }
-
-    .group-title {
-      border-bottom: 1px solid var(--line);
-      padding-bottom: 8px;
-      margin-bottom: 3px;
-    }
-
-    label {
-      font-weight: 700;
-      font-size: 14px;
-    }
-
-    select {
-      width: 100%;
-      min-height: 42px;
-      border: 1px solid #bfccd4;
-      border-radius: 6px;
-      padding: 9px 10px;
-      background: #fff;
-      color: var(--text);
-      font: inherit;
-    }
-
-    select:disabled {
-      background: #eef2f4;
-      color: #7b8993;
-    }
-
-    .summary {
-      position: sticky;
-      top: 16px;
-      padding: 18px;
-    }
-
-    .summary h2 {
-      margin: 0 0 14px;
-      font-size: 20px;
-    }
-
-    .line {
-      display: flex;
-      justify-content: space-between;
-      align-items: start;
-      gap: 14px;
-      border-bottom: 1px solid var(--line);
-      padding: 10px 0;
-      font-size: 14px;
-    }
-
-    .line span:first-child { color: var(--muted); }
-
-    .line strong {
-      max-width: 210px;
-      text-align: right;
-      line-height: 1.35;
-    }
-
-    .total {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      gap: 16px;
-      margin-top: 18px;
-      padding-top: 16px;
-      border-top: 2px solid var(--text);
-      font-weight: 800;
-    }
-
-    .total strong {
-      font-size: 28px;
-      color: var(--accent-dark);
-      white-space: nowrap;
-    }
-
-    .actions {
-      display: flex;
-      gap: 10px;
-      margin-top: 18px;
-    }
-
-    button {
-      border: 0;
-      border-radius: 6px;
-      min-height: 42px;
-      padding: 10px 14px;
-      cursor: pointer;
-      background: var(--accent);
-      color: white;
-      font-weight: 700;
-      font: inherit;
-    }
-
-    button.secondary {
-      background: #e7ecef;
-      color: var(--text);
-    }
-
-    .status {
-      min-height: 20px;
-      margin-top: 12px;
-      color: var(--accent-dark);
-      font-size: 14px;
-      font-weight: 700;
-    }
-
-    .status.error { color: var(--danger); }
-
-    @media (max-width: 860px) {
-      .layout,
-      .group-grid,
-      .group-grid.ram-grid,
-      .group-grid.storage-grid,
-      .group-grid.storage-grid.three-cols,
-      .group-grid.storage-grid.two-cols,
       .group-grid.storage-grid.one-col {
         grid-template-columns: 1fr;
       }
 
-      .summary { position: static; }
+      label {
+        font-weight: 700;
+        font-size: 14px;
+      }
 
-      .topbar {
+      select {
+        width: 100%;
+        min-height: 42px;
+        border: 1px solid #bfccd4;
+        border-radius: 6px;
+        padding: 9px 10px;
+        background: #fff;
+        color: var(--text);
+        font: inherit;
+      }
+
+      select:disabled {
+        background: #eef2f4;
+        color: #7b8993;
+      }
+
+      .summary {
+        position: sticky;
+        top: 16px;
+        padding: 18px;
+      }
+
+      .summary h2 {
+        margin: 0 0 14px;
+        font-size: 20px;
+      }
+
+      .line {
+        display: flex;
+        justify-content: space-between;
         align-items: start;
-        flex-direction: column;
+        gap: 14px;
+        border-bottom: 1px solid var(--line);
+        padding: 10px 0;
+        font-size: 14px;
       }
-    }
-  </style>
-</head>
-<body>
-  <main class="shell">
-    <div class="topbar">
-      <div>
-        <h1>AIO Calculator</h1>
+
+      .line span:first-child {
+        color: var(--muted);
+      }
+
+      .line strong {
+        max-width: 210px;
+        text-align: right;
+        line-height: 1.35;
+      }
+
+      .total {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 16px;
+        margin-top: 18px;
+        padding-top: 16px;
+        border-top: 2px solid var(--text);
+        font-weight: 800;
+      }
+
+      .total strong {
+        font-size: 28px;
+        color: var(--accent-dark);
+        white-space: nowrap;
+      }
+
+      .actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 18px;
+      }
+
+      button {
+        border: 0;
+        border-radius: 6px;
+        min-height: 42px;
+        padding: 10px 14px;
+        cursor: pointer;
+        background: var(--accent);
+        color: white;
+        font-weight: 700;
+        font: inherit;
+      }
+
+      button.secondary {
+        background: #e7ecef;
+        color: var(--text);
+      }
+
+      .status {
+        min-height: 20px;
+        margin-top: 12px;
+        color: var(--accent-dark);
+        font-size: 14px;
+        font-weight: 700;
+      }
+
+      .status.error {
+        color: var(--danger);
+      }
+
+      @media (max-width: 860px) {
+        .layout,
+        .group-grid,
+        .group-grid.ram-grid,
+        .group-grid.storage-grid,
+        .group-grid.storage-grid.three-cols,
+        .group-grid.storage-grid.two-cols,
+        .group-grid.storage-grid.one-col {
+          grid-template-columns: 1fr;
+        }
+
+        .summary {
+          position: static;
+        }
+
+        .topbar {
+          align-items: start;
+          flex-direction: column;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="shell">
+      <div class="topbar">
+        <div>
+          <h1>AIO Calculator</h1>
+        </div>
+        <a class="admin-link" href="/admin/">Admin panel</a>
       </div>
-      <a class="admin-link" href="/admin/">Admin panel</a>
-    </div>
 
-    <div class="layout">
-      <form class="panel form-grid" id="calculator-form">
-        {% csrf_token %}
+      <div class="layout">
+        <form class="panel form-grid" id="calculator-form">
+          {% csrf_token %}
 
-        <div class="field">
-          <label for="monoblock_base">AIO</label>
-          <select id="monoblock_base" name="monoblock_base"></select>
-        </div>
+          <div class="field">
+            <label for="monoblock_base">AIO</label>
+            <select id="monoblock_base" name="monoblock_base"></select>
+          </div>
 
-        <div class="field">
-          <label for="cpu">CPU</label>
-          <select id="cpu" name="cpu"></select>
-        </div>
+          <div class="field">
+            <label for="cpu">CPU</label>
+            <select id="cpu" name="cpu"></select>
+          </div>
 
-        <div class="group full">
-          <label class="group-title">RAM</label>
-          <div class="group-grid ram-grid" id="ram-slots"></div>
-        </div>
+          <fieldset  class="group full">
+            <legend>RAM</legend>
+            <div class="group-grid ram-grid" id="ram-slots"></div>
+          </fieldset >
 
-        <div class="group full">
-          <label class="group-title">SSD / HDD</label>
-          <div class="group-grid storage-grid" id="storage-slots"></div>
-        </div>
+          <fieldset class="group full">
+            <legend>SSD/HDD</legend>
+            <div class="group-grid storage-grid" id="storage-slots"></div>
+          </fieldset>
 
-        <div class="field full">
-          <label for="keyboard_mouse">Keyboard and Mouse</label>
-          <select id="keyboard_mouse" name="keyboard_mouse"></select>
-        </div>
-      </form>
+          <div class="field full">
+            <label for="keyboard_mouse">Keyboard and Mouse</label>
+            <select id="keyboard_mouse" name="keyboard_mouse"></select>
+          </div>
+        </form>
 
-      <aside class="panel summary">
-        <h2>Hisob-kitob</h2>
-        <div class="line"><span>AIO</span><strong id="summary-base">-</strong></div>
-        <div class="line"><span>CPU</span><strong id="summary-cpu">-</strong></div>
-        <div class="line"><span>RAM</span><strong id="summary-ram">-</strong></div>
-        <div class="line"><span>SSD / HDD</span><strong id="summary-storage">-</strong></div>
-        <div class="line"><span>Keyboard / Mouse</span><strong id="summary-keyboard">-</strong></div>
-        <div class="total"><span>Jami</span><strong id="summary-total">$0.00</strong></div>
-        <div class="actions">
-          <button type="button" id="save-quote">Saqlash</button>
-          <button type="button" class="secondary" id="reset-form">Tozalash</button>
-        </div>
-        <div class="status" id="status"></div>
-      </aside>
-    </div>
-  </main>
+        <aside class="panel summary">
+          <h2>Hisob-kitob</h2>
+          <div class="line">
+            <span>AIO</span><strong id="summary-base">-</strong>
+          </div>
+          <div class="line">
+            <span>CPU</span><strong id="summary-cpu">-</strong>
+          </div>
+          <div class="line">
+            <span>RAM</span><strong id="summary-ram">-</strong>
+          </div>
+          <div class="line">
+            <span>SSD / HDD</span><strong id="summary-storage">-</strong>
+          </div>
+          <div class="line">
+            <span>Keyboard / Mouse</span
+            ><strong id="summary-keyboard">-</strong>
+          </div>
+          <div class="total">
+            <span>Jami</span><strong id="summary-total">$0.00</strong>
+          </div>
+          <div class="actions">
+            <button type="button" id="save-quote">Saqlash</button>
+            <button type="button" class="secondary" id="reset-form">
+              Tozalash
+            </button>
+          </div>
+          <div class="status" id="status"></div>
+        </aside>
+      </div>
+    </main>
 
-  <script id="bases-data" type="application/json">{{ base_data|safe }}</script>
-  <script id="cpus-data" type="application/json">{{ cpu_data|safe }}</script>
-  <script id="rams-data" type="application/json">{{ ram_data|safe }}</script>
-  <script id="storages-data" type="application/json">{{ storage_data|safe }}</script>
-  <script id="keyboard-mouse-data" type="application/json">{{ keyboard_mouse_data|safe }}</script>
-  <script>
-    const bases = JSON.parse(document.getElementById("bases-data").textContent);
-    const cpus = JSON.parse(document.getElementById("cpus-data").textContent);
-    const rams = JSON.parse(document.getElementById("rams-data").textContent);
-    const storages = JSON.parse(document.getElementById("storages-data").textContent);
-    const keyboardMouse = JSON.parse(document.getElementById("keyboard-mouse-data").textContent);
-    const maps = {
-      base: new Map(bases.map((item) => [String(item.id), item])),
-      cpu: new Map(cpus.map((item) => [String(item.id), item])),
-      ram: new Map(rams.map((item) => [String(item.id), item])),
-      storage: new Map(storages.map((item) => [String(item.id), item])),
-      keyboardMouse: new Map(keyboardMouse.map((item) => [String(item.id), item])),
-    };
-    const form = document.getElementById("calculator-form");
-    const fields = {
-      base: document.getElementById("monoblock_base"),
-      cpu: document.getElementById("cpu"),
-      keyboardMouse: document.getElementById("keyboard_mouse"),
-    };
-
-    function money(value) {
-      return `$${Number(value || 0).toFixed(2)}`;
-    }
-
-    function selected(select, map) {
-      return map.get(select.value) || null;
-    }
-
-    function fillOptions(select, items, placeholder = "Tanlang", includeEmpty = false, autoSelect = true) {
-      const current = select.value;
-      select.innerHTML = "";
-      select.add(new Option(includeEmpty ? "Tanlanmagan" : placeholder, ""));
-      items.forEach((item) => {
-        select.add(new Option(`${item.name} - ${money(item.price)}`, item.id));
-      });
-      if (items.some((item) => String(item.id) === current)) {
-        select.value = current;
-      } else if (autoSelect && !includeEmpty && items.length) {
-        select.value = items[0].id;
-      }
-      select.disabled = items.length === 0 && !includeEmpty;
-    }
-
-    function activeBase() {
-      return selected(fields.base, maps.base);
-    }
-
-    function activeCpu() {
-      return selected(fields.cpu, maps.cpu);
-    }
-
-    function createSelect(label, name, items, placeholder) {
-      const field = document.createElement("div");
-      field.className = "field";
-      const labelEl = document.createElement("label");
-      labelEl.textContent = label;
-      const select = document.createElement("select");
-      select.name = name;
-      fillOptions(select, items, placeholder, true);
-      select.addEventListener("change", refreshSummary);
-      field.append(labelEl, select);
-      return field;
-    }
-
-    function renderRamSlots(base) {
-      const container = document.getElementById("ram-slots");
-      container.innerHTML = "";
-      const compatibleRam = rams.filter((item) => item.ram_type === base.ram_type);
-      for (let index = 1; index <= base.ram_slots; index += 1) {
-        container.append(createSelect(`RAM port ${index}`, "ram_slots", compatibleRam, "RAM tanlang"));
-      }
-    }
-
-    function renderStorageSlots(base) {
-      const container = document.getElementById("storage-slots");
-      container.innerHTML = "";
-      container.classList.remove("one-col", "two-cols", "three-cols");
-      const portCount = base.sata_ports + (base.supports_nvme ? 1 : 0);
-      container.classList.add(portCount >= 3 ? "three-cols" : portCount === 2 ? "two-cols" : "one-col");
-      if (base.supports_nvme) {
-        const nvmeItems = storages.filter((item) => item.interface === "nvme");
-        container.append(createSelect("NVMe port", "storage_slots", nvmeItems, "NVMe tanlang"));
-      }
-      const sataItems = storages.filter((item) => item.interface === "sata");
-      for (let index = 1; index <= base.sata_ports; index += 1) {
-        container.append(createSelect(`SATA port ${index}`, "storage_slots", sataItems, "SSD / HDD tanlang"));
-      }
-    }
-
-    function refreshForCpu() {
-      const cpu = activeCpu();
-      if (!cpu) {
-        clearSelections();
-        return;
-      }
-      fillOptions(fields.base, bases.filter((item) => cpu.bases.includes(item.id)), "AIO tanlang");
-      fillOptions(fields.keyboardMouse, keyboardMouse, "Keyboard / Mouse", true);
-      const base = activeBase();
-      if (base) {
-        renderRamSlots(base);
-        renderStorageSlots(base);
-      }
-      refreshSummary();
-    }
-
-    function selectedDynamic(name, map) {
-      return Array.from(form.querySelectorAll(`select[name="${name}"]`))
-        .map((select) => selected(select, map))
-        .filter(Boolean);
-    }
-
-    function refreshSummary() {
-      const base = activeBase();
-      const cpu = selected(fields.cpu, maps.cpu);
-      const ramItems = selectedDynamic("ram_slots", maps.ram);
-      const storageItems = selectedDynamic("storage_slots", maps.storage);
-      const keyboard = selected(fields.keyboardMouse, maps.keyboardMouse);
-      const totals = {
-        base: base ? base.price : 0,
-        cpu: cpu ? cpu.price : 0,
-        ram: ramItems.reduce((sum, item) => sum + item.price, 0),
-        storage: storageItems.reduce((sum, item) => sum + item.price, 0),
-        keyboard: keyboard ? keyboard.price : 0,
+    <script id="bases-data" type="application/json">
+      {{ base_data|safe }}
+    </script>
+    <script id="cpus-data" type="application/json">
+      {{ cpu_data|safe }}
+    </script>
+    <script id="rams-data" type="application/json">
+      {{ ram_data|safe }}
+    </script>
+    <script id="storages-data" type="application/json">
+      {{ storage_data|safe }}
+    </script>
+    <script id="keyboard-mouse-data" type="application/json">
+      {{ keyboard_mouse_data|safe }}
+    </script>
+    <script>
+      const bases = JSON.parse(
+        document.getElementById("bases-data").textContent,
+      );
+      const cpus = JSON.parse(document.getElementById("cpus-data").textContent);
+      const rams = JSON.parse(document.getElementById("rams-data").textContent);
+      const storages = JSON.parse(
+        document.getElementById("storages-data").textContent,
+      );
+      const keyboardMouse = JSON.parse(
+        document.getElementById("keyboard-mouse-data").textContent,
+      );
+      const maps = {
+        base: new Map(bases.map((item) => [String(item.id), item])),
+        cpu: new Map(cpus.map((item) => [String(item.id), item])),
+        ram: new Map(rams.map((item) => [String(item.id), item])),
+        storage: new Map(storages.map((item) => [String(item.id), item])),
+        keyboardMouse: new Map(
+          keyboardMouse.map((item) => [String(item.id), item]),
+        ),
       };
-      const total = Object.values(totals).reduce((sum, value) => sum + value, 0);
-      document.getElementById("summary-base").textContent = base ? base.name : "-";
-      document.getElementById("summary-cpu").textContent = cpu ? cpu.name : "-";
-      document.getElementById("summary-ram").textContent = ramItems.map((item) => item.name).join(", ") || "-";
-      document.getElementById("summary-storage").textContent = storageItems.map((item) => item.name).join(", ") || "-";
-      document.getElementById("summary-keyboard").textContent = keyboard ? keyboard.name : "-";
-      document.getElementById("summary-total").textContent = money(total);
-    }
+      const form = document.getElementById("calculator-form");
+      const fields = {
+        base: document.getElementById("monoblock_base"),
+        cpu: document.getElementById("cpu"),
+        keyboardMouse: document.getElementById("keyboard_mouse"),
+      };
 
-    function clearStatus() {
-      const status = document.getElementById("status");
-      status.textContent = "";
-      status.classList.remove("error");
-    }
-
-    function clearSelections() {
-      fillOptions(fields.base, [], "AIO tanlang", false, false);
-      fillOptions(fields.keyboardMouse, keyboardMouse, "Keyboard / Mouse", true, false);
-      document.getElementById("ram-slots").innerHTML = "";
-      const storageContainer = document.getElementById("storage-slots");
-      storageContainer.innerHTML = "";
-      storageContainer.classList.remove("one-col", "two-cols", "three-cols");
-      refreshSummary();
-    }
-
-    fillOptions(fields.cpu, cpus, "CPU tanlang", false, false);
-    clearSelections();
-
-    fields.cpu.addEventListener("change", () => {
-      refreshForCpu();
-      clearStatus();
-    });
-    fields.base.addEventListener("change", () => {
-      const base = activeBase();
-      if (base) {
-        renderRamSlots(base);
-        renderStorageSlots(base);
+      function money(value) {
+        return `$${Number(value || 0).toFixed(2)}`;
       }
-      refreshSummary();
-      clearStatus();
-    });
-    fields.keyboardMouse.addEventListener("change", refreshSummary);
 
-    document.getElementById("reset-form").addEventListener("click", () => {
-      fields.cpu.value = "";
-      clearSelections();
-      clearStatus();
-    });
-
-    document.getElementById("save-quote").addEventListener("click", async () => {
-      const status = document.getElementById("status");
-      const hasRam = selectedDynamic("ram_slots", maps.ram).length > 0;
-      const hasStorage = selectedDynamic("storage_slots", maps.storage).length > 0;
-      if (!fields.cpu.value || !fields.base.value || !hasRam || !hasStorage) {
-        status.textContent = "CPU, AIO, kamida bitta RAM va kamida bitta SSD / HDD tanlang.";
-        status.classList.add("error");
-        return;
+      function selected(select, map) {
+        return map.get(select.value) || null;
       }
-      const response = await fetch("{% url 'calculator:save_quote' %}", {
-        method: "POST",
-        body: new FormData(form),
-        headers: { "X-Requested-With": "XMLHttpRequest" },
-      });
-      const data = await response.json();
-      if (response.ok) {
-        status.textContent = `Hisob-kitob #${data.id} saqlandi: $${data.total_price}`;
+
+      function fillOptions(
+        select,
+        items,
+        placeholder = "Tanlang",
+        includeEmpty = false,
+        autoSelect = true,
+      ) {
+        const current = select.value;
+        select.innerHTML = "";
+        select.add(new Option(includeEmpty ? "Tanlanmagan" : placeholder, ""));
+        items.forEach((item) => {
+          select.add(
+            new Option(`${item.name} - ${money(item.price)}`, item.id),
+          );
+        });
+        if (items.some((item) => String(item.id) === current)) {
+          select.value = current;
+        } else if (autoSelect && !includeEmpty && items.length) {
+          select.value = items[0].id;
+        }
+        select.disabled = items.length === 0 && !includeEmpty;
+      }
+
+      function activeBase() {
+        return selected(fields.base, maps.base);
+      }
+
+      function activeCpu() {
+        return selected(fields.cpu, maps.cpu);
+      }
+
+      function createSelect(label, name, items, placeholder) {
+        const field = document.createElement("div");
+        field.className = "field";
+        const labelEl = document.createElement("label");
+        labelEl.textContent = label;
+        const select = document.createElement("select");
+        select.name = name;
+        fillOptions(select, items, placeholder, true);
+        select.addEventListener("change", refreshSummary);
+        field.append(labelEl, select);
+        return field;
+      }
+
+      function renderRamSlots(base) {
+        const container = document.getElementById("ram-slots");
+        container.innerHTML = "";
+        const compatibleRam = rams.filter(
+          (item) => item.ram_type === base.ram_type,
+        );
+        for (let index = 1; index <= base.ram_slots; index += 1) {
+          container.append(
+            createSelect(
+              `RAM port ${index}`,
+              "ram_slots",
+              compatibleRam,
+              "RAM tanlang",
+            ),
+          );
+        }
+      }
+
+      function renderStorageSlots(base) {
+        const container = document.getElementById("storage-slots");
+        container.innerHTML = "";
+        container.classList.remove("one-col", "two-cols", "three-cols");
+        const portCount = base.sata_ports + (base.supports_nvme ? 1 : 0);
+        container.classList.add(
+          portCount >= 3
+            ? "three-cols"
+            : portCount === 2
+              ? "two-cols"
+              : "one-col",
+        );
+        if (base.supports_nvme) {
+          const nvmeItems = storages.filter(
+            (item) => item.interface === "nvme",
+          );
+          container.append(
+            createSelect(
+              "NVMe port",
+              "storage_slots",
+              nvmeItems,
+              "NVMe tanlang",
+            ),
+          );
+        }
+        const sataItems = storages.filter((item) => item.interface === "sata");
+        for (let index = 1; index <= base.sata_ports; index += 1) {
+          container.append(
+            createSelect(
+              `SATA port ${index}`,
+              "storage_slots",
+              sataItems,
+              "SSD / HDD tanlang",
+            ),
+          );
+        }
+      }
+
+      function refreshForCpu() {
+        const cpu = activeCpu();
+        if (!cpu) {
+          clearSelections();
+          return;
+        }
+        fillOptions(
+          fields.base,
+          bases.filter((item) => cpu.bases.includes(item.id)),
+          "AIO tanlang",
+        );
+        fillOptions(
+          fields.keyboardMouse,
+          keyboardMouse,
+          "Keyboard / Mouse",
+          true,
+        );
+        const base = activeBase();
+        if (base) {
+          renderRamSlots(base);
+          renderStorageSlots(base);
+        }
+        refreshSummary();
+      }
+
+      function selectedDynamic(name, map) {
+        return Array.from(form.querySelectorAll(`select[name="${name}"]`))
+          .map((select) => selected(select, map))
+          .filter(Boolean);
+      }
+
+      function refreshSummary() {
+        const base = activeBase();
+        const cpu = selected(fields.cpu, maps.cpu);
+        const ramItems = selectedDynamic("ram_slots", maps.ram);
+        const storageItems = selectedDynamic("storage_slots", maps.storage);
+        const keyboard = selected(fields.keyboardMouse, maps.keyboardMouse);
+        const totals = {
+          base: base ? base.price : 0,
+          cpu: cpu ? cpu.price : 0,
+          ram: ramItems.reduce((sum, item) => sum + item.price, 0),
+          storage: storageItems.reduce((sum, item) => sum + item.price, 0),
+          keyboard: keyboard ? keyboard.price : 0,
+        };
+        const total = Object.values(totals).reduce(
+          (sum, value) => sum + value,
+          0,
+        );
+        document.getElementById("summary-base").textContent = base
+          ? base.name
+          : "-";
+        document.getElementById("summary-cpu").textContent = cpu
+          ? cpu.name
+          : "-";
+        document.getElementById("summary-ram").textContent =
+          ramItems.map((item) => item.name).join(", ") || "-";
+        document.getElementById("summary-storage").textContent =
+          storageItems.map((item) => item.name).join(", ") || "-";
+        document.getElementById("summary-keyboard").textContent = keyboard
+          ? keyboard.name
+          : "-";
+        document.getElementById("summary-total").textContent = money(total);
+      }
+
+      function clearStatus() {
+        const status = document.getElementById("status");
+        status.textContent = "";
         status.classList.remove("error");
-      } else {
-        status.textContent = "Saqlashda xatolik yuz berdi.";
-        status.classList.add("error");
       }
-    });
-  </script>
-</body>
+
+      function clearSelections() {
+        fillOptions(fields.base, [], "AIO tanlang", false, false);
+        fillOptions(
+          fields.keyboardMouse,
+          keyboardMouse,
+          "Keyboard / Mouse",
+          true,
+          false,
+        );
+
+        fields.keyboardMouse.value = "";
+
+        document.getElementById("ram-slots").innerHTML = "";
+        const storageContainer = document.getElementById("storage-slots");
+        storageContainer.innerHTML = "";
+        storageContainer.classList.remove("one-col", "two-cols", "three-cols");
+        refreshSummary();
+      }
+      fillOptions(fields.cpu, cpus, "CPU tanlang", false, false);
+      clearSelections();
+
+      fields.cpu.addEventListener("change", () => {
+        refreshForCpu();
+        clearStatus();
+      });
+      fields.base.addEventListener("change", () => {
+        const base = activeBase();
+        if (base) {
+          renderRamSlots(base);
+          renderStorageSlots(base);
+        }
+        refreshSummary();
+        clearStatus();
+      });
+      fields.keyboardMouse.addEventListener("change", refreshSummary);
+
+      document.getElementById("reset-form").addEventListener("click", () => {
+        fields.cpu.value = "";
+        clearSelections();
+        clearStatus();
+      });
+
+      document
+        .getElementById("save-quote")
+        .addEventListener("click", async () => {
+          const status = document.getElementById("status");
+          const hasRam = selectedDynamic("ram_slots", maps.ram).length > 0;
+          const hasStorage =
+            selectedDynamic("storage_slots", maps.storage).length > 0;
+          if (
+            !fields.cpu.value ||
+            !fields.base.value ||
+            !hasRam ||
+            !hasStorage
+          ) {
+            status.textContent =
+              "CPU, AIO, kamida bitta RAM va kamida bitta SSD / HDD tanlang.";
+            status.classList.add("error");
+            return;
+          }
+          const response = await fetch("{% url 'calculator:save_quote' %}", {
+            method: "POST",
+            body: new FormData(form),
+            headers: { "X-Requested-With": "XMLHttpRequest" },
+          });
+          const data = await response.json();
+          if (response.ok) {
+            status.textContent = `Hisob-kitob #${data.id} saqlandi: $${data.total_price}`;
+            status.classList.remove("error");
+          } else {
+            status.textContent = "Saqlashda xatolik yuz berdi.";
+            status.classList.add("error");
+          }
+        });
+    </script>
+  </body>
 </html>
