@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Monoblok kalkulyatori</title>
+  <title>AIO Calculator</title>
   <style>
     :root {
       color-scheme: light;
@@ -236,7 +236,7 @@
   <main class="shell">
     <div class="topbar">
       <div>
-        <h1>Monoblok kalkulyatori</h1>
+        <h1>AIO Calculator</h1>
       </div>
       <a class="admin-link" href="/admin/">Admin panel</a>
     </div>
@@ -340,6 +340,10 @@
       return selected(fields.base, maps.base);
     }
 
+    function activeCpu() {
+      return selected(fields.cpu, maps.cpu);
+    }
+
     function createSelect(label, name, items, placeholder) {
       const field = document.createElement("div");
       field.className = "field";
@@ -378,16 +382,19 @@
       }
     }
 
-    function refreshForBase() {
-      const base = activeBase();
-      if (!base) {
+    function refreshForCpu() {
+      const cpu = activeCpu();
+      if (!cpu) {
         clearSelections();
         return;
       }
-      fillOptions(fields.cpu, cpus.filter((item) => item.bases.includes(base.id)), "CPU tanlang");
+      fillOptions(fields.base, bases.filter((item) => cpu.bases.includes(item.id)), "AIO tanlang");
       fillOptions(fields.keyboardMouse, keyboardMouse, "Keyboard / Mouse", true);
-      renderRamSlots(base);
-      renderStorageSlots(base);
+      const base = activeBase();
+      if (base) {
+        renderRamSlots(base);
+        renderStorageSlots(base);
+      }
       refreshSummary();
     }
 
@@ -426,7 +433,7 @@
     }
 
     function clearSelections() {
-      fillOptions(fields.cpu, [], "CPU tanlang", false, false);
+      fillOptions(fields.base, [], "AIO tanlang", false, false);
       fillOptions(fields.keyboardMouse, keyboardMouse, "Keyboard / Mouse", true, false);
       document.getElementById("ram-slots").innerHTML = "";
       const storageContainer = document.getElementById("storage-slots");
@@ -435,18 +442,26 @@
       refreshSummary();
     }
 
-    fillOptions(fields.base, bases, "AIO tanlang");
-    refreshForBase();
+    fillOptions(fields.cpu, cpus, "CPU tanlang", false, false);
+    clearSelections();
 
-    fields.base.addEventListener("change", () => {
-      refreshForBase();
+    fields.cpu.addEventListener("change", () => {
+      refreshForCpu();
       clearStatus();
     });
-    fields.cpu.addEventListener("change", refreshSummary);
+    fields.base.addEventListener("change", () => {
+      const base = activeBase();
+      if (base) {
+        renderRamSlots(base);
+        renderStorageSlots(base);
+      }
+      refreshSummary();
+      clearStatus();
+    });
     fields.keyboardMouse.addEventListener("change", refreshSummary);
 
     document.getElementById("reset-form").addEventListener("click", () => {
-      fields.base.value = "";
+      fields.cpu.value = "";
       clearSelections();
       clearStatus();
     });
@@ -455,8 +470,8 @@
       const status = document.getElementById("status");
       const hasRam = selectedDynamic("ram_slots", maps.ram).length > 0;
       const hasStorage = selectedDynamic("storage_slots", maps.storage).length > 0;
-      if (!fields.base.value || !fields.cpu.value || !hasRam || !hasStorage) {
-        status.textContent = "AIO, CPU, kamida bitta RAM va kamida bitta SSD / HDD tanlang.";
+      if (!fields.cpu.value || !fields.base.value || !hasRam || !hasStorage) {
+        status.textContent = "CPU, AIO, kamida bitta RAM va kamida bitta SSD / HDD tanlang.";
         status.classList.add("error");
         return;
       }
