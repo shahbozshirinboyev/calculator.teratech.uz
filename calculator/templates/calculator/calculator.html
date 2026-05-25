@@ -370,7 +370,7 @@
         select.add(new Option(includeEmpty ? "Tanlanmagan" : placeholder, ""));
         items.forEach((item) => {
           select.add(
-            new Option(`${item.name} - ${money(item.price)}`, item.id),
+            new Option(item.name, item.id),
           );
         });
         if (items.some((item) => String(item.id) === current)) {
