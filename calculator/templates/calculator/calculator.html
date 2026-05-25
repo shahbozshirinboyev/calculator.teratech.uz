@@ -79,6 +79,10 @@
         color: var(--danger);
       }
 
+      .is-hidden {
+        display: none !important;
+      }
+
       .rate-save-btn {
         display: none;
       }
@@ -352,7 +356,7 @@
               step="1"
               maxlength="1"
               inputmode="numeric"
-              placeholder="1–7"
+              placeholder="0–7"
             />
 
           </div>
@@ -407,7 +411,7 @@
             <span>Keyboard / Mouse</span
             ><strong id="summary-keyboard">-</strong>
           </div>
-          <div class="line" id="summary-discount-wrap" hidden>
+          <div class="line is-hidden" id="summary-discount-wrap">
             <span>Chegirma</span><strong id="summary-discount">-</strong>
           </div>
           <div class="total">
@@ -474,7 +478,8 @@
       const MARKUP_BASE = 10;
       const MIN_MARKUP = 3;
       const MAX_DISCOUNT = 7;
-      const MIN_DISCOUNT = 1;
+      const MIN_DISCOUNT = 0;
+      const discountInput = document.getElementById("discount-percent");
 
       const usdRateInput = document.getElementById("usd-rate");
 
@@ -523,37 +528,54 @@
           .classList.toggle("is-visible", usdRateIsDirty());
       }
 
-      function readDiscountPercent() {
-        const raw = document.getElementById("discount-percent").value.trim();
-        if (raw === "") {
-          return 0;
+      function parseDiscountValue(raw) {
+        const text = String(raw).trim();
+        if (text === "") {
+          return null;
         }
-        const discount = Number(raw);
+        const discount = Number(text);
         if (
           !Number.isInteger(discount) ||
           discount < MIN_DISCOUNT ||
           discount > MAX_DISCOUNT
         ) {
-          return 0;
+          return null;
         }
         return discount;
       }
 
+      function readDiscountPercent() {
+        const parsed = parseDiscountValue(discountInput.value);
+        return parsed ?? 0;
+      }
+
       function sanitizeDiscountInput() {
-        const input = document.getElementById("discount-percent");
-        const raw = input.value.replace(/\D/g, "");
+        const raw = discountInput.value.replace(/\D/g, "").slice(0, 1);
         if (raw === "") {
-          input.value = "";
+          discountInput.value = "";
           return;
         }
-        const digit = Number(raw.slice(-1));
-        if (digit < MIN_DISCOUNT) {
-          input.value = "";
-        } else if (digit > MAX_DISCOUNT) {
-          input.value = String(MAX_DISCOUNT);
+        const digit = Number(raw);
+        if (digit > MAX_DISCOUNT) {
+          discountInput.value = String(MAX_DISCOUNT);
         } else {
-          input.value = String(digit);
+          discountInput.value = String(digit);
         }
+      }
+
+      function updateDiscountSummaryDisplay() {
+        const parsed = parseDiscountValue(discountInput.value);
+        const discountWrap = document.getElementById("summary-discount-wrap");
+        const discountLabel = document.getElementById("summary-discount");
+        const showDiscount = parsed !== null && parsed > 0;
+        discountWrap.classList.toggle("is-hidden", !showDiscount);
+        discountWrap.hidden = !showDiscount;
+        discountLabel.textContent = showDiscount ? `${parsed}%` : "-";
+      }
+
+      function onDiscountEdited() {
+        sanitizeDiscountInput();
+        refreshSummary();
       }
 
       function money(value) {
@@ -566,8 +588,11 @@
       }
 
       function effectiveMarkupPercent() {
-        const discount = readDiscountPercent();
-        return Math.max(MIN_MARKUP, MARKUP_BASE - discount);
+        const parsed = parseDiscountValue(discountInput.value);
+        if (parsed === null || parsed === 0) {
+          return MARKUP_BASE;
+        }
+        return Math.max(MIN_MARKUP, MARKUP_BASE - parsed);
       }
 
       function finalTotal(subtotal) {
@@ -727,7 +752,6 @@
           (sum, value) => sum + value,
           0,
         );
-        const discount = readDiscountPercent();
         const total = finalTotal(subtotal);
         document.getElementById("summary-base").textContent = base
           ? base.name
@@ -742,13 +766,7 @@
         document.getElementById("summary-keyboard").textContent = keyboard
           ? keyboard.name
           : "-";
-        const discountWrap = document.getElementById("summary-discount-wrap");
-        if (discount > 0) {
-          discountWrap.hidden = false;
-          document.getElementById("summary-discount").textContent = `${discount}%`;
-        } else {
-          discountWrap.hidden = true;
-        }
+        updateDiscountSummaryDisplay();
         document.getElementById("summary-total").textContent = money(total);
         const uzsWrap = document.getElementById("summary-total-uzs-wrap");
         const rate = readUsdRate();
@@ -803,9 +821,12 @@
       });
       fields.keyboardMouse.addEventListener("change", refreshSummary);
 
-      document.getElementById("discount-percent").addEventListener("input", () => {
-        sanitizeDiscountInput();
-        refreshSummary();
+      discountInput.addEventListener("input", onDiscountEdited);
+      discountInput.addEventListener("keyup", onDiscountEdited);
+      discountInput.addEventListener("change", onDiscountEdited);
+      discountInput.addEventListener("cut", onDiscountEdited);
+      discountInput.addEventListener("paste", () => {
+        requestAnimationFrame(onDiscountEdited);
       });
 
       function onUsdRateEdited() {
@@ -852,9 +873,10 @@
 
       document.getElementById("reset-form").addEventListener("click", () => {
         fields.cpu.value = "";
-        document.getElementById("discount-percent").value = "";
+        discountInput.value = "";
         clearSelections();
         clearStatus();
+        refreshSummary();
       });
 
       document

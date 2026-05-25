@@ -113,7 +113,7 @@ def save_quote(request):
         )
     except Exception:
         discount = Decimal("0")
-    if discount < 1 or discount > CalculatorSettings.MAX_DISCOUNT_PERCENT:
+    if discount < 0 or discount > CalculatorSettings.MAX_DISCOUNT_PERCENT:
         discount = Decimal("0")
     markup_percent = CalculatorSettings.effective_markup_percent(discount)
     total = CalculatorSettings.apply_markup(subtotal, discount)
