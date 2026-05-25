@@ -7,7 +7,7 @@ from django.views.decorators.http import require_POST
 
 from products.models import CPU, RAM, KeyboardMouse, MonoblockBase, Storage
 
-from .models import BuildQuote
+from .models import BuildQuote, CalculatorSettings
 
 
 def calculator(request):
@@ -54,6 +54,7 @@ def calculator(request):
         {"id": item.id, "name": item.name, "price": float(item.price)}
         for item in KeyboardMouse.objects.filter(is_active=True)
     ]
+    settings = CalculatorSettings.get_singleton()
     return render(
         request,
         "calculator/calculator.html",
@@ -63,8 +64,23 @@ def calculator(request):
             "ram_data": json.dumps(ram_data),
             "storage_data": json.dumps(storage_data),
             "keyboard_mouse_data": json.dumps(keyboard_mouse_data),
+            "usd_rate": float(settings.usd_rate),
         },
     )
+
+
+@require_POST
+def save_usd_rate(request):
+    try:
+        rate = Decimal(request.POST.get("usd_rate", "0").replace(",", ".").strip())
+    except Exception:
+        return JsonResponse({"error": "Kurs noto'g'ri kiritildi."}, status=400)
+    if rate <= 0:
+        return JsonResponse({"error": "Kurs 0 dan katta bo'lishi kerak."}, status=400)
+    settings = CalculatorSettings.get_singleton()
+    settings.usd_rate = rate
+    settings.save(update_fields=["usd_rate", "updated_at"])
+    return JsonResponse({"usd_rate": f"{settings.usd_rate:.2f}"})
 
 
 @require_POST

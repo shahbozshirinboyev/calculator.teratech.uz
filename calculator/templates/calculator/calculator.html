@@ -39,6 +39,40 @@
         justify-content: space-between;
         gap: 16px;
         margin-bottom: 16px;
+        flex-wrap: wrap;
+      }
+
+      .rate-bar {
+        display: flex;
+        align-items: end;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .rate-bar .field {
+        min-width: 180px;
+      }
+
+      input[type="number"] {
+        width: 100%;
+        min-height: 42px;
+        border: 1px solid #bfccd4;
+        border-radius: 6px;
+        padding: 9px 10px;
+        background: #fff;
+        color: var(--text);
+        font: inherit;
+      }
+
+      .rate-status {
+        min-height: 20px;
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--accent-dark);
+      }
+
+      .rate-status.error {
+        color: var(--danger);
       }
 
       h1 {
@@ -59,6 +93,7 @@
         grid-template-columns: minmax(0, 1fr) 360px;
         gap: 16px;
         align-items: start;
+        margin-top: 20px;
       }
 
       .panel {
@@ -179,6 +214,22 @@
         white-space: nowrap;
       }
 
+      .total-uzs {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 16px;
+        margin-top: 8px;
+        font-size: 15px;
+        color: var(--muted);
+      }
+
+      .total-uzs strong {
+        font-size: 18px;
+        color: var(--text);
+        white-space: nowrap;
+      }
+
       .actions {
         display: flex;
         gap: 10px;
@@ -237,12 +288,35 @@
     </style>
   </head>
   <body>
+
     <main class="shell">
+
       <div class="topbar">
         <div>
           <h1>AIO Calculator</h1>
         </div>
-        <a class="admin-link" href="/admin/">Admin panel</a>
+        <div>
+          <a class="admin-link" href="/admin/">Admin panel</a>
+        </div>
+      </div>
+
+      <div>
+        <div class="rate-bar">
+          <div class="field">
+            <label for="usd-rate">Dollar kursi (so'm)</label>
+            <input
+              type="number"
+              id="usd-rate"
+              name="usd_rate"
+              min="1"
+              step="1"
+              {% if usd_rate %}value="{{ usd_rate|floatformat:0 }}"{% endif %}
+              placeholder="Masalan: 12850"
+            />
+          </div>
+          <button type="button" id="save-usd-rate">Saqlash</button>
+          <div class="rate-status" id="rate-status"></div>
+        </div>
       </div>
 
       <div class="layout">
@@ -294,7 +368,10 @@
             ><strong id="summary-keyboard">-</strong>
           </div>
           <div class="total">
-            <span>Jami</span><strong id="summary-total">$0.00</strong>
+            <span>Jami (USD)</span><strong id="summary-total">$0.00</strong>
+          </div>
+          <div class="total-uzs" id="summary-total-uzs-wrap" hidden>
+            <span>Jami (so'm)</span><strong id="summary-total-uzs">0 so'm</strong>
           </div>
           <div class="actions">
             <button type="button" id="save-quote">Saqlash</button>
@@ -350,8 +427,15 @@
         keyboardMouse: document.getElementById("keyboard_mouse"),
       };
 
+      let usdRate = Number("{{ usd_rate }}") || 0;
+
       function money(value) {
         return `$${Number(value || 0).toFixed(2)}`;
+      }
+
+      function moneyUzs(value) {
+        const amount = Math.round(Number(value || 0) * usdRate);
+        return `${amount.toLocaleString("uz-UZ")} so'm`;
       }
 
       function selected(select, map) {
@@ -520,6 +604,14 @@
           ? keyboard.name
           : "-";
         document.getElementById("summary-total").textContent = money(total);
+        const uzsWrap = document.getElementById("summary-total-uzs-wrap");
+        if (usdRate > 0) {
+          uzsWrap.hidden = false;
+          document.getElementById("summary-total-uzs").textContent =
+            moneyUzs(total);
+        } else {
+          uzsWrap.hidden = true;
+        }
       }
 
       function clearStatus() {
@@ -563,6 +655,39 @@
         clearStatus();
       });
       fields.keyboardMouse.addEventListener("change", refreshSummary);
+
+      document.getElementById("save-usd-rate").addEventListener("click", async () => {
+        const rateStatus = document.getElementById("rate-status");
+        const rateInput = document.getElementById("usd-rate");
+        const rate = Number(rateInput.value);
+        if (!rate || rate <= 0) {
+          rateStatus.textContent = "Dollar kursini kiriting.";
+          rateStatus.classList.add("error");
+          return;
+        }
+        const body = new FormData();
+        body.append("usd_rate", String(rate));
+        body.append(
+          "csrfmiddlewaretoken",
+          document.querySelector("[name=csrfmiddlewaretoken]").value,
+        );
+        const response = await fetch("{% url 'calculator:save_usd_rate' %}", {
+          method: "POST",
+          body,
+          headers: { "X-Requested-With": "XMLHttpRequest" },
+        });
+        const data = await response.json();
+        if (response.ok) {
+          usdRate = Number(data.usd_rate);
+          rateInput.value = usdRate;
+          rateStatus.textContent = "Dollar kursi saqlandi.";
+          rateStatus.classList.remove("error");
+          refreshSummary();
+        } else {
+          rateStatus.textContent = data.error || "Saqlashda xatolik yuz berdi.";
+          rateStatus.classList.add("error");
+        }
+      });
 
       document.getElementById("reset-form").addEventListener("click", () => {
         fields.cpu.value = "";

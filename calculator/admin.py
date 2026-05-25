@@ -1,6 +1,17 @@
 from django.contrib import admin
 
-from .models import BuildQuote
+from .models import BuildQuote, CalculatorSettings
+
+
+@admin.register(CalculatorSettings)
+class CalculatorSettingsAdmin(admin.ModelAdmin):
+    list_display = ("usd_rate", "updated_at")
+
+    def has_add_permission(self, request):
+        return not CalculatorSettings.objects.exists()
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(BuildQuote)
