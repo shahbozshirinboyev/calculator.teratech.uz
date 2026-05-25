@@ -6,6 +6,7 @@ name = "pypi"
 [packages]
 django = "*"
 openpyxl = "*"
+whitenoise = "*"
 
 [dev-packages]
 

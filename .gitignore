@@ -1,0 +1,11 @@
+__pycache__/
+*.py[cod]
+*.log
+.env
+.venv/
+venv/
+staticfiles/
+db.sqlite3
+runserver.log
+runserver.err.log
+*.xlsx
