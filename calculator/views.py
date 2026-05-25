@@ -100,13 +100,34 @@ def save_quote(request):
 
     ram_items = [{"id": item.id, "name": item.name, "price": str(item.price)} for item in rams]
     storage_items = [{"id": item.id, "name": item.name, "price": str(item.price)} for item in storages]
-    total = (
+    subtotal = (
         monoblock_base.price
         + cpu.price
         + sum((item.price for item in rams), Decimal("0"))
         + sum((item.price for item in storages), Decimal("0"))
         + (keyboard_mouse.price if keyboard_mouse else Decimal("0"))
     )
+    try:
+        discount = Decimal(
+            request.POST.get("discount_percent", "0").replace(",", ".").strip()
+        )
+    except Exception:
+        discount = Decimal("0")
+    if discount < 1 or discount > CalculatorSettings.MAX_DISCOUNT_PERCENT:
+        discount = Decimal("0")
+    markup_percent = CalculatorSettings.effective_markup_percent(discount)
+    total = CalculatorSettings.apply_markup(subtotal, discount)
+    markup_amount = total - subtotal
+
+    try:
+        usd_rate = Decimal(
+            request.POST.get("usd_rate", "0").replace(",", ".").strip()
+        )
+    except Exception:
+        usd_rate = Decimal("0")
+    if usd_rate < 0:
+        usd_rate = Decimal("0")
+    total_price_uzs = (total * usd_rate).quantize(Decimal("1")) if usd_rate > 0 else Decimal("0")
 
     quote = BuildQuote.objects.create(
         monoblock_base=monoblock_base,
@@ -114,6 +135,12 @@ def save_quote(request):
         ram_items=ram_items,
         storage_items=storage_items,
         keyboard_mouse=keyboard_mouse,
+        subtotal_price=subtotal,
+        discount_percent=discount,
+        markup_percent=markup_percent,
+        markup_amount=markup_amount,
+        usd_rate=usd_rate,
         total_price=total,
+        total_price_uzs=total_price_uzs,
     )
     return JsonResponse({"id": quote.id, "total_price": f"{quote.total_price:.2f}"})

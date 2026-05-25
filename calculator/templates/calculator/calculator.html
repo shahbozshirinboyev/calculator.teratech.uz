@@ -35,23 +35,23 @@
 
       .topbar {
         display: flex;
-        align-items: end;
         justify-content: space-between;
-        gap: 16px;
         margin-bottom: 16px;
         flex-wrap: wrap;
       }
 
-      .rate-bar {
-        display: flex;
-        align-items: end;
-        gap: 10px;
-        flex-wrap: wrap;
-      }
+.rate-bar {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    width: 100%;
+}
 
-      .rate-bar .field {
-        min-width: 180px;
-      }
+.save_button{
+  width: 100%;
+  margin-left: 10px;
+  margin-right: 10px;
+}
 
       input[type="number"] {
         width: 100%;
@@ -70,9 +70,21 @@
         font-weight: 700;
         color: var(--accent-dark);
       }
+      .chegirma_input{
+        display: flex;
+        flex-direction: column;
+      }
 
       .rate-status.error {
         color: var(--danger);
+      }
+
+      .rate-save-btn {
+        display: none;
+      }
+
+      .rate-save-btn.is-visible {
+        display: inline-block;
       }
 
       h1 {
@@ -83,9 +95,7 @@
 
       .admin-link {
         color: var(--accent);
-        font-weight: 700;
         text-decoration: none;
-        white-space: nowrap;
       }
 
       .layout {
@@ -145,7 +155,7 @@
         grid-template-columns: 1fr;
       }
 
-      label {
+      label, legend {
         font-weight: 700;
         font-size: 14px;
       }
@@ -164,6 +174,12 @@
       select:disabled {
         background: #eef2f4;
         color: #7b8993;
+      }
+
+      .group_inputs{
+
+        border: 1px solid #bfccd4;
+        border-radius: 6px;
       }
 
       .summary {
@@ -205,11 +221,10 @@
         margin-top: 18px;
         padding-top: 16px;
         border-top: 2px solid var(--text);
-        font-weight: 800;
       }
 
       .total strong {
-        font-size: 28px;
+        font-size: 14px;
         color: var(--accent-dark);
         white-space: nowrap;
       }
@@ -220,7 +235,6 @@
         align-items: baseline;
         gap: 16px;
         margin-top: 8px;
-        font-size: 15px;
         color: var(--muted);
       }
 
@@ -232,6 +246,7 @@
 
       .actions {
         display: flex;
+        justify-content: space-between;
         gap: 10px;
         margin-top: 18px;
       }
@@ -279,11 +294,6 @@
         .summary {
           position: static;
         }
-
-        .topbar {
-          align-items: start;
-          flex-direction: column;
-        }
       }
     </style>
   </head>
@@ -296,27 +306,57 @@
           <h1>AIO Calculator</h1>
         </div>
         <div>
-          <a class="admin-link" href="/admin/">Admin panel</a>
+          <a class="admin-link" href="/admin/">
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-person-fill-gear" viewBox="0 0 16 16">
+              <path d="M11 5a3 3 0 1 1-6 0 3 3 0 0 1 6 0m-9 8c0 1 1 1 1 1h5.256A4.5 4.5 0 0 1 8 12.5a4.5 4.5 0 0 1 1.544-3.393Q8.844 9.002 8 9c-5 0-6 3-6 4m9.886-3.54c.18-.613 1.048-.613 1.229 0l.043.148a.64.64 0 0 0 .921.382l.136-.074c.561-.306 1.175.308.87.869l-.075.136a.64.64 0 0 0 .382.92l.149.045c.612.18.612 1.048 0 1.229l-.15.043a.64.64 0 0 0-.38.921l.074.136c.305.561-.309 1.175-.87.87l-.136-.075a.64.64 0 0 0-.92.382l-.045.149c-.18.612-1.048.612-1.229 0l-.043-.15a.64.64 0 0 0-.921-.38l-.136.074c-.561.305-1.175-.309-.87-.87l.075-.136a.64.64 0 0 0-.382-.92l-.148-.045c-.613-.18-.613-1.048 0-1.229l.148-.043a.64.64 0 0 0 .382-.921l-.074-.136c-.306-.561.308-1.175.869-.87l.136.075a.64.64 0 0 0 .92-.382zM14 12.5a1.5 1.5 0 1 0-3 0 1.5 1.5 0 0 0 3 0"/>
+            </svg>
+          </a>
         </div>
       </div>
 
-      <div>
+
         <div class="rate-bar">
-          <div class="field">
-            <label for="usd-rate">Dollar kursi (so'm)</label>
+
+          <div>
+
+            <label for="usd-rate" style="margin-bottom: 2px;">Dollar kursi(so'm):</label>
+
             <input
               type="number"
               id="usd-rate"
               name="usd_rate"
               min="1"
               step="1"
+              data-saved-rate="{% if usd_rate %}{{ usd_rate|floatformat:0 }}{% else %}0{% endif %}"
               {% if usd_rate %}value="{{ usd_rate|floatformat:0 }}"{% endif %}
               placeholder="Masalan: 12850"
             />
-          </div>
-          <button type="button" id="save-usd-rate">Saqlash</button>
-          <div class="rate-status" id="rate-status"></div>
         </div>
+
+         <div class="save_button">
+          <div class="rate-status" id="rate-status"></div>
+          <button type="button" id="save-usd-rate" class="rate-save-btn">
+            Saqlash
+          </button>
+         </div>
+
+          <div class="chegirma_input">
+
+            <label for="discount-percent" style="margin-bottom: 2px;">Chegirma(%):</label>
+
+            <input
+              type="number"
+              id="discount-percent"
+              min="1"
+              max="7"
+              step="1"
+              maxlength="1"
+              inputmode="numeric"
+              placeholder="1–7"
+            />
+
+          </div>
+
       </div>
 
       <div class="layout">
@@ -333,12 +373,12 @@
             <select id="cpu" name="cpu"></select>
           </div>
 
-          <fieldset  class="group full">
+          <fieldset  class="group full group_inputs">
             <legend>RAM</legend>
             <div class="group-grid ram-grid" id="ram-slots"></div>
           </fieldset >
 
-          <fieldset class="group full">
+          <fieldset class="group full group_inputs">
             <legend>SSD/HDD</legend>
             <div class="group-grid storage-grid" id="storage-slots"></div>
           </fieldset>
@@ -367,19 +407,23 @@
             <span>Keyboard / Mouse</span
             ><strong id="summary-keyboard">-</strong>
           </div>
+          <div class="line" id="summary-discount-wrap" hidden>
+            <span>Chegirma</span><strong id="summary-discount">-</strong>
+          </div>
           <div class="total">
-            <span>Jami (USD)</span><strong id="summary-total">$0.00</strong>
+            <strong>Jami (USD)</strong><strong id="summary-total">$0.00</strong>
           </div>
+
           <div class="total-uzs" id="summary-total-uzs-wrap" hidden>
-            <span>Jami (so'm)</span><strong id="summary-total-uzs">0 so'm</strong>
+            <strong>Jami (so'm)</strong>
+            <strong id="summary-total-uzs">0 so'm</strong>
           </div>
+
+          <div class="status" id="status"></div>
           <div class="actions">
             <button type="button" id="save-quote">Saqlash</button>
-            <button type="button" class="secondary" id="reset-form">
-              Tozalash
-            </button>
+            <button type="button" class="secondary" id="reset-form">Tozalash</button>
           </div>
-          <div class="status" id="status"></div>
         </aside>
       </div>
     </main>
@@ -427,15 +471,108 @@
         keyboardMouse: document.getElementById("keyboard_mouse"),
       };
 
-      let usdRate = Number("{{ usd_rate }}") || 0;
+      const MARKUP_BASE = 10;
+      const MIN_MARKUP = 3;
+      const MAX_DISCOUNT = 7;
+      const MIN_DISCOUNT = 1;
+
+      const usdRateInput = document.getElementById("usd-rate");
+
+      function parseUsdRateValue(raw) {
+        const text = String(raw).trim().replace(",", ".");
+        if (text === "") {
+          return null;
+        }
+        const rate = Number(text);
+        if (!Number.isFinite(rate) || rate <= 0) {
+          return null;
+        }
+        return Math.round(rate);
+      }
+
+      function getSavedUsdRate() {
+        return parseUsdRateValue(usdRateInput.dataset.savedRate) ?? 0;
+      }
+
+      function setSavedUsdRate(rate) {
+        const normalized = Math.round(Number(rate)) || 0;
+        usdRateInput.dataset.savedRate = String(normalized);
+        return normalized;
+      }
+
+      function readUsdRate() {
+        const raw = usdRateInput.value.trim();
+        if (raw === "") {
+          return getSavedUsdRate();
+        }
+        return parseUsdRateValue(raw) ?? getSavedUsdRate();
+      }
+
+      function usdRateIsDirty() {
+        const saved = getSavedUsdRate();
+        const current = parseUsdRateValue(usdRateInput.value);
+        if (current === null) {
+          return saved !== 0;
+        }
+        return current !== saved;
+      }
+
+      function updateUsdRateSaveVisibility() {
+        document
+          .getElementById("save-usd-rate")
+          .classList.toggle("is-visible", usdRateIsDirty());
+      }
+
+      function readDiscountPercent() {
+        const raw = document.getElementById("discount-percent").value.trim();
+        if (raw === "") {
+          return 0;
+        }
+        const discount = Number(raw);
+        if (
+          !Number.isInteger(discount) ||
+          discount < MIN_DISCOUNT ||
+          discount > MAX_DISCOUNT
+        ) {
+          return 0;
+        }
+        return discount;
+      }
+
+      function sanitizeDiscountInput() {
+        const input = document.getElementById("discount-percent");
+        const raw = input.value.replace(/\D/g, "");
+        if (raw === "") {
+          input.value = "";
+          return;
+        }
+        const digit = Number(raw.slice(-1));
+        if (digit < MIN_DISCOUNT) {
+          input.value = "";
+        } else if (digit > MAX_DISCOUNT) {
+          input.value = String(MAX_DISCOUNT);
+        } else {
+          input.value = String(digit);
+        }
+      }
 
       function money(value) {
         return `$${Number(value || 0).toFixed(2)}`;
       }
 
       function moneyUzs(value) {
-        const amount = Math.round(Number(value || 0) * usdRate);
+        const amount = Math.round(Number(value || 0) * readUsdRate());
         return `${amount.toLocaleString("uz-UZ")} so'm`;
+      }
+
+      function effectiveMarkupPercent() {
+        const discount = readDiscountPercent();
+        return Math.max(MIN_MARKUP, MARKUP_BASE - discount);
+      }
+
+      function finalTotal(subtotal) {
+        const markup = effectiveMarkupPercent();
+        return subtotal * (1 + markup / 100);
       }
 
       function selected(select, map) {
@@ -586,10 +723,12 @@
           storage: storageItems.reduce((sum, item) => sum + item.price, 0),
           keyboard: keyboard ? keyboard.price : 0,
         };
-        const total = Object.values(totals).reduce(
+        const subtotal = Object.values(totals).reduce(
           (sum, value) => sum + value,
           0,
         );
+        const discount = readDiscountPercent();
+        const total = finalTotal(subtotal);
         document.getElementById("summary-base").textContent = base
           ? base.name
           : "-";
@@ -603,9 +742,17 @@
         document.getElementById("summary-keyboard").textContent = keyboard
           ? keyboard.name
           : "-";
+        const discountWrap = document.getElementById("summary-discount-wrap");
+        if (discount > 0) {
+          discountWrap.hidden = false;
+          document.getElementById("summary-discount").textContent = `${discount}%`;
+        } else {
+          discountWrap.hidden = true;
+        }
         document.getElementById("summary-total").textContent = money(total);
         const uzsWrap = document.getElementById("summary-total-uzs-wrap");
-        if (usdRate > 0) {
+        const rate = readUsdRate();
+        if (rate > 0) {
           uzsWrap.hidden = false;
           document.getElementById("summary-total-uzs").textContent =
             moneyUzs(total);
@@ -656,11 +803,24 @@
       });
       fields.keyboardMouse.addEventListener("change", refreshSummary);
 
+      document.getElementById("discount-percent").addEventListener("input", () => {
+        sanitizeDiscountInput();
+        refreshSummary();
+      });
+
+      function onUsdRateEdited() {
+        refreshSummary();
+        updateUsdRateSaveVisibility();
+      }
+
+      usdRateInput.addEventListener("input", onUsdRateEdited);
+      usdRateInput.addEventListener("change", onUsdRateEdited);
+      updateUsdRateSaveVisibility();
+
       document.getElementById("save-usd-rate").addEventListener("click", async () => {
         const rateStatus = document.getElementById("rate-status");
-        const rateInput = document.getElementById("usd-rate");
-        const rate = Number(rateInput.value);
-        if (!rate || rate <= 0) {
+        const rate = parseUsdRateValue(usdRateInput.value);
+        if (rate === null) {
           rateStatus.textContent = "Dollar kursini kiriting.";
           rateStatus.classList.add("error");
           return;
@@ -678,11 +838,12 @@
         });
         const data = await response.json();
         if (response.ok) {
-          usdRate = Number(data.usd_rate);
-          rateInput.value = usdRate;
+          const saved = setSavedUsdRate(data.usd_rate);
+          usdRateInput.value = String(saved);
           rateStatus.textContent = "Dollar kursi saqlandi.";
           rateStatus.classList.remove("error");
           refreshSummary();
+          updateUsdRateSaveVisibility();
         } else {
           rateStatus.textContent = data.error || "Saqlashda xatolik yuz berdi.";
           rateStatus.classList.add("error");
@@ -691,6 +852,7 @@
 
       document.getElementById("reset-form").addEventListener("click", () => {
         fields.cpu.value = "";
+        document.getElementById("discount-percent").value = "";
         clearSelections();
         clearStatus();
       });
@@ -713,9 +875,12 @@
             status.classList.add("error");
             return;
           }
+          const body = new FormData(form);
+          body.append("discount_percent", String(readDiscountPercent()));
+          body.append("usd_rate", String(readUsdRate()));
           const response = await fetch("{% url 'calculator:save_quote' %}", {
             method: "POST",
-            body: new FormData(form),
+            body,
             headers: { "X-Requested-With": "XMLHttpRequest" },
           });
           const data = await response.json();
