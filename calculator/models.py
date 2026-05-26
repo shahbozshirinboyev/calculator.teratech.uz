@@ -50,6 +50,13 @@ class CalculatorSettings(models.Model):
 
 
 class BuildQuote(models.Model):
+    order_number = models.CharField(
+        max_length=24,
+        unique=True,
+        blank=True,
+        null=True,
+        verbose_name="Zakaz raqami",
+    )
     monoblock_base = models.ForeignKey(MonoblockBase, on_delete=models.PROTECT, related_name="quotes")
     cpu = models.ForeignKey(CPU, on_delete=models.PROTECT, related_name="quotes")
     ram_items = models.JSONField(default=list, blank=True)
@@ -106,4 +113,5 @@ class BuildQuote(models.Model):
         verbose_name_plural = "Saved Calculations"
 
     def __str__(self):
-        return f"{self.monoblock_base} - {self.total_price}"
+        label = self.order_number or f"AIO#{self.pk}"
+        return f"{label} - {self.monoblock_base} - {self.total_price}"

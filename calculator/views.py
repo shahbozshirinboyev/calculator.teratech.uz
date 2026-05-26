@@ -3,6 +3,7 @@ import json
 
 from django.http import JsonResponse
 from django.shortcuts import render
+from django.db.models import Max
 from django.views.decorators.http import require_POST
 
 from products.models import CPU, RAM, KeyboardMouse, MonoblockBase, Storage
@@ -55,6 +56,7 @@ def calculator(request):
         for item in KeyboardMouse.objects.filter(is_active=True)
     ]
     settings = CalculatorSettings.get_singleton()
+    next_quote_id = (BuildQuote.objects.aggregate(max_id=Max("id"))["max_id"] or 0) + 1
     return render(
         request,
         "calculator/calculator.html",
@@ -65,6 +67,7 @@ def calculator(request):
             "storage_data": json.dumps(storage_data),
             "keyboard_mouse_data": json.dumps(keyboard_mouse_data),
             "usd_rate": float(settings.usd_rate),
+            "next_order_number": f"AIO#{next_quote_id}",
         },
     )
 
@@ -143,4 +146,12 @@ def save_quote(request):
         total_price=total,
         total_price_uzs=total_price_uzs,
     )
-    return JsonResponse({"id": quote.id, "total_price": f"{quote.total_price:.2f}"})
+    quote.order_number = f"AIO#{quote.id}"
+    quote.save(update_fields=["order_number"])
+    return JsonResponse(
+        {
+            "id": quote.id,
+            "order_number": quote.order_number,
+            "total_price": f"{quote.total_price:.2f}",
+        }
+    )

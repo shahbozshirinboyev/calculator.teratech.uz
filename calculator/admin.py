@@ -17,6 +17,7 @@ class CalculatorSettingsAdmin(admin.ModelAdmin):
 @admin.register(BuildQuote)
 class BuildQuoteAdmin(admin.ModelAdmin):
     list_display = (
+        "order_number",
         "created_at",
         "monoblock_base",
         "cpu",
@@ -26,8 +27,9 @@ class BuildQuoteAdmin(admin.ModelAdmin):
         "total_price_uzs",
     )
     list_filter = ("created_at", "monoblock_base")
-    search_fields = ("monoblock_base__name", "cpu__name")
+    search_fields = ("order_number", "monoblock_base__name", "cpu__name")
     readonly_fields = (
+        "order_number",
         "created_at",
         "subtotal_price",
         "discount_percent",
@@ -42,6 +44,7 @@ class BuildQuoteAdmin(admin.ModelAdmin):
             "Komponentlar",
             {
                 "fields": (
+                    "order_number",
                     "monoblock_base",
                     "cpu",
                     "ram_items",
