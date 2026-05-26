@@ -21,6 +21,8 @@ class BuildQuoteAdmin(admin.ModelAdmin):
         "created_at",
         "monoblock_base",
         "cpu",
+        "ram_summary",
+        "storage_summary",
         "subtotal_price",
         "markup_amount",
         "total_price",
@@ -31,6 +33,8 @@ class BuildQuoteAdmin(admin.ModelAdmin):
     readonly_fields = (
         "order_number",
         "created_at",
+        "ram_summary",
+        "storage_summary",
         "subtotal_price",
         "discount_percent",
         "markup_percent",
@@ -47,8 +51,8 @@ class BuildQuoteAdmin(admin.ModelAdmin):
                     "order_number",
                     "monoblock_base",
                     "cpu",
-                    "ram_items",
-                    "storage_items",
+                    "ram_summary",
+                    "storage_summary",
                     "keyboard_mouse",
                 ),
             },
@@ -75,3 +79,19 @@ class BuildQuoteAdmin(admin.ModelAdmin):
         rams = ", ".join(item["name"] for item in obj.ram_items) or "No RAM"
         storages = ", ".join(item["name"] for item in obj.storage_items) or "No storage"
         return f"{rams} | {storages}"
+
+    @admin.display(description="RAM")
+    def ram_summary(self, obj):
+        return self.format_items(obj.ram_items, "RAM tanlanmagan")
+
+    @admin.display(description="Storage")
+    def storage_summary(self, obj):
+        return self.format_items(obj.storage_items, "Storage tanlanmagan")
+
+    def format_items(self, items, empty_text):
+        if not items:
+            return empty_text
+        return ", ".join(
+            f"{item.get('name', '-')} (${item.get('price', '0')})"
+            for item in items
+        )

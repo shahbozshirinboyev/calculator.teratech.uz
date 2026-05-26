@@ -92,6 +92,8 @@ def save_quote(request):
     cpu = CPU.objects.get(pk=request.POST["cpu"])
     keyboard_mouse = None
     ram_ids = [value for value in request.POST.getlist("ram_slots") if value]
+    if request.POST.get("ram"):
+        ram_ids.append(request.POST["ram"])
     storage_ids = [value for value in request.POST.getlist("storage_slots") if value]
     ram_map = RAM.objects.in_bulk(ram_ids)
     storage_map = Storage.objects.in_bulk(storage_ids)
