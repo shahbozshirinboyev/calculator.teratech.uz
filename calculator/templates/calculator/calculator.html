@@ -43,14 +43,19 @@
 .rate-bar {
     display: flex;
     align-items: flex-end;
-    justify-content: space-between;
+    justify-content: flex-start;
+    gap: 10px;
     width: 100%;
 }
 
 .save_button{
-  width: 100%;
-  margin-left: 10px;
-  margin-right: 10px;
+  width: auto;
+  margin: 0 auto 0 0;
+}
+
+.rate-bar label {
+  display: block;
+  margin-bottom: 4px;
 }
 
       input[type="number"] {
@@ -62,6 +67,11 @@
         background: #fff;
         color: var(--text);
         font: inherit;
+      }
+
+      #usd-rate {
+        width: 150px;
+        max-width: 100%;
       }
 
       .rate-status {
@@ -144,36 +154,31 @@
       }
 
       .group-grid.storage-grid {
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      }
-
-      .group-grid.storage-grid.three-cols {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-      }
-
-      .group-grid.storage-grid.two-cols {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-
-      .group-grid.storage-grid.one-col {
         grid-template-columns: 1fr;
+        gap: 0;
       }
 
       .storage-port-section {
         display: flex;
-        flex-direction: column;
+        align-items: center;
         gap: 8px;
       }
 
-      .storage-port-label {
-        font-weight: 700;
-        font-size: 14px;
+      .storage-port-section .field {
+        flex: 1 1 auto;
+        min-width: 180px;
       }
 
       .storage-kind-toggle {
-        display: flex;
-        gap: 6px;
+        display: inline-grid;
+        grid-template-columns: repeat(2, minmax(72px, 1fr));
+        flex: 0 0 184px;
+        gap: 0;
         align-items: center;
+        min-height: 44px;
+        padding: 6px;
+        border-radius: 999px;
+        background: #e3e4e7;
       }
 
       .storage-kind-toggle input[type="radio"] {
@@ -181,44 +186,54 @@
       }
 
       .storage-kind-toggle label {
-        flex: 1;
-        padding: 8px 12px;
+        display: grid;
+        place-items: center;
+        min-height: 32px;
+        padding: 7px 12px;
         text-align: center;
-        background: #e7ecef;
-        border: 2px solid transparent;
-        border-radius: 6px;
+        border-radius: 999px;
         cursor: pointer;
-        transition: all 0.2s;
+        transition:
+          background 0.2s,
+          box-shadow 0.2s,
+          color 0.2s;
         margin: 0;
-        font-size: 13px;
+        color: #6b7178;
+        font-size: 11px;
+        font-weight: 800;
+        text-transform: uppercase;
       }
 
       .storage-kind-toggle input[type="radio"]:checked + label {
-        background: var(--accent);
-        color: white;
-        border-color: var(--accent-dark);
+        background: #fff;
+        color: #172026;
+        box-shadow:
+          0 1px 3px rgba(15, 23, 42, 0.16),
+          inset 0 0 0 1px rgba(15, 23, 42, 0.06);
       }
 
       .storage-kind-toggle label:hover {
-        background: #d9e0e5;
+        color: #172026;
       }
 
-      .storage-kind-toggle input[type="radio"]:checked + label:hover {
-        background: var(--accent);
-      }
-
-      label, legend {
+      label {
         font-weight: 700;
         font-size: 14px;
       }
 
       select {
+        appearance: none;
+        -webkit-appearance: none;
         width: 100%;
         min-height: 42px;
         border: 1px solid #bfccd4;
         border-radius: 6px;
-        padding: 9px 10px;
-        background: #fff;
+        padding: 9px 42px 9px 10px;
+        background-color: #fff;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23172026' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 12px center;
+        background-size: 14px 14px;
         color: var(--text);
         font: inherit;
       }
@@ -228,10 +243,23 @@
         color: #7b8993;
       }
 
-      .group_inputs{
+      .group_inputs {
+        min-height: 42px;
+        padding: 0;
+      }
 
-        border: 1px solid #bfccd4;
-        border-radius: 6px;
+      .storage-field {
+        display: grid;
+        gap: 7px;
+      }
+
+      .storage-field > label {
+        line-height: 1.2;
+      }
+
+      #nvme-storage-slot .field,
+      #nvme-storage-slot select {
+        width: 100%;
       }
 
       .summary {
@@ -336,11 +364,20 @@
         .layout,
         .group-grid,
         .group-grid.ram-grid,
-        .group-grid.storage-grid,
-        .group-grid.storage-grid.three-cols,
-        .group-grid.storage-grid.two-cols,
-        .group-grid.storage-grid.one-col {
+        .group-grid.storage-grid {
           grid-template-columns: 1fr;
+        }
+
+        .storage-port-section {
+          align-items: stretch;
+          flex-direction: column;
+        }
+
+        .storage-kind-toggle,
+        .storage-port-section .field {
+          flex: none;
+          width: 100%;
+          min-width: 0;
         }
 
         .summary {
@@ -430,15 +467,16 @@
             <select id="ram" name="ram"></select>
           </div>
 
-          <fieldset class="group full group_inputs">
-            <legend>SSD NVMe</legend>
-            <div class="group-grid storage-grid" id="storage-slots"></div>
-          </fieldset>
 
-          <fieldset class="group full group_inputs">
-            <legend>SSD/HDD</legend>
-            <div class="group-grid storage-grid" id="storage-slots"></div>
-          </fieldset>
+          <div class="storage-field full" id="nvme-storage-group">
+            <label for="nvme-storage-select">SSD NVMe</label>
+            <div class="group-grid storage-grid group_inputs" id="nvme-storage-slot"></div>
+          </div>
+
+          <div class="storage-field full" id="sata-storage-group">
+            <label for="sata-storage-select">SSD/HDD</label>
+            <div class="group-grid storage-grid group_inputs" id="sata-storage-slot"></div>
+          </div>
 
           <div class="field full">
             <label for="keyboard_mouse">Keyboard and Mouse</label>
@@ -447,7 +485,7 @@
         </form>
 
         <aside class="panel summary">
-          <h2>Hisob-kitob</h2>
+          <h2>AIO Configuration</h2>
           <div class="line">
             <span>AIO</span><strong id="summary-base">-</strong>
           </div>
@@ -692,13 +730,19 @@
       function createSelect(label, name, items, placeholder) {
         const field = document.createElement("div");
         field.className = "field";
-        const labelEl = document.createElement("label");
-        labelEl.textContent = label;
-        const select = document.createElement("select");
-        select.name = name;
-        fillOptions(select, items, placeholder, true);
+          const select = document.createElement("select");
+          select.name = name;
+          if (label === "nvme") {
+            select.id = "nvme-storage-select";
+          }
+          fillOptions(select, items, placeholder, true);
         select.addEventListener("change", refreshSummary);
-        field.append(labelEl, select);
+        if (label && label !== "nvme") {
+          const labelEl = document.createElement("label");
+          labelEl.textContent = label;
+          field.append(labelEl);
+        }
+        field.append(select);
         return field;
       }
 
@@ -710,49 +754,35 @@
       }
 
       function renderStorageSlots(base) {
-        const container = document.getElementById("storage-slots");
-        container.innerHTML = "";
-        container.classList.remove("one-col", "two-cols", "three-cols");
+        const nvmeGroup = document.getElementById("nvme-storage-group");
+        const sataGroup = document.getElementById("sata-storage-group");
+        const nvmeContainer = document.getElementById("nvme-storage-slot");
+        const sataContainer = document.getElementById("sata-storage-slot");
+        nvmeContainer.innerHTML = "";
+        sataContainer.innerHTML = "";
+        nvmeGroup.classList.toggle("is-hidden", !base.supports_nvme);
+        sataGroup.classList.toggle("is-hidden", !base.supports_sata);
 
-        // Determine port count for layout
-        const portCount = base.sata_ports + (base.supports_nvme ? 1 : 0);
-        container.classList.add(
-          portCount >= 3
-            ? "three-cols"
-            : portCount === 2
-              ? "two-cols"
-              : "one-col",
-        );
-
-        // NVMe port section
         if (base.supports_nvme) {
           const nvmeItems = storages.filter(
             (item) => item.interface === "nvme",
           );
-          container.append(
+          nvmeContainer.append(
             createSelect(
-              "NVMe port",
+              "nvme",
               "storage_slots",
               nvmeItems,
-              "NVMe tanlang",
+              "Tanlanmagan",
             ),
           );
         }
 
-        // Single SATA port section with SSD/HDD toggle
         const sataItems = storages.filter((item) => item.interface === "sata");
 
-        if (base.sata_ports > 0) {
+        if (base.supports_sata) {
           const sataSection = document.createElement("div");
           sataSection.className = "storage-port-section";
 
-          // Label
-          const label = document.createElement("div");
-          label.className = "storage-port-label";
-          label.textContent = "SATA port";
-          sataSection.appendChild(label);
-
-          // SSD/HDD Toggle
           const toggle = document.createElement("div");
           toggle.className = "storage-kind-toggle";
 
@@ -784,18 +814,17 @@
           toggle.append(ssdRadio, ssdLabel, hddRadio, hddLabel);
           sataSection.appendChild(toggle);
 
-          // SATA Dropdown
           const sataField = document.createElement("div");
           sataField.className = "field";
           const sataSelect = document.createElement("select");
           sataSelect.name = "storage_slots";
+          sataSelect.id = "sata-storage-select";
           sataSelect.dataset.portType = "sata";
 
-          // Add event listener for toggle change
           const updateSataOptions = () => {
             const selectedKind = document.querySelector("input[name='storage_kind']:checked")?.value || "ssd";
             const filteredItems = sataItems.filter(item => item.kind === selectedKind);
-            fillOptions(sataSelect, filteredItems, `${selectedKind.toUpperCase()} tanlang`, true);
+            fillOptions(sataSelect, filteredItems, "Tanlanmagan", true);
             refreshSummary();
           };
 
@@ -803,14 +832,13 @@
           hddRadio.addEventListener("change", updateSataOptions);
           sataSelect.addEventListener("change", refreshSummary);
 
-          // Initial population with SSD items
           const initialSsdItems = sataItems.filter(item => item.kind === "ssd");
-          fillOptions(sataSelect, initialSsdItems, "SSD tanlang", true);
+          fillOptions(sataSelect, initialSsdItems, "Tanlanmagan", true);
 
           sataField.appendChild(sataSelect);
           sataSection.appendChild(sataField);
 
-          container.appendChild(sataSection);
+          sataContainer.appendChild(sataSection);
         }
       }
 
@@ -909,9 +937,10 @@
         fields.ram.value = "";
         fields.keyboardMouse.value = "";
 
-        const storageContainer = document.getElementById("storage-slots");
-        storageContainer.innerHTML = "";
-        storageContainer.classList.remove("one-col", "two-cols", "three-cols");
+        document.getElementById("nvme-storage-slot").innerHTML = "";
+        document.getElementById("sata-storage-slot").innerHTML = "";
+        document.getElementById("nvme-storage-group").classList.add("is-hidden");
+        document.getElementById("sata-storage-group").classList.add("is-hidden");
         refreshSummary();
       }
       fillOptions(fields.cpu, cpus, "CPU tanlang", false, false);

@@ -20,7 +20,7 @@ def calculator(request):
             "ram_type": item.ram_type,
             "ram_type_label": item.get_ram_type_display(),
             "ram_slots": item.ram_slots,
-            "sata_ports": item.sata_ports,
+            "supports_sata": item.supports_sata,
             "supports_nvme": item.supports_nvme,
             "price": float(item.price),
         }

@@ -28,11 +28,11 @@ class MonoblockBase(PricedItem):
     motherboard_type = models.CharField("MB Type", max_length=10)
     ram_type = models.CharField(max_length=10, choices=MemoryType.choices)
     ram_slots = models.PositiveSmallIntegerField(default=2)
-    sata_ports = models.PositiveSmallIntegerField(default=1)
+    supports_sata = models.BooleanField(default=True)
     supports_nvme = models.BooleanField(default=False)
 
     class Meta:
-        ordering = ["motherboard_type", "ram_type", "name"]
+        ordering = ["price", "name"]
         constraints = [
             models.UniqueConstraint(
                 fields=["name", "motherboard_type", "ram_type"],
@@ -50,7 +50,7 @@ class CPU(PricedItem):
     compatible_bases = models.ManyToManyField(MonoblockBase, related_name="cpus")
 
     class Meta:
-        ordering = ["name"]
+        ordering = ["price", "name"]
         verbose_name = "CPU"
         verbose_name_plural = "CPUs"
 
@@ -60,7 +60,7 @@ class RAM(PricedItem):
     capacity_gb = models.PositiveSmallIntegerField(blank=True, null=True)
 
     class Meta:
-        ordering = ["ram_type", "capacity_gb", "name"]
+        ordering = ["price", "name"]
         verbose_name = "RAM"
         verbose_name_plural = "RAMs"
 
@@ -78,7 +78,7 @@ class Storage(PricedItem):
     capacity_gb = models.PositiveIntegerField(blank=True, null=True)
 
     class Meta:
-        ordering = ["kind", "interface", "capacity_gb", "name"]
+        ordering = ["price", "name"]
         verbose_name = "Storage"
         verbose_name_plural = "Storages"
 
@@ -88,6 +88,6 @@ class Storage(PricedItem):
 
 class KeyboardMouse(PricedItem):
     class Meta:
-        ordering = ["name"]
+        ordering = ["price", "name"]
         verbose_name = "Keyboard and Mouse"
         verbose_name_plural = "Keyboard and Mouse"

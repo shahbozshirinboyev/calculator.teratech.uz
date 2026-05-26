@@ -5,6 +5,8 @@ from .models import CPU, RAM, KeyboardMouse, MonoblockBase, Storage
 
 @admin.register(MonoblockBase)
 class MonoblockBaseAdmin(admin.ModelAdmin):
+    ordering = ("price", "name")
+
     class Media:
         css = {"all": ("products/admin.css",)}
 
@@ -13,7 +15,7 @@ class MonoblockBaseAdmin(admin.ModelAdmin):
         "price",
         "motherboard_type",
         "ram_type",
-        "sata_ports",
+        "supports_sata",
         "supports_nvme",
         "is_active",
     )
@@ -23,16 +25,18 @@ class MonoblockBaseAdmin(admin.ModelAdmin):
         "price",
         "motherboard_type",
         "ram_type",
-        "sata_ports",
+        "supports_sata",
         "supports_nvme",
         "is_active",
     )
-    list_filter = ("motherboard_type", "ram_type", "supports_nvme", "is_active")
+    list_filter = ("motherboard_type", "ram_type", "supports_sata", "supports_nvme", "is_active")
     search_fields = ("name",)
 
 
 @admin.register(CPU)
 class CPUAdmin(admin.ModelAdmin):
+    ordering = ("price", "name")
+
     list_display = ("name", "price", "compatible", "is_active")
     list_editable = ("price", "is_active")
     fields = ("name", "price", "compatible_bases", "is_active")
@@ -50,6 +54,8 @@ class CPUAdmin(admin.ModelAdmin):
 
 @admin.register(RAM)
 class RAMAdmin(admin.ModelAdmin):
+    ordering = ("price", "name")
+
     list_display = ("name", "price", "ram_type", "capacity_gb",  "is_active")
     list_editable = ("price", "is_active")
     fields = ("name", "price", "ram_type", "capacity_gb", "is_active")
@@ -59,6 +65,8 @@ class RAMAdmin(admin.ModelAdmin):
 
 @admin.register(Storage)
 class StorageAdmin(admin.ModelAdmin):
+    ordering = ("price", "name")
+
     list_display = ("name", "price", "kind", "interface", "capacity_gb", "is_active")
     list_editable = ("price", "is_active")
     fields = ("name", "price", "kind", "interface", "capacity_gb", "is_active")
@@ -68,6 +76,8 @@ class StorageAdmin(admin.ModelAdmin):
 
 @admin.register(KeyboardMouse)
 class KeyboardMouseAdmin(admin.ModelAdmin):
+    ordering = ("price", "name")
+
     list_display = ("name", "price", "is_active")
     list_editable = ("price", "is_active")
     fields = ("name", "price", "is_active")

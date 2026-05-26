@@ -31,7 +31,7 @@ class Command(BaseCommand):
                     "price": Decimal("0.00"),
                     "supports_nvme": supports_nvme,
                     "ram_slots": 2,
-                    "sata_ports": 1,
+                    "supports_sata": True,
                     "is_active": True,
                 },
             )

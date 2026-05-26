@@ -98,7 +98,7 @@ class Command(BaseCommand):
                 "price": price,
                 "supports_nvme": chipset == "H610",
                 "ram_slots": 2,
-                "sata_ports": 1,
+                "supports_sata": True,
                 "is_active": True,
             },
         )
