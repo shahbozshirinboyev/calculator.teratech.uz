@@ -51,7 +51,7 @@ cPanel → Python App → **Enter to the virtual environment**, keyin:
 ```bash
 cd ~/calculator.teratech.uz
 pip install -r requirements.txt
-python manage.py migrate
+pip install -r requirements.txt
 python manage.py collectstatic --noinput
 python manage.py createsuperuser
 ```

@@ -24,12 +24,12 @@ def env_list(name: str, default: str = "") -> list[str]:
     return [item.strip() for item in raw.split(",") if item.strip()]
 
 
-DEBUG = env_bool("DJANGO_DEBUG", True)
-SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", INSECURE_DEV_SECRET_KEY)
+DEBUG=True
+SECRET_KEY='k$4^29a9wb1p+z*7$ai)q%+vc!a!tc)u3f)$edk_z6tj#s0-a&'
 
 if not DEBUG and SECRET_KEY == INSECURE_DEV_SECRET_KEY:
     raise ImproperlyConfigured(
-        "Set DJANGO_SECRET_KEY in the environment before running in production."
+        "*3btai_rb3ck$v+@@*+l@$wi^bus3_w!@0i_ndy$j&cr!-x3jo"
     )
 
 ALLOWED_HOSTS = env_list(
@@ -99,7 +99,7 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
 
-LANGUAGE_CODE = "uz"
+LANGUAGE_CODE = "en"
 TIME_ZONE = "Asia/Tashkent"
 USE_I18N = True
 USE_TZ = True

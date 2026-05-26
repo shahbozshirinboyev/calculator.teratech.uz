@@ -159,6 +159,54 @@
         grid-template-columns: 1fr;
       }
 
+      .storage-port-section {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .storage-port-label {
+        font-weight: 700;
+        font-size: 14px;
+      }
+
+      .storage-kind-toggle {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+      }
+
+      .storage-kind-toggle input[type="radio"] {
+        display: none;
+      }
+
+      .storage-kind-toggle label {
+        flex: 1;
+        padding: 8px 12px;
+        text-align: center;
+        background: #e7ecef;
+        border: 2px solid transparent;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s;
+        margin: 0;
+        font-size: 13px;
+      }
+
+      .storage-kind-toggle input[type="radio"]:checked + label {
+        background: var(--accent);
+        color: white;
+        border-color: var(--accent-dark);
+      }
+
+      .storage-kind-toggle label:hover {
+        background: #d9e0e5;
+      }
+
+      .storage-kind-toggle input[type="radio"]:checked + label:hover {
+        background: var(--accent);
+      }
+
       label, legend {
         font-weight: 700;
         font-size: 14px;
@@ -381,6 +429,11 @@
             <label for="ram">RAM</label>
             <select id="ram" name="ram"></select>
           </div>
+
+          <fieldset class="group full group_inputs">
+            <legend>SSD NVMe</legend>
+            <div class="group-grid storage-grid" id="storage-slots"></div>
+          </fieldset>
 
           <fieldset class="group full group_inputs">
             <legend>SSD/HDD</legend>
@@ -660,6 +713,8 @@
         const container = document.getElementById("storage-slots");
         container.innerHTML = "";
         container.classList.remove("one-col", "two-cols", "three-cols");
+
+        // Determine port count for layout
         const portCount = base.sata_ports + (base.supports_nvme ? 1 : 0);
         container.classList.add(
           portCount >= 3
@@ -668,6 +723,8 @@
               ? "two-cols"
               : "one-col",
         );
+
+        // NVMe port section
         if (base.supports_nvme) {
           const nvmeItems = storages.filter(
             (item) => item.interface === "nvme",
@@ -681,16 +738,79 @@
             ),
           );
         }
+
+        // Single SATA port section with SSD/HDD toggle
         const sataItems = storages.filter((item) => item.interface === "sata");
-        for (let index = 1; index <= base.sata_ports; index += 1) {
-          container.append(
-            createSelect(
-              `SATA port ${index}`,
-              "storage_slots",
-              sataItems,
-              "SSD / HDD tanlang",
-            ),
-          );
+
+        if (base.sata_ports > 0) {
+          const sataSection = document.createElement("div");
+          sataSection.className = "storage-port-section";
+
+          // Label
+          const label = document.createElement("div");
+          label.className = "storage-port-label";
+          label.textContent = "SATA port";
+          sataSection.appendChild(label);
+
+          // SSD/HDD Toggle
+          const toggle = document.createElement("div");
+          toggle.className = "storage-kind-toggle";
+
+          // SSD Option
+          const ssdRadio = document.createElement("input");
+          ssdRadio.type = "radio";
+          ssdRadio.name = "storage_kind";
+          ssdRadio.value = "ssd";
+          ssdRadio.id = "storage_kind_ssd";
+          ssdRadio.checked = true;
+          ssdRadio.dataset.storageKind = "ssd";
+
+          const ssdLabel = document.createElement("label");
+          ssdLabel.htmlFor = "storage_kind_ssd";
+          ssdLabel.textContent = "SSD";
+
+          // HDD Option
+          const hddRadio = document.createElement("input");
+          hddRadio.type = "radio";
+          hddRadio.name = "storage_kind";
+          hddRadio.value = "hdd";
+          hddRadio.id = "storage_kind_hdd";
+          hddRadio.dataset.storageKind = "hdd";
+
+          const hddLabel = document.createElement("label");
+          hddLabel.htmlFor = "storage_kind_hdd";
+          hddLabel.textContent = "HDD";
+
+          toggle.append(ssdRadio, ssdLabel, hddRadio, hddLabel);
+          sataSection.appendChild(toggle);
+
+          // SATA Dropdown
+          const sataField = document.createElement("div");
+          sataField.className = "field";
+          const sataSelect = document.createElement("select");
+          sataSelect.name = "storage_slots";
+          sataSelect.dataset.portType = "sata";
+
+          // Add event listener for toggle change
+          const updateSataOptions = () => {
+            const selectedKind = document.querySelector("input[name='storage_kind']:checked")?.value || "ssd";
+            const filteredItems = sataItems.filter(item => item.kind === selectedKind);
+            fillOptions(sataSelect, filteredItems, `${selectedKind.toUpperCase()} tanlang`, true);
+            refreshSummary();
+          };
+
+          ssdRadio.addEventListener("change", updateSataOptions);
+          hddRadio.addEventListener("change", updateSataOptions);
+          sataSelect.addEventListener("change", refreshSummary);
+
+          // Initial population with SSD items
+          const initialSsdItems = sataItems.filter(item => item.kind === "ssd");
+          fillOptions(sataSelect, initialSsdItems, "SSD tanlang", true);
+
+          sataField.appendChild(sataSelect);
+          sataSection.appendChild(sataField);
+
+          container.appendChild(sataSection);
         }
       }
 
