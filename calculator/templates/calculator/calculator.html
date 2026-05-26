@@ -1205,14 +1205,17 @@
           const hasRam = fields.ram.value !== "";
           const hasStorage =
             selectedDynamic("storage_slots", maps.storage).length > 0;
-          if (
-            !fields.cpu.value ||
-            !fields.base.value ||
-            !hasRam ||
-            !hasStorage
-          ) {
-            status.textContent =
-              "CPU, AIO, RAM va kamida bitta SSD / HDD tanlang.";
+          const hasKeyboardMouse = fields.keyboardMouse.value !== "";
+
+          const errors = [];
+          if (!fields.cpu.value) errors.push("CPU tanlanmadi");
+          if (!fields.base.value) errors.push("AIO tanlanmadi");
+          if (!hasRam) errors.push("RAM tanlanmadi");
+          if (!hasKeyboardMouse) errors.push("Keyboard/Mouse tanlanmadi");
+          if (!hasStorage) errors.push("SSD / HDD tanlanmadi");
+
+          if (errors.length > 0) {
+            status.textContent = errors.join(" • ");
             status.classList.add("error");
             return;
           }

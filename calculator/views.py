@@ -90,7 +90,10 @@ def save_usd_rate(request):
 def save_quote(request):
     monoblock_base = MonoblockBase.objects.get(pk=request.POST["monoblock_base"])
     cpu = CPU.objects.get(pk=request.POST["cpu"])
-    keyboard_mouse = None
+    keyboard_mouse_id = request.POST.get("keyboard_mouse")
+    if not keyboard_mouse_id:
+        return JsonResponse({"error": "Keyboard/Mouse tanlanishi kerak."}, status=400)
+    keyboard_mouse = KeyboardMouse.objects.get(pk=keyboard_mouse_id)
     ram_ids = [value for value in request.POST.getlist("ram_slots") if value]
     if request.POST.get("ram"):
         ram_ids.append(request.POST["ram"])
@@ -99,9 +102,6 @@ def save_quote(request):
     storage_map = Storage.objects.in_bulk(storage_ids)
     rams = [ram_map[int(pk)] for pk in ram_ids if int(pk) in ram_map]
     storages = [storage_map[int(pk)] for pk in storage_ids if int(pk) in storage_map]
-
-    if request.POST.get("keyboard_mouse"):
-        keyboard_mouse = KeyboardMouse.objects.get(pk=request.POST["keyboard_mouse"])
 
     ram_items = [{"id": item.id, "name": item.name, "price": str(item.price)} for item in rams]
     storage_items = [{"id": item.id, "name": item.name, "price": str(item.price)} for item in storages]
