@@ -377,10 +377,10 @@
             <select id="cpu" name="cpu"></select>
           </div>
 
-          <fieldset  class="group full group_inputs">
-            <legend>RAM</legend>
-            <div class="group-grid ram-grid" id="ram-slots"></div>
-          </fieldset >
+          <div class="field">
+            <label for="ram">RAM</label>
+            <select id="ram" name="ram"></select>
+          </div>
 
           <fieldset class="group full group_inputs">
             <legend>SSD/HDD</legend>
@@ -472,6 +472,7 @@
       const fields = {
         base: document.getElementById("monoblock_base"),
         cpu: document.getElementById("cpu"),
+        ram: document.getElementById("ram"),
         keyboardMouse: document.getElementById("keyboard_mouse"),
       };
 
@@ -648,22 +649,11 @@
         return field;
       }
 
-      function renderRamSlots(base) {
-        const container = document.getElementById("ram-slots");
-        container.innerHTML = "";
+      function renderRamSelect(base) {
         const compatibleRam = rams.filter(
           (item) => item.ram_type === base.ram_type,
         );
-        for (let index = 1; index <= base.ram_slots; index += 1) {
-          container.append(
-            createSelect(
-              `RAM port ${index}`,
-              "ram_slots",
-              compatibleRam,
-              "RAM tanlang",
-            ),
-          );
-        }
+        fillOptions(fields.ram, compatibleRam, "RAM tanlang");
       }
 
       function renderStorageSlots(base) {
@@ -723,7 +713,7 @@
         );
         const base = activeBase();
         if (base) {
-          renderRamSlots(base);
+          renderRamSelect(base);
           renderStorageSlots(base);
         }
         refreshSummary();
@@ -738,13 +728,13 @@
       function refreshSummary() {
         const base = activeBase();
         const cpu = selected(fields.cpu, maps.cpu);
-        const ramItems = selectedDynamic("ram_slots", maps.ram);
+        const ramItem = selected(fields.ram, maps.ram);
         const storageItems = selectedDynamic("storage_slots", maps.storage);
         const keyboard = selected(fields.keyboardMouse, maps.keyboardMouse);
         const totals = {
           base: base ? base.price : 0,
           cpu: cpu ? cpu.price : 0,
-          ram: ramItems.reduce((sum, item) => sum + item.price, 0),
+          ram: ramItem ? ramItem.price : 0,
           storage: storageItems.reduce((sum, item) => sum + item.price, 0),
           keyboard: keyboard ? keyboard.price : 0,
         };
@@ -760,7 +750,7 @@
           ? cpu.name
           : "-";
         document.getElementById("summary-ram").textContent =
-          ramItems.map((item) => item.name).join(", ") || "-";
+          ramItem ? ramItem.name : "-";
         document.getElementById("summary-storage").textContent =
           storageItems.map((item) => item.name).join(", ") || "-";
         document.getElementById("summary-keyboard").textContent = keyboard
@@ -787,6 +777,7 @@
 
       function clearSelections() {
         fillOptions(fields.base, [], "AIO tanlang", false, false);
+        fillOptions(fields.ram, [], "RAM tanlang", false, false);
         fillOptions(
           fields.keyboardMouse,
           keyboardMouse,
@@ -795,9 +786,9 @@
           false,
         );
 
+        fields.ram.value = "";
         fields.keyboardMouse.value = "";
 
-        document.getElementById("ram-slots").innerHTML = "";
         const storageContainer = document.getElementById("storage-slots");
         storageContainer.innerHTML = "";
         storageContainer.classList.remove("one-col", "two-cols", "three-cols");
@@ -813,12 +804,13 @@
       fields.base.addEventListener("change", () => {
         const base = activeBase();
         if (base) {
-          renderRamSlots(base);
+          renderRamSelect(base);
           renderStorageSlots(base);
         }
         refreshSummary();
         clearStatus();
       });
+      fields.ram.addEventListener("change", refreshSummary);
       fields.keyboardMouse.addEventListener("change", refreshSummary);
 
       discountInput.addEventListener("input", onDiscountEdited);
@@ -883,7 +875,7 @@
         .getElementById("save-quote")
         .addEventListener("click", async () => {
           const status = document.getElementById("status");
-          const hasRam = selectedDynamic("ram_slots", maps.ram).length > 0;
+          const hasRam = fields.ram.value !== "";
           const hasStorage =
             selectedDynamic("storage_slots", maps.storage).length > 0;
           if (
@@ -893,7 +885,7 @@
             !hasStorage
           ) {
             status.textContent =
-              "CPU, AIO, kamida bitta RAM va kamida bitta SSD / HDD tanlang.";
+              "CPU, AIO, RAM va kamida bitta SSD / HDD tanlang.";
             status.classList.add("error");
             return;
           }
