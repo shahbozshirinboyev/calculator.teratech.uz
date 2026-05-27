@@ -1,6 +1,7 @@
 from decimal import Decimal
 import json
 
+from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.shortcuts import render
 from django.db.models import Max
@@ -11,6 +12,7 @@ from products.models import CPU, RAM, KeyboardMouse, MonoblockBase, Storage
 from .models import BuildQuote, CalculatorSettings
 
 
+@login_required
 def calculator(request):
     bases = MonoblockBase.objects.filter(is_active=True)
     base_data = [
@@ -72,6 +74,7 @@ def calculator(request):
     )
 
 
+@login_required
 @require_POST
 def save_usd_rate(request):
     try:
@@ -86,6 +89,7 @@ def save_usd_rate(request):
     return JsonResponse({"usd_rate": f"{settings.usd_rate:.2f}"})
 
 
+@login_required
 @require_POST
 def save_quote(request):
     monoblock_base = MonoblockBase.objects.get(pk=request.POST["monoblock_base"])

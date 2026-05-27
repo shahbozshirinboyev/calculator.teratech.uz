@@ -32,10 +32,7 @@ if not DEBUG and SECRET_KEY == INSECURE_DEV_SECRET_KEY:
         "*3btai_rb3ck$v+@@*+l@$wi^bus3_w!@0i_ndy$j&cr!-x3jo"
     )
 
-ALLOWED_HOSTS = env_list(
-    "DJANGO_ALLOWED_HOSTS",
-    "localhost,127.0.0.1,testserver,calculator.teratech.uz,www.calculator.teratech.uz",
-)
+ALLOWED_HOSTS = ['*']
 
 CSRF_TRUSTED_ORIGINS = env_list("DJANGO_CSRF_TRUSTED_ORIGINS")
 
@@ -113,3 +110,8 @@ STORAGES = {
 }
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# Auth
+LOGIN_URL = "/login/"
+LOGIN_REDIRECT_URL = "/"
+LOGOUT_REDIRECT_URL = "/login/"
