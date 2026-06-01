@@ -5,7 +5,8 @@ from .models import BuildQuote, CalculatorSettings
 
 @admin.register(CalculatorSettings)
 class CalculatorSettingsAdmin(admin.ModelAdmin):
-    list_display = ("usd_rate", "updated_at")
+    list_display = ("usd_rate", "markup_percent", "max_discount_percent", "updated_at")
+    fields = ("usd_rate", "markup_percent", "max_discount_percent")
 
     def has_add_permission(self, request):
         return not CalculatorSettings.objects.exists()

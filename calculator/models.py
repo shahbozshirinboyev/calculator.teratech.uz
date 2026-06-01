@@ -4,48 +4,60 @@ from products.models import CPU, KeyboardMouse, MonoblockBase
 
 
 class CalculatorSettings(models.Model):
-    MARKUP_PERCENT = 10
-    MAX_DISCOUNT_PERCENT = 7
-    MIN_MARKUP_PERCENT = 3
-
     usd_rate = models.DecimalField(
         max_digits=12,
         decimal_places=2,
         default=0,
         verbose_name="Dollar kursi (so'm)",
     )
+    markup_percent = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=10,
+        verbose_name="Ustama (%)",
+    )
+    max_discount_percent = models.PositiveSmallIntegerField(
+        default=7,
+        verbose_name="Maksimal chegirma (%)",
+    )
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        verbose_name = "Kalkulyator sozlamalari"
-        verbose_name_plural = "Kalkulyator sozlamalari"
+        verbose_name = "Calculator Settings"
+        verbose_name_plural = "Calculator Settings"
 
     def __str__(self):
-        return f"Dollar kursi: {self.usd_rate}"
+        return (
+            f"Dollar kursi: {self.usd_rate} | "
+            f"Ustama: {self.markup_percent}% | "
+            f"Chegirma: 0–{self.max_discount_percent}%"
+        )
 
     @classmethod
     def get_singleton(cls):
-        obj, _ = cls.objects.get_or_create(pk=1, defaults={"usd_rate": 0})
+        obj, _ = cls.objects.get_or_create(
+            pk=1,
+            defaults={
+                "usd_rate": 0,
+                "markup_percent": 10,
+                "max_discount_percent": 7,
+            },
+        )
         return obj
 
-    @classmethod
-    def effective_markup_percent(cls, discount_percent=0):
+    def effective_markup_percent(self, discount_percent=0):
         from decimal import Decimal
 
         discount = min(
             max(Decimal("0"), Decimal(str(discount_percent))),
-            Decimal(str(cls.MAX_DISCOUNT_PERCENT)),
+            Decimal(str(self.max_discount_percent)),
         )
-        return max(
-            Decimal(str(cls.MIN_MARKUP_PERCENT)),
-            Decimal(str(cls.MARKUP_PERCENT)) - discount,
-        )
+        return Decimal(str(self.markup_percent)) - discount
 
-    @classmethod
-    def apply_markup(cls, subtotal, discount_percent=0):
+    def apply_markup(self, subtotal, discount_percent=0):
         from decimal import Decimal
 
-        markup = cls.effective_markup_percent(discount_percent)
+        markup = self.effective_markup_percent(discount_percent)
         return subtotal * (Decimal("1") + markup / Decimal("100"))
 
 

@@ -69,6 +69,8 @@ def calculator(request):
             "storage_data": json.dumps(storage_data),
             "keyboard_mouse_data": json.dumps(keyboard_mouse_data),
             "usd_rate": float(settings.usd_rate),
+            "markup_percent": float(settings.markup_percent),
+            "max_discount_percent": settings.max_discount_percent,
             "next_order_number": f"AIO#{next_quote_id}",
         },
     )
@@ -122,10 +124,11 @@ def save_quote(request):
         )
     except Exception:
         discount = Decimal("0")
-    if discount < 0 or discount > CalculatorSettings.MAX_DISCOUNT_PERCENT:
+    settings = CalculatorSettings.get_singleton()
+    if discount < 0 or discount > settings.max_discount_percent:
         discount = Decimal("0")
-    markup_percent = CalculatorSettings.effective_markup_percent(discount)
-    total = CalculatorSettings.apply_markup(subtotal, discount)
+    markup_percent = settings.effective_markup_percent(discount)
+    total = settings.apply_markup(subtotal, discount)
     markup_amount = total - subtotal
 
     try:

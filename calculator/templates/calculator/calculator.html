@@ -485,11 +485,11 @@
               type="number"
               id="discount-percent"
               min="1"
-              max="7"
+              max="{{ max_discount_percent }}"
               step="1"
               maxlength="1"
               inputmode="numeric"
-              placeholder="0–7"
+              placeholder="0–{{ max_discount_percent }}"
             />
 
           </div>
@@ -618,9 +618,8 @@
         keyboardMouse: document.getElementById("keyboard_mouse"),
       };
 
-      const MARKUP_BASE = 10;
-      const MIN_MARKUP = 3;
-      const MAX_DISCOUNT = 7;
+      const MARKUP_BASE = {{ markup_percent }};
+      const MAX_DISCOUNT = {{ max_discount_percent }};
       const MIN_DISCOUNT = 0;
       const discountInput = document.getElementById("discount-percent");
 
@@ -694,16 +693,16 @@
       }
 
       function sanitizeDiscountInput() {
-        const raw = discountInput.value.replace(/\D/g, "").slice(0, 1);
+        const raw = discountInput.value.replace(/\D/g, "");
         if (raw === "") {
           discountInput.value = "";
           return;
         }
-        const digit = Number(raw);
-        if (digit > MAX_DISCOUNT) {
+        const number = Number(raw);
+        if (number > MAX_DISCOUNT) {
           discountInput.value = String(MAX_DISCOUNT);
         } else {
-          discountInput.value = String(digit);
+          discountInput.value = String(number);
         }
       }
 
@@ -891,7 +890,7 @@
         if (parsed === null || parsed === 0) {
           return MARKUP_BASE;
         }
-        return Math.max(MIN_MARKUP, MARKUP_BASE - parsed);
+        return MARKUP_BASE - parsed;
       }
 
       function finalTotal(subtotal) {
@@ -1049,6 +1048,114 @@
         }
       }
 
+      // CPU yoki AIO o'zgarganda storage ko'rinishini yangilaydi
+      function refreshStorageVisibility(base) {
+        const nvmeGroup = document.getElementById("nvme-storage-group");
+        const sataGroup = document.getElementById("sata-storage-group");
+        const nvmeContainer = document.getElementById("nvme-storage-slot");
+        const sataContainer = document.getElementById("sata-storage-slot");
+
+        const nvmeAlreadyRendered = nvmeContainer.querySelector("select") !== null;
+        const sataAlreadyRendered = sataContainer.querySelector("select") !== null;
+
+        // Agar hech narsa render qilinmagan bo'lsa — to'liq render qilamiz
+        if (!nvmeAlreadyRendered && !sataAlreadyRendered) {
+          renderStorageSlots(base);
+          return;
+        }
+
+        // NVMe ni boshqarish
+        if (base.supports_nvme) {
+          // NVMe kerak, lekin hali render qilinmagan
+          if (!nvmeAlreadyRendered) {
+            // Faqat NVMe qismini render qilish
+            nvmeContainer.innerHTML = "";
+            const nvmeItems = storages.filter(item => item.interface === "nvme");
+            nvmeContainer.append(
+              createSelect("nvme", "storage_slots", nvmeItems, "Tanlanmagan")
+            );
+          }
+          nvmeGroup.classList.remove("is-hidden");
+        } else {
+          // NVMe kerak emas
+          nvmeGroup.classList.add("is-hidden");
+          nvmeContainer.querySelectorAll("select").forEach(select => {
+            select.value = "";
+          });
+        }
+
+        // SATA ni boshqarish
+        if (base.supports_sata) {
+          // SATA kerak, lekin hali render qilinmagan
+          if (!sataAlreadyRendered) {
+            // Faqat SATA qismini render qilish
+            sataContainer.innerHTML = "";
+            const sataItems = storages.filter(item => item.interface === "sata");
+            
+            const sataSection = document.createElement("div");
+            sataSection.className = "storage-port-section";
+
+            const toggle = document.createElement("div");
+            toggle.className = "storage-kind-toggle";
+
+            const ssdRadio = document.createElement("input");
+            ssdRadio.type = "radio";
+            ssdRadio.name = "storage_kind";
+            ssdRadio.value = "ssd";
+            ssdRadio.id = "storage_kind_ssd";
+            ssdRadio.checked = true;
+
+            const ssdLabel = document.createElement("label");
+            ssdLabel.htmlFor = "storage_kind_ssd";
+            ssdLabel.textContent = "SSD";
+
+            const hddRadio = document.createElement("input");
+            hddRadio.type = "radio";
+            hddRadio.name = "storage_kind";
+            hddRadio.value = "hdd";
+            hddRadio.id = "storage_kind_hdd";
+
+            const hddLabel = document.createElement("label");
+            hddLabel.htmlFor = "storage_kind_hdd";
+            hddLabel.textContent = "HDD";
+
+            toggle.append(ssdRadio, ssdLabel, hddRadio, hddLabel);
+            sataSection.appendChild(toggle);
+
+            const sataField = document.createElement("div");
+            sataField.className = "field";
+            const sataSelect = document.createElement("select");
+            sataSelect.name = "storage_slots";
+            sataSelect.id = "sata-storage-select";
+
+            const updateSataOptions = () => {
+              const selectedKind = document.querySelector("input[name='storage_kind']:checked")?.value || "ssd";
+              const filteredItems = sataItems.filter(item => item.kind === selectedKind);
+              fillOptions(sataSelect, filteredItems, "Tanlanmagan", true);
+              refreshSummary();
+            };
+
+            ssdRadio.addEventListener("change", updateSataOptions);
+            hddRadio.addEventListener("change", updateSataOptions);
+            sataSelect.addEventListener("change", refreshSummary);
+
+            const initialSsdItems = sataItems.filter(item => item.kind === "ssd");
+            fillOptions(sataSelect, initialSsdItems, "Tanlanmagan", true);
+
+            sataField.appendChild(sataSelect);
+            sataSection.appendChild(sataField);
+            sataContainer.appendChild(sataSection);
+          }
+          sataGroup.classList.remove("is-hidden");
+        } else {
+          // SATA kerak emas
+          sataGroup.classList.add("is-hidden");
+          sataContainer.querySelectorAll("select").forEach(select => {
+            select.value = "";
+          });
+        }
+      }
+
       function refreshForCpu() {
         const cpu = activeCpu();
         if (!cpu) {
@@ -1069,7 +1176,7 @@
         const base = activeBase();
         if (base) {
           renderRamSelect(base);
-          renderStorageSlots(base);
+          refreshStorageVisibility(base);
         }
         refreshSummary();
       }
@@ -1161,7 +1268,7 @@
         const base = activeBase();
         if (base) {
           renderRamSelect(base);
-          renderStorageSlots(base);
+          refreshStorageVisibility(base);
         }
         refreshSummary();
         clearStatus();
@@ -1220,11 +1327,10 @@
       });
 
       document.getElementById("reset-form").addEventListener("click", () => {
-        fields.cpu.value = "";
         discountInput.value = "";
+        fields.cpu.value = "";
         clearSelections();
         clearStatus();
-        refreshSummary();
       });
 
       document
