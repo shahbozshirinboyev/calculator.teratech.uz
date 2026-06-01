@@ -1,11 +1,57 @@
-__pycache__/
-*.py[cod]
-*.log
+# Dependencies
+node_modules/
+vendor/
+
+# Build outputs
+dist/
+build/
+out/
+.next/
+.nuxt/
+
+# Environment & secrets
 .env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor & IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Testing & coverage
+coverage/
+.nyc_output/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
 .venv/
 venv/
-staticfiles/
-db.sqlite3
-runserver.log
-runserver.err.log
-*.xlsx
+*.egg-info/
+dist/
+*.egg
+
+# Java
+*.class
+*.jar
+*.war
+target/
+
+# Temp files
+*.tmp
+*.temp
+.cache/
