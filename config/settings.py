@@ -5,11 +5,9 @@ Django settings for config project.
 import os
 from pathlib import Path
 
-from django.core.exceptions import ImproperlyConfigured
-
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-INSECURE_DEV_SECRET_KEY = "django-insecure-tq!^ejph_p!cishh3qgtd&)0nr-suxzwe1a8e4w)_&^7m(22_!"
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "django-insecure-local-dev-only")
 
 
 def env_bool(name: str, default: bool = False) -> bool:
@@ -24,15 +22,8 @@ def env_list(name: str, default: str = "") -> list[str]:
     return [item.strip() for item in raw.split(",") if item.strip()]
 
 
-DEBUG=True
-SECRET_KEY='k$4^29a9wb1p+z*7$ai)q%+vc!a!tc)u3f)$edk_z6tj#s0-a&'
-
-if not DEBUG and SECRET_KEY == INSECURE_DEV_SECRET_KEY:
-    raise ImproperlyConfigured(
-        "*3btai_rb3ck$v+@@*+l@$wi^bus3_w!@0i_ndy$j&cr!-x3jo"
-    )
-
-ALLOWED_HOSTS = ['*']
+DEBUG = env_bool("DJANGO_DEBUG", default=True)
+ALLOWED_HOSTS = env_list("DJANGO_ALLOWED_HOSTS", default="*")
 
 CSRF_TRUSTED_ORIGINS = env_list("DJANGO_CSRF_TRUSTED_ORIGINS")
 

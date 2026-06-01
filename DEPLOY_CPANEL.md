@@ -1,18 +1,30 @@
-# cPanel ga deploy qilish (AIO Calculator)
+# cPanel ga deploy qilish — AIO Calculator
 
-## 1. Tayyor fayllarni yuklash
+## 1. Serverga yuklash
 
-ZIP qiling va cPanel **File Manager** orqali serverga yuklang (masalan: `calculator.teratech.uz` papkasi).
+ZIP qilib cPanel **File Manager** orqali yuklang yoki Git orqali clone qiling.
 
 **Yuklanishi kerak:**
-- `calculator/`, `config/`, `products/`
-- `manage.py`, `passenger_wsgi.py`, `requirements.txt`
+```
+calculator/
+config/
+products/
+templates/          ← 404.html shu yerda
+manage.py
+passenger_wsgi.py
+requirements.txt
+```
 
 **Yuklanmasin:**
-- `.env` (maxfiy)
-- `db.sqlite3` (birinchi marta serverda yaratiladi)
-- `staticfiles/` (serverda `collectstatic` bilan yig'iladi)
-- `__pycache__/`, `.venv/`, `runserver*.log`
+```
+.env                ← maxfiy, hech qachon yuklamang
+db.sqlite3          ← serverda migrate bilan yaratiladi
+staticfiles/        ← serverda collectstatic bilan yig'iladi
+__pycache__/
+.venv/
+Pipfile
+Pipfile.lock
+```
 
 ---
 
@@ -22,13 +34,17 @@ cPanel → **Setup Python App** → **Create Application**
 
 | Maydon | Qiymat |
 |--------|--------|
-| Python version | 3.11 yoki 3.12 |
-| Application root | `calculator.teratech.uz` (loyiha papkasi) |
-| Application URL | `/` yoki subdomain |
+| Python version | 3.11 |
+| Application root | `calculator.teratech.uz` |
+| Application URL | `/` |
 | Application startup file | `passenger_wsgi.py` |
 | Application entry point | `application` |
 
-**Environment variables** (`.env.example` dan):
+---
+
+## 3. Environment variables
+
+cPanel → Setup Python App → **Environment variables** bo'limiga qo'shing:
 
 ```
 DJANGO_DEBUG=False
@@ -37,38 +53,37 @@ DJANGO_ALLOWED_HOSTS=calculator.teratech.uz,www.calculator.teratech.uz
 DJANGO_CSRF_TRUSTED_ORIGINS=https://calculator.teratech.uz,https://www.calculator.teratech.uz
 ```
 
-`DJANGO_SECRET_KEY` uchun terminalda:
+`DJANGO_SECRET_KEY` generatsiya qilish:
 ```bash
 python -c "import secrets; print(secrets.token_urlsafe(50))"
 ```
 
 ---
 
-## 3. Paketlar va migratsiya
+## 4. Paketlar o'rnatish va migratsiya
 
 cPanel → Python App → **Enter to the virtual environment**, keyin:
 
 ```bash
-cd ~/calculator.teratech.uz
 pip install -r requirements.txt
-pip install -r requirements.txt
+python manage.py migrate
 python manage.py collectstatic --noinput
 python manage.py createsuperuser
 ```
 
-(`createsuperuser` — admin panel uchun)
+---
+
+## 5. Ruxsatlar
+
+SQLite uchun loyiha papkasi **yozish** huquqiga ega bo'lishi kerak:
+```bash
+chmod 755 ~/calculator.teratech.uz
+chmod 664 ~/calculator.teratech.uz/db.sqlite3
+```
 
 ---
 
-## 4. Ruxsatlar
-
-`db.sqlite3` va loyiha papkasi **yozish** huquqiga ega bo'lishi kerak (SQLite uchun).
-
-Agar `db.sqlite3` yo'q bo'lsa, `migrate` avtomatik yaratadi.
-
----
-
-## 5. Ilovani qayta ishga tushirish
+## 6. Ilovani qayta ishga tushirish
 
 Python App sahifasida **Restart** tugmasini bosing.
 
@@ -76,23 +91,30 @@ Brauzerda oching: `https://calculator.teratech.uz`
 
 ---
 
-## 6. Tekshirish ro'yxati
+## 7. Tekshirish ro'yxati
 
-- [ ] Bosh sahifa (kalkulyator) ochiladi
-- [ ] Admin: `https://calculator.teratech.uz/admin/`
+- [ ] Bosh sahifa ochiladi va login so'raladi
+- [ ] Login ishlaydi
+- [ ] Dark/light mode ishlaydi
 - [ ] Dollar kursi saqlanadi
-- [ ] Hisob-kitob saqlanadi (Saved Calculations)
-- [ ] HTTPS ishlayapti (CSRF xatosi bo'lmasa, `DJANGO_CSRF_TRUSTED_ORIGINS` to'g'ri)
+- [ ] Hisob-kitob saqlanadi
+- [ ] Admin panel: `https://calculator.teratech.uz/admin/`
+- [ ] HTTPS ishlaydi (CSRF xatosi yo'q)
+- [ ] 404 sahifasi chiroyli ko'rinadi
 
 ---
 
 ## Muammolar
 
 **500 xato**
-- cPanel → Errors yoki `passenger.log` ni tekshiring
-- `DJANGO_DEBUG=True` vaqtincha qo'yib xatoni ko'ring (keyin yana `False` qiling)
+```
+# cPanel → Errors yoki passenger.log ni tekshiring
+# Vaqtincha debug yoqish:
+DJANGO_DEBUG=True
+# Xatoni ko'rgach yana False qiling
+```
 
-**Static (admin CSS) yo'q**
+**Static fayllar (admin CSS) yo'q**
 ```bash
 python manage.py collectstatic --noinput
 ```
@@ -101,4 +123,4 @@ python manage.py collectstatic --noinput
 - `DJANGO_CSRF_TRUSTED_ORIGINS` da `https://` bilan to'liq domen bo'lsin
 
 **Mavjud bazani ko'chirish**
-- Lokal `db.sqlite3` ni serverdagi loyiha papkasiga yuklang (eski ma'lumotlar saqlanadi)
+- Lokal `db.sqlite3` ni serverdagi loyiha papkasiga yuklang

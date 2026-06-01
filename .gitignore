@@ -45,6 +45,11 @@ venv/
 dist/
 *.egg
 
+# Django
+db.sqlite3
+staticfiles/
+media/
+
 # Java
 *.class
 *.jar
