@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="uz" data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>404 — Sahifa topilmadi</title>
+    <script>
+      (function() {
+        var t = localStorage.getItem('theme');
+        if (t === 'dark' || t === 'light') {
+          document.documentElement.dataset.theme = t;
+        }
+      })();
+    </script>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f5f7f8;
+        --card: #ffffff;
+        --card-border: #d9e0e5;
+        --text: #172026;
+        --muted: #60707c;
+        --accent: #0f766e;
+        --accent-dark: #0a5f59;
+        --toggle-btn-bg: #ffffff;
+        --toggle-btn-border: #d9e0e5;
+        --toggle-btn-hover: #f0f4f6;
+      }
+
+      [data-theme="dark"] {
+        color-scheme: dark;
+        --bg: #0f172a;
+        --card: #1e293b;
+        --card-border: #334155;
+        --text: #f1f5f9;
+        --muted: #94a3b8;
+        --accent: #14b8a6;
+        --accent-dark: #2dd4bf;
+        --toggle-btn-bg: #1e293b;
+        --toggle-btn-border: #334155;
+        --toggle-btn-hover: #334155;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        background: var(--bg);
+        color: var(--text);
+        font: 14px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+        padding: 24px;
+        transition: background 0.3s, color 0.3s;
+      }
+
+      .card {
+        width: min(480px, 100%);
+        background: var(--card);
+        border: 1px solid var(--card-border);
+        border-radius: 16px;
+        padding: 40px 32px;
+        box-shadow: 0 18px 60px rgba(16, 24, 40, 0.1);
+        text-align: center;
+        position: relative;
+      }
+
+      .theme-toggle {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        border: 1px solid var(--toggle-btn-border);
+        background: var(--toggle-btn-bg);
+        color: var(--text);
+        cursor: pointer;
+        transition: background 0.2s, border-color 0.2s;
+      }
+
+      .theme-toggle:hover {
+        background: var(--toggle-btn-hover);
+      }
+
+      .theme-toggle .icon-sun,
+      .theme-toggle .icon-moon { display: none; }
+
+      [data-theme="light"] .theme-toggle .icon-moon {
+        display: block;
+        color: #7cb9e8;
+      }
+
+      [data-theme="dark"] .theme-toggle .icon-sun {
+        display: block;
+        color: #fbbf24;
+      }
+
+      .code {
+        font-size: 80px;
+        font-weight: 800;
+        line-height: 1;
+        color: var(--accent);
+        margin: 0 0 12px;
+        letter-spacing: -2px;
+      }
+
+      h1 {
+        margin: 0 0 8px;
+        font-size: 22px;
+        font-weight: 700;
+      }
+
+      p {
+        margin: 0 0 28px;
+        color: var(--muted);
+      }
+
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 11px 22px;
+        border-radius: 10px;
+        border: 0;
+        background: var(--accent);
+        color: #fff;
+        font: inherit;
+        font-weight: 700;
+        font-size: 14px;
+        cursor: pointer;
+        text-decoration: none;
+        transition: opacity 0.2s;
+      }
+
+      .btn:hover { opacity: 0.88; }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <button type="button" class="theme-toggle" id="theme-toggle" title="Mavzuni o'zgartirish" aria-label="Mavzuni o'zgartirish">
+        <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+          <path d="M8 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6m0 1a4 4 0 1 0 0-8 4 4 0 0 0 0 8M8 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 0m0 13a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 13m8-5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2a.5.5 0 0 1 .5.5M3 8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2A.5.5 0 0 1 3 8m10.657-5.657a.5.5 0 0 1 0 .707l-1.414 1.415a.5.5 0 1 1-.707-.708l1.414-1.414a.5.5 0 0 1 .707 0m-9.193 9.193a.5.5 0 0 1 0 .707L3.05 13.657a.5.5 0 0 1-.707-.707l1.414-1.414a.5.5 0 0 1 .707 0m9.193 2.121a.5.5 0 0 1-.707 0l-1.414-1.414a.5.5 0 0 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .707M4.464 4.465a.5.5 0 0 1-.707 0L2.343 3.05a.5.5 0 1 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .708"/>
+        </svg>
+        <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+          <path d="M6 .278a.77.77 0 0 1 .08.858 7.2 7.2 0 0 0-.878 3.46c0 4.021 3.278 7.277 7.318 7.277q.792-.001 1.533-.16a.79.79 0 0 1 .81.316.73.73 0 0 1-.031.893A8.35 8.35 0 0 1 8.344 16C3.734 16 0 12.286 0 7.71 0 4.266 2.114 1.312 5.124.06A.75.75 0 0 1 6 .278"/>
+        </svg>
+      </button>
+
+      <div class="code">404</div>
+      <h1>Sahifa topilmadi!</h1>
+      <p>Siz qidirayotgan sahifa mavjud emas yoki ko'chirilgan.</p>
+      <a href="/" class="btn">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+          <path d="M8.354 1.146a.5.5 0 0 0-.708 0l-6 6A.5.5 0 0 0 1.5 7.5v7a.5.5 0 0 0 .5.5h4.5a.5.5 0 0 0 .5-.5v-4h2v4a.5.5 0 0 0 .5.5H14a.5.5 0 0 0 .5-.5v-7a.5.5 0 0 0-.146-.354z"/>
+        </svg>
+        Bosh sahifaga qaytish
+      </a>
+    </div>
+
+    <script>
+      const btn = document.getElementById('theme-toggle');
+      btn.addEventListener('click', function () {
+        const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+        document.documentElement.dataset.theme = next;
+        localStorage.setItem('theme', next);
+      });
+    </script>
+  </body>
+</html>
