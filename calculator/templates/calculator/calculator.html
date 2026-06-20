@@ -1,1580 +1,909 @@
-<!doctype html>
-<html lang="uz" data-theme="light">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>AIO Calculator</title>
-    <!-- Sahifa yuklanishida theme flash oldini olish -->
-    <script>
-      (function() {
-        var t = localStorage.getItem('theme');
-        if (t === 'dark' || t === 'light') {
-          document.documentElement.dataset.theme = t;
-        }
-      })();
-    </script>
-    <style>
-      :root {
-        color-scheme: light;
-        --bg: #f5f7f8;
-        --panel: #ffffff;
-        --line: #d9e0e5;
-        --text: #172026;
-        --muted: #60707c;
-        --accent: #0f766e;
-        --accent-dark: #0a5f59;
-        --danger: #b42318;
-        --input-bg: #ffffff;
-        --input-border: #bfccd4;
-        --select-bg: #ffffff;
-        --select-disabled-bg: #eef2f4;
-        --select-disabled-color: #7b8993;
-        --toggle-bg: #e3e4e7;
-        --toggle-label-color: #6b7178;
-        --toggle-checked-bg: #ffffff;
-        --toggle-checked-color: #172026;
-        --toggle-border: #c8cdd1;
-        --logout-bg: #ffffff;
-        --logout-hover-bg: #fbfdfe;
-        --logout-hover-border: #bfccd4;
-        --btn-secondary-bg: #e7ecef;
-        --btn-secondary-color: #172026;
-        --btn-secondary-border: #d0d9de;
-      }
+{% extends "base.html" %}
 
-      [data-theme="dark"] {
-        color-scheme: dark;
-        --bg: #0f172a;
-        --panel: #1e293b;
-        --line: #334155;
-        --text: #f1f5f9;
-        --muted: #94a3b8;
-        --accent: #14b8a6;
-        --accent-dark: #2dd4bf;
-        --danger: #f87171;
-        --input-bg: #1e293b;
-        --input-border: #475569;
-        --select-bg: #1e293b;
-        --select-disabled-bg: #0f172a;
-        --select-disabled-color: #64748b;
-        --toggle-bg: #1e293b;
-        --toggle-label-color: #94a3b8;
-        --toggle-checked-bg: #475569;
-        --toggle-checked-color: #f1f5f9;
-        --toggle-border: #334155;
-        --logout-bg: #1e293b;
-        --logout-hover-bg: #334155;
-        --logout-hover-border: #475569;
-        --btn-secondary-bg: #334155;
-        --btn-secondary-color: #e2e8f0;
-        --btn-secondary-border: #475569;
-      }
+{% block title %}AIO Calculator{% endblock %}
 
-      * {
-        box-sizing: border-box;
-      }
+{% block extra_css %}
+/* ── Calculator page styles ── */
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 16px;
+  align-items: start;
+  margin-top: 20px;
+}
 
-      body {
-        margin: 0;
-        background: var(--bg);
-        color: var(--text);
-        font-family: Arial, Helvetica, sans-serif;
-      }
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+  padding: 18px;
+}
 
-      .shell {
-        width: min(1180px, calc(100% - 32px));
-        margin: 24px auto;
-      }
+.field,
+.group {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+}
 
-      .topbar {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 16px;
-        flex-wrap: wrap;
-      }
+.full {
+  grid-column: 1 / -1;
+}
 
-.rate-bar {
-    display: flex;
-    align-items: flex-end;
-    justify-content: flex-start;
-    gap: 10px;
+.group-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.group-grid.ram-grid {
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.group-grid.storage-grid {
+  grid-template-columns: 1fr;
+  gap: 0;
+}
+
+.storage-port-section {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.storage-port-section .field {
+  flex: 1 1 auto;
+  min-width: 180px;
+}
+
+.storage-kind-toggle {
+  display: inline-grid;
+  grid-template-columns: repeat(2, minmax(72px, 1fr));
+  flex: 0 0 184px;
+  gap: 0;
+  align-items: center;
+  min-height: 44px;
+  padding: 6px;
+  border-radius: 999px;
+  background: var(--toggle-bg);
+  border: 1px solid var(--toggle-border);
+  position: relative;
+}
+
+.storage-kind-toggle::before {
+  content: '';
+  position: absolute;
+  top: 6px;
+  bottom: 6px;
+  left: 6px;
+  width: calc(50% - 6px);
+  border-radius: 999px;
+  background: var(--toggle-checked-bg);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.storage-kind-toggle[data-selected="hdd"]::before {
+  transform: translateX(100%);
+}
+
+.storage-kind-toggle input[type="radio"] {
+  display: none;
+}
+
+.storage-kind-toggle label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+  padding: 0 12px;
+  text-align: center;
+  border-radius: 999px;
+  cursor: pointer;
+  margin: 0;
+  color: var(--toggle-label-color);
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  line-height: 1;
+  position: relative;
+  z-index: 1;
+  transition: color 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.storage-kind-toggle input[type="radio"]:checked + label {
+  color: var(--toggle-checked-color);
+}
+
+.storage-kind-toggle label:hover {
+  color: var(--toggle-checked-color);
+}
+
+.group_inputs {
+  min-height: 42px;
+  padding: 0;
+}
+
+.storage-field {
+  display: grid;
+  gap: 7px;
+}
+
+.storage-field > label {
+  line-height: 1.2;
+}
+
+#nvme-storage-slot .field,
+#nvme-storage-slot select {
+  width: 100%;
+}
+
+.summary {
+  position: sticky;
+  top: 16px;
+  padding: 18px;
+}
+
+.summary-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  margin: 0 0 14px;
+}
+
+.summary h2 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.order-number {
+  color: var(--accent-dark);
+  font-size: 15px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.line {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: 14px;
+  border-bottom: 1px solid var(--line);
+  padding: 10px 0;
+  font-size: 14px;
+}
+
+.line span:first-child {
+  color: var(--muted);
+}
+
+.line strong {
+  max-width: 210px;
+  text-align: right;
+  line-height: 1.35;
+}
+
+.total {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 16px;
+  margin-top: 18px;
+}
+
+.total strong {
+  font-size: 14px;
+  color: var(--accent-dark);
+  white-space: nowrap;
+}
+
+.total-uzs {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 16px;
+  margin-top: 8px;
+  color: var(--muted);
+}
+
+.total-uzs strong {
+  font-size: 18px;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.actions #save-quote,
+.actions #reset-form {
+  flex: 1 1 auto;
+}
+
+.actions #copy-image {
+  flex: 0 0 42px;
+  width: 42px;
+  padding: 0;
+}
+
+@media (max-width: 860px) {
+  .layout,
+  .group-grid,
+  .group-grid.ram-grid,
+  .group-grid.storage-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .storage-port-section {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .storage-kind-toggle,
+  .storage-port-section .field {
+    flex: none;
     width: 100%;
+    min-width: 0;
+  }
+
+  .summary {
+    position: static;
+  }
 }
-
-.save_button{
-  width: auto;
-  margin: 0 auto 0 0;
-}
-
-.rate-bar label {
-  display: block;
-  margin-bottom: 4px;
-}
-
-      input[type="number"] {
-        width: 100%;
-        min-height: 42px;
-        border: 1px solid var(--input-border);
-        border-radius: 6px;
-        padding: 9px 10px;
-        background: var(--input-bg);
-        color: var(--text);
-        font: inherit;
-      }
-
-      #usd-rate {
-        width: 150px;
-        max-width: 100%;
-      }
-
-      .rate-status {
-        min-height: 20px;
-        font-size: 13px;
-        font-weight: 700;
-        color: var(--accent-dark);
-      }
-      .chegirma_input{
-        display: flex;
-        flex-direction: column;
-      }
-
-      .rate-status.error {
-        color: var(--danger);
-      }
-
-      .is-hidden {
-        display: none !important;
-      }
-
-      .rate-save-btn {
-        display: none;
-      }
-
-      .rate-save-btn.is-visible {
-        display: inline-block;
-      }
-
-      h1 {
-        margin: 0;
-        font-size: clamp(24px, 4vw, 34px);
-        line-height: 1.1;
-      }
-
-      .admin-link {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 42px;
-        height: 42px;
-        border-radius: 8px;
-        border: 1px solid var(--line);
-        background: var(--logout-bg);
-        color: var(--accent);
-        text-decoration: none;
-        transition: background 0.2s, border-color 0.2s;
-      }
-
-      .admin-link:hover {
-        border-color: var(--logout-hover-border);
-        background: var(--logout-hover-bg);
-      }
-
-      .logout-link {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        padding: 10px 12px;
-        border-radius: 8px;
-        border: 1px solid var(--line);
-        background: var(--logout-bg);
-        color: var(--text);
-        text-decoration: none;
-        font-weight: 700;
-        font-size: 14px;
-        cursor: pointer;
-      }
-
-      .logout-link:hover {
-        border-color: var(--logout-hover-border);
-        background: var(--logout-hover-bg);
-      }
-
-      .top-actions {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-      }
-
-      .theme-toggle {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 42px;
-        height: 42px;
-        border-radius: 8px;
-        border: 1px solid var(--line);
-        background: var(--logout-bg);
-        color: var(--text);
-        cursor: pointer;
-        transition: background 0.2s, border-color 0.2s;
-        flex-shrink: 0;
-      }
-
-      .theme-toggle:hover {
-        border-color: var(--logout-hover-border);
-        background: var(--logout-hover-bg);
-      }
-
-      .theme-toggle .icon-sun,
-      .theme-toggle .icon-moon {
-        display: none;
-      }
-
-      [data-theme="light"] .theme-toggle .icon-moon {
-        display: block;
-        color: #7cb9e8;
-      }
-
-      [data-theme="dark"] .theme-toggle .icon-sun {
-        display: block;
-        color: #fbbf24;
-      }
-
-      .layout {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) 360px;
-        gap: 16px;
-        align-items: start;
-        margin-top: 20px;
-      }
-
-      .panel {
-        background: var(--panel);
-        border: 1px solid var(--line);
-        border-radius: 8px;
-      }
-
-      .form-grid {
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: 14px;
-        padding: 18px;
-      }
-
-      .field,
-      .group {
-        display: grid;
-        gap: 7px;
-        min-width: 0;
-      }
-
-      .full {
-        grid-column: 1 / -1;
-      }
-
-      .group-grid {
-        display: grid;
-        gap: 12px;
-      }
-
-      .group-grid.ram-grid {
-        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      }
-
-      .group-grid.storage-grid {
-        grid-template-columns: 1fr;
-        gap: 0;
-      }
-
-      .storage-port-section {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-      }
-
-      .storage-port-section .field {
-        flex: 1 1 auto;
-        min-width: 180px;
-      }
-
-      .storage-kind-toggle {
-        display: inline-grid;
-        grid-template-columns: repeat(2, minmax(72px, 1fr));
-        flex: 0 0 184px;
-        gap: 0;
-        align-items: center;
-        min-height: 44px;
-        padding: 6px;
-        border-radius: 999px;
-        background: var(--toggle-bg);
-        border: 1px solid var(--toggle-border);
-        position: relative;
-      }
-
-      /* Siljuvchi pill */
-      .storage-kind-toggle::before {
-        content: '';
-        position: absolute;
-        top: 6px;
-        bottom: 6px;
-        left: 6px;
-        width: calc(50% - 6px);
-        border-radius: 999px;
-        background: var(--toggle-checked-bg);
-        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
-        transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-        pointer-events: none;
-        z-index: 0;
-      }
-
-      /* HDD tanlanganda pill o'ngga siljiydi */
-      .storage-kind-toggle[data-selected="hdd"]::before {
-        transform: translateX(100%);
-      }
-
-      .storage-kind-toggle input[type="radio"] {
-        display: none;
-      }
-
-      .storage-kind-toggle label {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        min-height: 32px;
-        padding: 0 12px;
-        text-align: center;
-        border-radius: 999px;
-        cursor: pointer;
-        margin: 0;
-        color: var(--toggle-label-color);
-        font-size: 13px;
-        font-weight: 600;
-        text-transform: uppercase;
-        line-height: 1;
-        position: relative;
-        z-index: 1;
-        transition: color 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-      }
-
-      .storage-kind-toggle input[type="radio"]:checked + label {
-        color: var(--toggle-checked-color);
-      }
-
-      .storage-kind-toggle label:hover {
-        color: var(--toggle-checked-color);
-      }
-
-      label {
-        font-weight: 700;
-        font-size: 14px;
-      }
-
-      select {
-        appearance: none;
-        -webkit-appearance: none;
-        width: 100%;
-        min-height: 42px;
-        border: 1px solid var(--input-border);
-        border-radius: 6px;
-        padding: 9px 42px 9px 10px;
-        background-color: var(--select-bg);
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23172026' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
-        background-repeat: no-repeat;
-        background-position: right 12px center;
-        background-size: 14px 14px;
-        color: var(--text);
-        font: inherit;
-      }
-
-      [data-theme="dark"] select {
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23f1f5f9' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
-      }
-
-      select:disabled {
-        background-color: var(--select-disabled-bg);
-        color: var(--select-disabled-color);
-      }
-
-      .group_inputs {
-        min-height: 42px;
-        padding: 0;
-      }
-
-      .storage-field {
-        display: grid;
-        gap: 7px;
-      }
-
-      .storage-field > label {
-        line-height: 1.2;
-      }
-
-      #nvme-storage-slot .field,
-      #nvme-storage-slot select {
-        width: 100%;
-      }
-
-      .summary {
-        position: sticky;
-        top: 16px;
-        padding: 18px;
-      }
-
-      .summary-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: baseline;
-        gap: 12px;
-        margin: 0 0 14px;
-      }
-
-      .summary h2 {
-        margin: 0;
-        font-size: 20px;
-      }
-
-      .order-number {
-        color: var(--accent-dark);
-        font-size: 15px;
-        font-weight: 800;
-        white-space: nowrap;
-      }
-
-      .line {
-        display: flex;
-        justify-content: space-between;
-        align-items: start;
-        gap: 14px;
-        border-bottom: 1px solid var(--line);
-        padding: 10px 0;
-        font-size: 14px;
-      }
-
-      .line span:first-child {
-        color: var(--muted);
-      }
-
-      .line strong {
-        max-width: 210px;
-        text-align: right;
-        line-height: 1.35;
-      }
-
-      .total {
-        display: flex;
-        justify-content: space-between;
-        align-items: baseline;
-        gap: 16px;
-        margin-top: 18px;
-      }
-
-      .total strong {
-        font-size: 14px;
-        color: var(--accent-dark);
-        white-space: nowrap;
-      }
-
-      .total-uzs {
-        display: flex;
-        justify-content: space-between;
-        align-items: baseline;
-        gap: 16px;
-        margin-top: 8px;
-        color: var(--muted);
-      }
-
-      .total-uzs strong {
-        font-size: 18px;
-        color: var(--text);
-        white-space: nowrap;
-      }
-
-      .actions {
-        display: flex;
-        justify-content: space-between;
-        flex-wrap: wrap;
-        gap: 10px;
-        margin-top: 18px;
-      }
-
-      button {
-        border: 0;
-        border-radius: 6px;
-        min-height: 42px;
-        padding: 10px 14px;
-        cursor: pointer;
-        background: var(--accent);
-        color: white;
-        font-weight: 700;
-        font: inherit;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-      }
-
-      button.secondary {
-        background: var(--btn-secondary-bg);
-        color: var(--btn-secondary-color);
-        border: 1px solid var(--btn-secondary-border);
-      }
-
-      .actions button {
-        flex: 1 1 110px;
-      }
-
-      .status {
-        min-height: 20px;
-        margin-top: 12px;
-        color: var(--accent-dark);
-        font-size: 14px;
-        font-weight: 700;
-      }
-
-      .status.error {
-        color: var(--danger);
-      }
-
-      @media (max-width: 860px) {
-        .layout,
-        .group-grid,
-        .group-grid.ram-grid,
-        .group-grid.storage-grid {
-          grid-template-columns: 1fr;
-        }
-
-        .storage-port-section {
-          align-items: stretch;
-          flex-direction: column;
-        }
-
-        .storage-kind-toggle,
-        .storage-port-section .field {
-          flex: none;
-          width: 100%;
-          min-width: 0;
-        }
-
-        .summary {
-          position: static;
-        }
-      }
-    </style>
-  </head>
-  <body>
-
-    <main class="shell">
-
-      <div class="topbar" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
-        <div style="display:flex;align-items:center;gap:24px;">
-          <nav>
-            <ul style="display:flex;gap:4px;list-style:none;margin:0;padding:0;">
-              <li><a href="{% url 'calculator:home' %}" style="display:inline-block;padding:8px 14px;border-radius:6px;text-decoration:none;font-weight:700;font-size:14px;background:var(--accent);color:#fff;">AIO</a></li>
-              <li><a href="{% url 'monitors:list' %}" style="display:inline-block;padding:8px 14px;border-radius:6px;text-decoration:none;font-weight:700;font-size:14px;color:var(--muted);">Monitors</a></li>
-              <li><a href="{% url 'printers:list' %}" style="display:inline-block;padding:8px 14px;border-radius:6px;text-decoration:none;font-weight:700;font-size:14px;color:var(--muted);">Printers</a></li>
-              <li><a href="{% url 'laptops:list' %}" style="display:inline-block;padding:8px 14px;border-radius:6px;text-decoration:none;font-weight:700;font-size:14px;color:var(--muted);">Laptops</a></li>
-            </ul>
-          </nav>
-        </div>
-        <div class="top-actions">
-          <button type="button" class="theme-toggle" id="theme-toggle" title="Mavzuni o'zgartirish" aria-label="Mavzuni o'zgartirish">
-            <!-- Quyosh (dark modeda ko'rinadi) -->
-            <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
-              <path d="M8 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6m0 1a4 4 0 1 0 0-8 4 4 0 0 0 0 8M8 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 0m0 13a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 13m8-5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2a.5.5 0 0 1 .5.5M3 8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2A.5.5 0 0 1 3 8m10.657-5.657a.5.5 0 0 1 0 .707l-1.414 1.415a.5.5 0 1 1-.707-.708l1.414-1.414a.5.5 0 0 1 .707 0m-9.193 9.193a.5.5 0 0 1 0 .707L3.05 13.657a.5.5 0 0 1-.707-.707l1.414-1.414a.5.5 0 0 1 .707 0m9.193 2.121a.5.5 0 0 1-.707 0l-1.414-1.414a.5.5 0 0 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .707M4.464 4.465a.5.5 0 0 1-.707 0L2.343 3.05a.5.5 0 1 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .708"/>
-            </svg>
-            <!-- Oy (light modeda ko'rinadi) -->
-            <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
-              <path d="M6 .278a.77.77 0 0 1 .08.858 7.2 7.2 0 0 0-.878 3.46c0 4.021 3.278 7.277 7.318 7.277q.792-.001 1.533-.16a.79.79 0 0 1 .81.316.73.73 0 0 1-.031.893A8.35 8.35 0 0 1 8.344 16C3.734 16 0 12.286 0 7.71 0 4.266 2.114 1.312 5.124.06A.75.75 0 0 1 6 .278"/>
-            </svg>
-          </button>
-          <form method="post" action="{% url 'logout' %}" style="margin:0">
-            {% csrf_token %}
-            <button type="submit" class="logout-link">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-door-closed" viewBox="0 0 16 16">
-                <path d="M3 2a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v13h1.5a.5.5 0 0 1 0 1h-13a.5.5 0 0 1 0-1H3zm1 13h8V2H4z"/>
-                <path d="M9 9a1 1 0 1 0 2 0 1 1 0 0 0-2 0"/>
-              </svg>
-              Chiqish
-            </button>
-          </form>
-          {% if request.user.is_staff %}
-          <a class="admin-link" href="/admin/">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-person-fill-gear" viewBox="0 0 16 16">
-              <path d="M11 5a3 3 0 1 1-6 0 3 3 0 0 1 6 0m-9 8c0 1 1 1 1 1h5.256A4.5 4.5 0 0 1 8 12.5a4.5 4.5 0 0 1 1.544-3.393Q8.844 9.002 8 9c-5 0-6 3-6 4m9.886-3.54c.18-.613 1.048-.613 1.229 0l.043.148a.64.64 0 0 0 .921.382l.136-.074c.561-.306 1.175.308.87.869l-.075.136a.64.64 0 0 0 .382.92l.149.045c.612.18.612 1.048 0 1.229l-.15.043a.64.64 0 0 0-.38.921l.074.136c.305.561-.309 1.175-.87.87l-.136-.075a.64.64 0 0 0-.92.382l-.045.149c-.18.612-1.048.612-1.229 0l-.043-.15a.64.64 0 0 0-.921-.38l-.136.074c-.561.305-1.175-.309-.87-.87l.075-.136a.64.64 0 0 0-.382-.92l-.148-.045c-.613-.18-.613-1.048 0-1.229l.148-.043a.64.64 0 0 0 .382-.921l-.074-.136c-.306-.561.308-1.175.869-.87l.136.075a.64.64 0 0 0 .92-.382zM14 12.5a1.5 1.5 0 1 0-3 0 1.5 1.5 0 0 0 3 0"/>
-            </svg>
-          </a>
-          {% endif %}
-        </div>
-      </div>
-
-
-        <div class="rate-bar">
-
-          <div>
-
-            <label for="usd-rate" style="margin-bottom: 2px;">Dollar kursi(so'm):</label>
-
-            <input
-              type="number"
-              id="usd-rate"
-              name="usd_rate"
-              min="1"
-              step="1"
-              data-saved-rate="{% if usd_rate %}{{ usd_rate|floatformat:0 }}{% else %}0{% endif %}"
-              {% if usd_rate %}value="{{ usd_rate|floatformat:0 }}"{% endif %}
-              placeholder="Masalan: 12850"
-            />
-        </div>
-
-         <div class="save_button">
-          <div class="rate-status" id="rate-status"></div>
-          <button type="button" id="save-usd-rate" class="rate-save-btn">
-            Saqlash
-          </button>
-         </div>
-
-          <div class="chegirma_input">
-
-            <label for="discount-percent" style="margin-bottom: 2px;">Chegirma(%):</label>
-
-            <input
-              type="number"
-              id="discount-percent"
-              min="1"
-              max="{{ max_discount_percent }}"
-              step="1"
-              maxlength="1"
-              inputmode="numeric"
-              placeholder="0–{{ max_discount_percent }}"
-            />
-
-          </div>
-
-      </div>
-
-      <div class="layout">
-        <form class="panel form-grid" id="calculator-form">
-          {% csrf_token %}
-
-          <div class="field">
-            <label for="monoblock_base">AIO</label>
-            <select id="monoblock_base" name="monoblock_base"></select>
-          </div>
-
-          <div class="field">
-            <label for="cpu">CPU</label>
-            <select id="cpu" name="cpu"></select>
-          </div>
-
-          <div class="field">
-            <label for="ram">RAM</label>
-            <select id="ram" name="ram"></select>
-          </div>
-
-
-          <div class="storage-field full" id="nvme-storage-group">
-            <label for="nvme-storage-select">SSD NVMe</label>
-            <div class="group-grid storage-grid group_inputs" id="nvme-storage-slot"></div>
-          </div>
-
-          <div class="storage-field full" id="sata-storage-group">
-            <label for="sata-storage-select">SSD/HDD</label>
-            <div class="group-grid storage-grid group_inputs" id="sata-storage-slot"></div>
-          </div>
-
-          <div class="field full">
-            <label for="keyboard_mouse">Keyboard and Mouse</label>
-            <select id="keyboard_mouse" name="keyboard_mouse"></select>
-          </div>
-        </form>
-
-        <aside class="panel summary">
-          <div class="summary-header">
-            <h2>AIO Configuration</h2>
-            <strong class="order-number" id="summary-order-number">{{ next_order_number }}</strong>
-          </div>
-          <div class="line">
-            <span>AIO</span><strong id="summary-base">-</strong>
-          </div>
-          <div class="line">
-            <span>CPU</span><strong id="summary-cpu">-</strong>
-          </div>
-          <div class="line">
-            <span>RAM</span><strong id="summary-ram">-</strong>
-          </div>
-          <div class="line">
-            <span>SSD/HDD</span><strong id="summary-storage">-</strong>
-          </div>
-          <div class="line">
-            <span>Keyboard and Mouse</span
-            ><strong id="summary-keyboard">-</strong>
-          </div>
-          <div class="line is-hidden" id="summary-discount-wrap">
-            <span>Chegirma</span><strong id="summary-discount">-</strong>
-          </div>
-          <div class="total">
-            <strong>Jami:</strong><strong id="summary-total">$0.00</strong>
-          </div>
-
-          <div class="total-uzs" id="summary-total-uzs-wrap" hidden>
-            <strong>Jami:</strong>
-            <strong id="summary-total-uzs">0 so'm</strong>
-          </div>
-
-          <div class="status" id="status"></div>
-          <div class="actions">
-            <button type="button" id="save-quote">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-floppy" viewBox="0 0 16 16" style="vertical-align:-2px;margin-right:6px">
-                <path d="M11 2H9v3h2z"/>
-                <path d="M1.5 0h11.586a1.5 1.5 0 0 1 1.06.44l1.415 1.414A1.5 1.5 0 0 1 16 2.914V14.5a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 14.5v-13A1.5 1.5 0 0 1 1.5 0M1 1.5v13a.5.5 0 0 0 .5.5H2v-4.5A1.5 1.5 0 0 1 3.5 9h9a1.5 1.5 0 0 1 1.5 1.5V15h.5a.5.5 0 0 0 .5-.5V2.914a.5.5 0 0 0-.146-.353l-1.415-1.415A.5.5 0 0 0 13.086 1H13v4.5A1.5 1.5 0 0 1 11.5 7h-7A1.5 1.5 0 0 1 3 5.5V1H1.5a.5.5 0 0 0-.5.5m3 4a.5.5 0 0 0 .5.5h7a.5.5 0 0 0 .5-.5V1H4zM3 15h10v-4.5a.5.5 0 0 0-.5-.5h-9a.5.5 0 0 0-.5.5z"/>
-              </svg>Saqlash
-            </button>
-            <button type="button" class="secondary" id="reset-form">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-eraser" viewBox="0 0 16 16" style="vertical-align:-2px;margin-right:6px">
-                <path d="M8.086 2.207a2 2 0 0 1 2.828 0l3.879 3.879a2 2 0 0 1 0 2.828l-5.5 5.5A2 2 0 0 1 7.879 15H5.12a2 2 0 0 1-1.414-.586l-2.5-2.5a2 2 0 0 1 0-2.828zm2.121.707a1 1 0 0 0-1.414 0L4.16 7.547l5.293 5.293 4.633-4.633a1 1 0 0 0 0-1.414zM8.746 13.547 3.453 8.254 1.914 9.793a1 1 0 0 0 0 1.414l2.5 2.5a1 1 0 0 0 .707.293H7.88a1 1 0 0 0 .707-.293z"/>
-              </svg>Tozalash
-            </button>
-          </div>
-        </aside>
-      </div>
-    </main>
-
-    <script id="bases-data" type="application/json">
-      {{ base_data|safe }}
-    </script>
-    <script id="cpus-data" type="application/json">
-      {{ cpu_data|safe }}
-    </script>
-    <script id="rams-data" type="application/json">
-      {{ ram_data|safe }}
-    </script>
-    <script id="storages-data" type="application/json">
-      {{ storage_data|safe }}
-    </script>
-    <script id="keyboard-mouse-data" type="application/json">
-      {{ keyboard_mouse_data|safe }}
-    </script>
-    <script>
-      const bases = JSON.parse(
-        document.getElementById("bases-data").textContent,
-      );
-      const cpus = JSON.parse(document.getElementById("cpus-data").textContent);
-      const rams = JSON.parse(document.getElementById("rams-data").textContent);
-      const storages = JSON.parse(
-        document.getElementById("storages-data").textContent,
-      );
-      const keyboardMouse = JSON.parse(
-        document.getElementById("keyboard-mouse-data").textContent,
-      );
-      const maps = {
-        base: new Map(bases.map((item) => [String(item.id), item])),
-        cpu: new Map(cpus.map((item) => [String(item.id), item])),
-        ram: new Map(rams.map((item) => [String(item.id), item])),
-        storage: new Map(storages.map((item) => [String(item.id), item])),
-        keyboardMouse: new Map(
-          keyboardMouse.map((item) => [String(item.id), item]),
-        ),
-      };
-      const form = document.getElementById("calculator-form");
-      const fields = {
-        base: document.getElementById("monoblock_base"),
-        cpu: document.getElementById("cpu"),
-        ram: document.getElementById("ram"),
-        keyboardMouse: document.getElementById("keyboard_mouse"),
-      };
-
-      const MARKUP_BASE = {{ markup_percent }};
-      const MAX_DISCOUNT = {{ max_discount_percent }};
-      const MIN_DISCOUNT = 0;
-      const discountInput = document.getElementById("discount-percent");
-
-      const usdRateInput = document.getElementById("usd-rate");
-      const orderNumberEl = document.getElementById("summary-order-number");
-
-      function parseUsdRateValue(raw) {
-        const text = String(raw).trim().replace(",", ".");
-        if (text === "") {
-          return null;
-        }
-        const rate = Number(text);
-        if (!Number.isFinite(rate) || rate <= 0) {
-          return null;
-        }
-        return Math.round(rate);
-      }
-
-      function getSavedUsdRate() {
-        return parseUsdRateValue(usdRateInput.dataset.savedRate) ?? 0;
-      }
-
-      function setSavedUsdRate(rate) {
-        const normalized = Math.round(Number(rate)) || 0;
-        usdRateInput.dataset.savedRate = String(normalized);
-        return normalized;
-      }
-
-      function readUsdRate() {
-        const raw = usdRateInput.value.trim();
-        if (raw === "") {
-          return getSavedUsdRate();
-        }
-        return parseUsdRateValue(raw) ?? getSavedUsdRate();
-      }
-
-      function usdRateIsDirty() {
-        const saved = getSavedUsdRate();
-        const current = parseUsdRateValue(usdRateInput.value);
-        if (current === null) {
-          return saved !== 0;
-        }
-        return current !== saved;
-      }
-
-      function updateUsdRateSaveVisibility() {
-        document
-          .getElementById("save-usd-rate")
-          .classList.toggle("is-visible", usdRateIsDirty());
-      }
-
-      function parseDiscountValue(raw) {
-        const text = String(raw).trim();
-        if (text === "") {
-          return null;
-        }
-        const discount = Number(text);
-        if (
-          !Number.isInteger(discount) ||
-          discount < MIN_DISCOUNT ||
-          discount > MAX_DISCOUNT
-        ) {
-          return null;
-        }
-        return discount;
-      }
-
-      function readDiscountPercent() {
-        const parsed = parseDiscountValue(discountInput.value);
-        return parsed ?? 0;
-      }
-
-      function sanitizeDiscountInput() {
-        const raw = discountInput.value.replace(/\D/g, "");
-        if (raw === "") {
-          discountInput.value = "";
-          return;
-        }
-        const number = Number(raw);
-        if (number > MAX_DISCOUNT) {
-          discountInput.value = String(MAX_DISCOUNT);
-        } else {
-          discountInput.value = String(number);
-        }
-      }
-
-      function updateDiscountSummaryDisplay() {
-        const parsed = parseDiscountValue(discountInput.value);
-        const discountWrap = document.getElementById("summary-discount-wrap");
-        const discountLabel = document.getElementById("summary-discount");
-        const showDiscount = parsed !== null && parsed > 0;
-        discountWrap.classList.toggle("is-hidden", !showDiscount);
-        discountWrap.hidden = !showDiscount;
-        discountLabel.textContent = showDiscount ? `${parsed}%` : "-";
-      }
-
-      function onDiscountEdited() {
-        sanitizeDiscountInput();
-        refreshSummary();
-      }
-
-      function money(value) {
-        return `$${Number(value || 0).toFixed(2)}`;
-      }
-
-      function moneyUzs(value) {
-        const amount = Math.round(Number(value || 0) * readUsdRate());
-        return `${amount.toLocaleString("uz-UZ")} so'm`;
-      }
-
-      function nextOrderNumber(orderNumber) {
-        const match = String(orderNumber || "").match(/^(.*?)(\d+)$/);
-        if (!match) {
-          return orderNumber;
-        }
-        const prefix = match[1];
-        const number = Number(match[2]);
-        return `${prefix}${number + 1}`;
-      }
-
-      function drawWrappedRightText(ctx, text, rightX, y, maxWidth, lineHeight) {
-        const words = String(text || "-").split(/\s+/);
-        const lines = [];
-        let current = "";
-        words.forEach((word) => {
-          const next = current ? `${current} ${word}` : word;
-          if (ctx.measureText(next).width <= maxWidth || !current) {
-            current = next;
-          } else {
-            lines.push(current);
-            current = word;
-          }
-        });
-        if (current) {
-          lines.push(current);
-        }
-        lines.forEach((line, index) => {
-          ctx.fillText(line, rightX, y + index * lineHeight);
-        });
-        return Math.max(lines.length, 1) * lineHeight;
-      }
-
-      function roundedRect(ctx, x, y, width, height, radius) {
-        ctx.beginPath();
-        ctx.moveTo(x + radius, y);
-        ctx.lineTo(x + width - radius, y);
-        ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
-        ctx.lineTo(x + width, y + height - radius);
-        ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
-        ctx.lineTo(x + radius, y + height);
-        ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
-        ctx.lineTo(x, y + radius);
-        ctx.quadraticCurveTo(x, y, x + radius, y);
-        ctx.closePath();
-      }
-
-      function downloadSummaryImage() {
-        const orderNumber = orderNumberEl.textContent.trim() || "AIO#";
-        const rows = [
-          ["AIO", document.getElementById("summary-base").textContent],
-          ["CPU", document.getElementById("summary-cpu").textContent],
-          ["RAM", document.getElementById("summary-ram").textContent],
-          ["SSD / HDD", document.getElementById("summary-storage").textContent],
-          ["Keyboard and Mouse", document.getElementById("summary-keyboard").textContent],
-        ];
-        const discountWrap = document.getElementById("summary-discount-wrap");
-        if (!discountWrap.hidden && !discountWrap.classList.contains("is-hidden")) {
-          rows.push(["Chegirma", document.getElementById("summary-discount").textContent]);
-        }
-
-        const scale = 2;
-        const width = 720;
-        const padding = 36;
-        const rowGap = 18;
-        const lineHeight = 28;
-        const labelX = padding;
-        const valueRightX = width - padding;
-        const valueMaxWidth = 310;
-        const canvas = document.createElement("canvas");
-        const measuringCtx = canvas.getContext("2d");
-        let height = padding + 62;
-        measuringCtx.font = "700 24px Arial, Helvetica, sans-serif";
-        rows.forEach(([, value], index) => {
-          const wrappedHeight = Math.max(
-            lineHeight,
-            drawWrappedRightText(
-              {
-                measureText: measuringCtx.measureText.bind(measuringCtx),
-                fillText: () => {},
-              },
-              value,
-              0,
-              0,
-              index >= rows.length - 2 ? 250 : valueMaxWidth,
-              lineHeight,
-            ),
-          );
-          height += Math.max(lineHeight, wrappedHeight) + rowGap;
-          if (index < rows.length - 1) {
-            height += 20;
-          }
-        });
-        height += 18;
-
-        canvas.width = width * scale;
-        canvas.height = height * scale;
-        canvas.style.width = `${width}px`;
-        canvas.style.height = `${height}px`;
-        const ctx = canvas.getContext("2d");
-        ctx.scale(scale, scale);
-        ctx.fillStyle = "#f5f7f8";
-        ctx.fillRect(0, 0, width, height);
-        roundedRect(ctx, 6, 6, width - 12, height - 12, 12);
-        ctx.fillStyle = "#ffffff";
-        ctx.fill();
-        ctx.strokeStyle = "#d9e0e5";
-        ctx.lineWidth = 2;
-        ctx.stroke();
-
-        ctx.fillStyle = "#000000";
-        ctx.font = "700 30px Arial, Helvetica, sans-serif";
-        ctx.textAlign = "left";
-        ctx.textBaseline = "top";
-        ctx.fillText("AIO Configuration", padding, padding);
-        ctx.fillStyle = "#0a5f59";
-        ctx.font = "700 26px Arial, Helvetica, sans-serif";
-        ctx.textAlign = "right";
-        ctx.fillText(orderNumber, width - padding, padding + 2);
-
-        let y = padding + 62;
-        rows.forEach(([label, value], index) => {
-          ctx.font = "400 24px Arial, Helvetica, sans-serif";
-          ctx.fillStyle = "#60707c";
-          ctx.textAlign = "left";
-          ctx.fillText(label, labelX, y);
-
-          ctx.font = "700 24px Arial, Helvetica, sans-serif";
-          ctx.fillStyle = "#000000";
-          ctx.textAlign = "right";
-          const usedHeight = drawWrappedRightText(
-            ctx,
-            value,
-            valueRightX,
-            y,
-            valueMaxWidth,
-            lineHeight,
-          );
-
-          y += Math.max(lineHeight, usedHeight) + rowGap;
-          if (index < rows.length - 1) {
-            ctx.strokeStyle = "#d9e0e5";
-            ctx.lineWidth = 1;
-            ctx.beginPath();
-            ctx.moveTo(padding, y - 3);
-            ctx.lineTo(width - padding, y - 3);
-            ctx.stroke();
-            y += 20;
-          }
-        });
-        const link = document.createElement("a");
-        link.download = `${orderNumber.toLowerCase()}-configuration.png`;
-        link.href = canvas.toDataURL("image/png");
-        link.click();
-      }
-
-      function effectiveMarkupPercent() {
-        const parsed = parseDiscountValue(discountInput.value);
-        if (parsed === null || parsed === 0) {
-          return MARKUP_BASE;
-        }
-        return MARKUP_BASE - parsed;
-      }
-
-      function finalTotal(subtotal) {
-        const markup = effectiveMarkupPercent();
-        return subtotal * (1 + markup / 100);
-      }
-
-      function selected(select, map) {
-        return map.get(select.value) || null;
-      }
-
-      function fillOptions(
-        select,
-        items,
-        placeholder = "Tanlang",
-        includeEmpty = false,
-        autoSelect = true,
-      ) {
-        const current = select.value;
-        select.innerHTML = "";
-        select.add(new Option(includeEmpty ? "Tanlanmagan" : placeholder, ""));
-        items.forEach((item) => {
-          select.add(
-            new Option(item.name, item.id),
-          );
-        });
-        if (items.some((item) => String(item.id) === current)) {
-          select.value = current;
-        } else if (autoSelect && !includeEmpty && items.length) {
-          select.value = items[0].id;
-        }
-        select.disabled = items.length === 0 && !includeEmpty;
-      }
-
-      function activeBase() {
-        return selected(fields.base, maps.base);
-      }
-
-      function activeCpu() {
-        return selected(fields.cpu, maps.cpu);
-      }
-
-      function createSelect(label, name, items, placeholder) {
-        const field = document.createElement("div");
-        field.className = "field";
-          const select = document.createElement("select");
-          select.name = name;
-          if (label === "nvme") {
-            select.id = "nvme-storage-select";
-          }
-          fillOptions(select, items, placeholder, true);
-        select.addEventListener("change", refreshSummary);
-        if (label && label !== "nvme") {
-          const labelEl = document.createElement("label");
-          labelEl.textContent = label;
-          field.append(labelEl);
-        }
-        field.append(select);
-        return field;
-      }
-
-      function renderRamSelect(base) {
-        const compatibleRam = rams.filter(
-          (item) => item.ram_type === base.ram_type,
-        );
-        fillOptions(fields.ram, compatibleRam, "RAM tanlang");
-      }
-
-      function renderStorageSlots(base) {
-        const nvmeGroup = document.getElementById("nvme-storage-group");
-        const sataGroup = document.getElementById("sata-storage-group");
-        const nvmeContainer = document.getElementById("nvme-storage-slot");
-        const sataContainer = document.getElementById("sata-storage-slot");
-        nvmeContainer.innerHTML = "";
-        sataContainer.innerHTML = "";
-        nvmeGroup.classList.toggle("is-hidden", !base.supports_nvme);
-        sataGroup.classList.toggle("is-hidden", !base.supports_sata);
-
-        if (base.supports_nvme) {
-          const nvmeItems = storages.filter(
-            (item) => item.interface === "nvme",
-          );
-          nvmeContainer.append(
-            createSelect(
-              "nvme",
-              "storage_slots",
-              nvmeItems,
-              "Tanlanmagan",
-            ),
-          );
-        }
-
-        const sataItems = storages.filter((item) => item.interface === "sata");
-
-        if (base.supports_sata) {
-          const sataSection = document.createElement("div");
-          sataSection.className = "storage-port-section";
-
-          const toggle = document.createElement("div");
-          toggle.className = "storage-kind-toggle";
-
-          // SSD Option
-          const ssdRadio = document.createElement("input");
-          ssdRadio.type = "radio";
-          ssdRadio.name = "storage_kind";
-          ssdRadio.value = "ssd";
-          ssdRadio.id = "storage_kind_ssd";
-          ssdRadio.checked = true;
-          ssdRadio.dataset.storageKind = "ssd";
-
-          const ssdLabel = document.createElement("label");
-          ssdLabel.htmlFor = "storage_kind_ssd";
-          ssdLabel.textContent = "SSD";
-
-          // HDD Option
-          const hddRadio = document.createElement("input");
-          hddRadio.type = "radio";
-          hddRadio.name = "storage_kind";
-          hddRadio.value = "hdd";
-          hddRadio.id = "storage_kind_hdd";
-          hddRadio.dataset.storageKind = "hdd";
-
-          const hddLabel = document.createElement("label");
-          hddLabel.htmlFor = "storage_kind_hdd";
-          hddLabel.textContent = "HDD";
-
-          toggle.append(ssdRadio, ssdLabel, hddRadio, hddLabel);
-          toggle.dataset.selected = "ssd";
-
-          const updateToggleSelected = () => {
-            const val = document.querySelector("input[name='storage_kind']:checked")?.value || "ssd";
-            toggle.dataset.selected = val;
-          };
-
-          sataSection.appendChild(toggle);
-
-          const sataField = document.createElement("div");
-          sataField.className = "field";
-          const sataSelect = document.createElement("select");
-          sataSelect.name = "storage_slots";
-          sataSelect.id = "sata-storage-select";
-          sataSelect.dataset.portType = "sata";
-
-          const updateSataOptions = () => {
-            const selectedKind = document.querySelector("input[name='storage_kind']:checked")?.value || "ssd";
-            const filteredItems = sataItems.filter(item => item.kind === selectedKind);
-            fillOptions(sataSelect, filteredItems, "Tanlanmagan", true);
-            refreshSummary();
-          };
-
-          ssdRadio.addEventListener("change", () => { updateToggleSelected(); updateSataOptions(); });
-          hddRadio.addEventListener("change", () => { updateToggleSelected(); updateSataOptions(); });
-          sataSelect.addEventListener("change", refreshSummary);
-
-          const initialSsdItems = sataItems.filter(item => item.kind === "ssd");
-          fillOptions(sataSelect, initialSsdItems, "Tanlanmagan", true);
-
-          sataField.appendChild(sataSelect);
-          sataSection.appendChild(sataField);
-
-          sataContainer.appendChild(sataSection);
-        }
-      }
-
-      // CPU yoki AIO o'zgarganda storage ko'rinishini yangilaydi
-      function refreshStorageVisibility(base) {
-        const nvmeGroup = document.getElementById("nvme-storage-group");
-        const sataGroup = document.getElementById("sata-storage-group");
-        const nvmeContainer = document.getElementById("nvme-storage-slot");
-        const sataContainer = document.getElementById("sata-storage-slot");
-
-        const nvmeAlreadyRendered = nvmeContainer.querySelector("select") !== null;
-        const sataAlreadyRendered = sataContainer.querySelector("select") !== null;
-
-        // Agar hech narsa render qilinmagan bo'lsa — to'liq render qilamiz
-        if (!nvmeAlreadyRendered && !sataAlreadyRendered) {
-          renderStorageSlots(base);
-          return;
-        }
-
-        // NVMe ni boshqarish
-        if (base.supports_nvme) {
-          // NVMe kerak, lekin hali render qilinmagan
-          if (!nvmeAlreadyRendered) {
-            // Faqat NVMe qismini render qilish
-            nvmeContainer.innerHTML = "";
-            const nvmeItems = storages.filter(item => item.interface === "nvme");
-            nvmeContainer.append(
-              createSelect("nvme", "storage_slots", nvmeItems, "Tanlanmagan")
-            );
-          }
-          nvmeGroup.classList.remove("is-hidden");
-        } else {
-          // NVMe kerak emas
-          nvmeGroup.classList.add("is-hidden");
-          nvmeContainer.querySelectorAll("select").forEach(select => {
-            select.value = "";
-          });
-        }
-
-        // SATA ni boshqarish
-        if (base.supports_sata) {
-          // SATA kerak, lekin hali render qilinmagan
-          if (!sataAlreadyRendered) {
-            // Faqat SATA qismini render qilish
-            sataContainer.innerHTML = "";
-            const sataItems = storages.filter(item => item.interface === "sata");
-            
-            const sataSection = document.createElement("div");
-            sataSection.className = "storage-port-section";
-
-            const toggle = document.createElement("div");
-            toggle.className = "storage-kind-toggle";
-
-            const ssdRadio = document.createElement("input");
-            ssdRadio.type = "radio";
-            ssdRadio.name = "storage_kind";
-            ssdRadio.value = "ssd";
-            ssdRadio.id = "storage_kind_ssd";
-            ssdRadio.checked = true;
-
-            const ssdLabel = document.createElement("label");
-            ssdLabel.htmlFor = "storage_kind_ssd";
-            ssdLabel.textContent = "SSD";
-
-            const hddRadio = document.createElement("input");
-            hddRadio.type = "radio";
-            hddRadio.name = "storage_kind";
-            hddRadio.value = "hdd";
-            hddRadio.id = "storage_kind_hdd";
-
-            const hddLabel = document.createElement("label");
-            hddLabel.htmlFor = "storage_kind_hdd";
-            hddLabel.textContent = "HDD";
-
-            toggle.append(ssdRadio, ssdLabel, hddRadio, hddLabel);
-            toggle.dataset.selected = "ssd";
-
-            const updateToggleSelected2 = () => {
-              const val = document.querySelector("input[name='storage_kind']:checked")?.value || "ssd";
-              toggle.dataset.selected = val;
-            };
-
-            sataSection.appendChild(toggle);
-
-            const sataField = document.createElement("div");
-            sataField.className = "field";
-            const sataSelect = document.createElement("select");
-            sataSelect.name = "storage_slots";
-            sataSelect.id = "sata-storage-select";
-
-            const updateSataOptions = () => {
-              const selectedKind = document.querySelector("input[name='storage_kind']:checked")?.value || "ssd";
-              const filteredItems = sataItems.filter(item => item.kind === selectedKind);
-              fillOptions(sataSelect, filteredItems, "Tanlanmagan", true);
-              refreshSummary();
-            };
-
-            ssdRadio.addEventListener("change", () => { updateToggleSelected2(); updateSataOptions(); });
-            hddRadio.addEventListener("change", () => { updateToggleSelected2(); updateSataOptions(); });
-            sataSelect.addEventListener("change", refreshSummary);
-
-            const initialSsdItems = sataItems.filter(item => item.kind === "ssd");
-            fillOptions(sataSelect, initialSsdItems, "Tanlanmagan", true);
-
-            sataField.appendChild(sataSelect);
-            sataSection.appendChild(sataField);
-            sataContainer.appendChild(sataSection);
-          }
-          sataGroup.classList.remove("is-hidden");
-        } else {
-          // SATA kerak emas
-          sataGroup.classList.add("is-hidden");
-          sataContainer.querySelectorAll("select").forEach(select => {
-            select.value = "";
-          });
-        }
-      }
-
-      function refreshForCpu() {
-        const cpu = activeCpu();
-        if (!cpu) {
-          clearSelections();
-          return;
-        }
-        fillOptions(
-          fields.base,
-          bases.filter((item) => cpu.bases.includes(item.id)),
-          "AIO tanlang",
-        );
-        fillOptions(
-          fields.keyboardMouse,
-          keyboardMouse,
-          "Keyboard and Mouse",
-          true,
-        );
-        const base = activeBase();
-        if (base) {
-          renderRamSelect(base);
-          refreshStorageVisibility(base);
-        }
-        refreshSummary();
-      }
-
-      function selectedDynamic(name, map) {
-        return Array.from(form.querySelectorAll(`select[name="${name}"]`))
-          .map((select) => selected(select, map))
-          .filter(Boolean);
-      }
-
-      function refreshSummary() {
-        const base = activeBase();
-        const cpu = selected(fields.cpu, maps.cpu);
-        const ramItem = selected(fields.ram, maps.ram);
-        const storageItems = selectedDynamic("storage_slots", maps.storage);
-        const keyboard = selected(fields.keyboardMouse, maps.keyboardMouse);
-        const totals = {
-          base: base ? base.price : 0,
-          cpu: cpu ? cpu.price : 0,
-          ram: ramItem ? ramItem.price : 0,
-          storage: storageItems.reduce((sum, item) => sum + item.price, 0),
-          keyboard: keyboard ? keyboard.price : 0,
-        };
-        const subtotal = Object.values(totals).reduce(
-          (sum, value) => sum + value,
-          0,
-        );
-        const total = finalTotal(subtotal);
-        document.getElementById("summary-base").textContent = base
-          ? base.name
-          : "-";
-        document.getElementById("summary-cpu").textContent = cpu
-          ? cpu.name
-          : "-";
-        document.getElementById("summary-ram").textContent =
-          ramItem ? ramItem.name : "-";
-        document.getElementById("summary-storage").textContent =
-          storageItems.map((item) => item.name).join(", ") || "-";
-        document.getElementById("summary-keyboard").textContent = keyboard
-          ? keyboard.name
-          : "-";
-        updateDiscountSummaryDisplay();
-        document.getElementById("summary-total").textContent = money(total);
-        const uzsWrap = document.getElementById("summary-total-uzs-wrap");
-        const rate = readUsdRate();
-        if (rate > 0) {
-          uzsWrap.hidden = false;
-          document.getElementById("summary-total-uzs").textContent =
-            moneyUzs(total);
-        } else {
-          uzsWrap.hidden = true;
-        }
-      }
-
-      function clearStatus() {
-        const status = document.getElementById("status");
-        status.textContent = "";
-        status.classList.remove("error");
-      }
-
-      function clearSelections() {
-        fillOptions(fields.base, [], "AIO tanlang", false, false);
-        fillOptions(fields.ram, [], "RAM tanlang", false, false);
-        fillOptions(
-          fields.keyboardMouse,
-          keyboardMouse,
-          "Keyboard and Mouse",
-          true,
-          false,
-        );
-
-        fields.ram.value = "";
-        fields.keyboardMouse.value = "";
-
-        document.getElementById("nvme-storage-slot").innerHTML = "";
-        document.getElementById("sata-storage-slot").innerHTML = "";
-        document.getElementById("nvme-storage-group").classList.add("is-hidden");
-        document.getElementById("sata-storage-group").classList.add("is-hidden");
-        refreshSummary();
-      }
-      fillOptions(fields.cpu, cpus, "CPU tanlang", false, false);
-      clearSelections();
-
-      fields.cpu.addEventListener("change", () => {
-        refreshForCpu();
-        clearStatus();
-      });
-      fields.base.addEventListener("change", () => {
-        const base = activeBase();
-        if (base) {
-          renderRamSelect(base);
-          refreshStorageVisibility(base);
-        }
-        refreshSummary();
-        clearStatus();
-      });
-      fields.ram.addEventListener("change", refreshSummary);
-      fields.keyboardMouse.addEventListener("change", refreshSummary);
-
-      discountInput.addEventListener("input", onDiscountEdited);
-      discountInput.addEventListener("keyup", onDiscountEdited);
-      discountInput.addEventListener("change", onDiscountEdited);
-      discountInput.addEventListener("cut", onDiscountEdited);
-      discountInput.addEventListener("paste", () => {
-        requestAnimationFrame(onDiscountEdited);
-      });
-
-      function onUsdRateEdited() {
-        refreshSummary();
-        updateUsdRateSaveVisibility();
-      }
-
-      usdRateInput.addEventListener("input", onUsdRateEdited);
-      usdRateInput.addEventListener("change", onUsdRateEdited);
-      updateUsdRateSaveVisibility();
-
-      document.getElementById("save-usd-rate").addEventListener("click", async () => {
-        const rateStatus = document.getElementById("rate-status");
-        const rate = parseUsdRateValue(usdRateInput.value);
-        if (rate === null) {
-          rateStatus.textContent = "Dollar kursini kiriting.";
-          rateStatus.classList.add("error");
-          return;
-        }
-        const body = new FormData();
-        body.append("usd_rate", String(rate));
-        body.append(
-          "csrfmiddlewaretoken",
-          document.querySelector("[name=csrfmiddlewaretoken]").value,
-        );
-        const response = await fetch("{% url 'calculator:save_usd_rate' %}", {
-          method: "POST",
-          body,
-          headers: { "X-Requested-With": "XMLHttpRequest" },
-        });
-        const data = await response.json();
-        if (response.ok) {
-          const saved = setSavedUsdRate(data.usd_rate);
-          usdRateInput.value = String(saved);
-          rateStatus.textContent = "Dollar kursi saqlandi.";
-          rateStatus.classList.remove("error");
-          refreshSummary();
-          updateUsdRateSaveVisibility();
-        } else {
-          rateStatus.textContent = data.error || "Saqlashda xatolik yuz berdi.";
-          rateStatus.classList.add("error");
-        }
-      });
-
-      document.getElementById("reset-form").addEventListener("click", () => {
-        discountInput.value = "";
-        fields.cpu.value = "";
-        clearSelections();
-        clearStatus();
-      });
-
-      document
-        .getElementById("save-quote")
-        .addEventListener("click", async () => {
-          const status = document.getElementById("status");
-          const saveButton = document.getElementById("save-quote");
-          const hasRam = fields.ram.value !== "";
-          const hasStorage =
-            selectedDynamic("storage_slots", maps.storage).length > 0;
-          const hasKeyboardMouse = fields.keyboardMouse.value !== "";
-
-          const errors = [];
-          if (!fields.cpu.value) errors.push("CPU tanlanmadi");
-          if (!fields.base.value) errors.push("AIO tanlanmadi");
-          if (!hasRam) errors.push("RAM tanlanmadi");
-          if (!hasKeyboardMouse) errors.push("Keyboard and Mouse tanlanmadi");
-          if (!hasStorage) errors.push("SSD/HDD tanlanmadi");
-
-          if (errors.length > 0) {
-            status.textContent = errors.join(" • ");
-            status.classList.add("error");
-            return;
-          }
-          const body = new FormData(form);
-          body.append("discount_percent", String(readDiscountPercent()));
-          body.append("usd_rate", String(readUsdRate()));
-          saveButton.disabled = true;
-          try {
-            const response = await fetch("{% url 'calculator:save_quote' %}", {
-              method: "POST",
-              body,
-              headers: { "X-Requested-With": "XMLHttpRequest" },
-            });
-            const data = await response.json();
-            if (response.ok) {
-              orderNumberEl.textContent = data.order_number || `AIO#${data.id}`;
-              const savedOrderNumber = orderNumberEl.textContent;
-              status.textContent = `${orderNumberEl.textContent} saqlandi: $${data.total_price}`;
-              status.classList.remove("error");
-              downloadSummaryImage();
-              orderNumberEl.textContent = nextOrderNumber(savedOrderNumber);
-            } else {
-              status.textContent = "Saqlashda xatolik yuz berdi.";
-              status.classList.add("error");
-            }
-          } catch (error) {
-            status.textContent = "Saqlashda xatolik yuz berdi.";
-            status.classList.add("error");
-          } finally {
-            saveButton.disabled = false;
-          }
-        });
-
-    // ── Theme toggle ──────────────────────────────────────────
-    const themeToggleBtn = document.getElementById('theme-toggle');
-
-    function applyTheme(theme) {
-      document.documentElement.dataset.theme = theme;
-      localStorage.setItem('theme', theme);
+{% endblock %}
+
+{% block content %}
+<div class="layout">
+  <form class="panel form-grid" id="calculator-form">
+    {% csrf_token %}
+
+    <div class="field">
+      <label for="monoblock_base">AIO</label>
+      <select id="monoblock_base" name="monoblock_base"></select>
+    </div>
+
+    <div class="field">
+      <label for="cpu">CPU</label>
+      <select id="cpu" name="cpu"></select>
+    </div>
+
+    <div class="field">
+      <label for="ram">RAM</label>
+      <select id="ram" name="ram"></select>
+    </div>
+
+    <div class="storage-field full" id="nvme-storage-group">
+      <label for="nvme-storage-select">SSD NVMe</label>
+      <div class="group-grid storage-grid group_inputs" id="nvme-storage-slot"></div>
+    </div>
+
+    <div class="storage-field full" id="sata-storage-group">
+      <label for="sata-storage-select">SSD/HDD</label>
+      <div class="group-grid storage-grid group_inputs" id="sata-storage-slot"></div>
+    </div>
+
+    <div class="field full">
+      <label for="keyboard_mouse">Keyboard and Mouse</label>
+      <select id="keyboard_mouse" name="keyboard_mouse"></select>
+    </div>
+  </form>
+
+  <aside class="panel summary">
+    <div class="summary-header">
+      <h2>AIO Configuration</h2>
+      <strong class="order-number" id="summary-order-number">{{ next_order_number }}</strong>
+    </div>
+    <div class="line">
+      <span>AIO</span><strong id="summary-base">-</strong>
+    </div>
+    <div class="line">
+      <span>CPU</span><strong id="summary-cpu">-</strong>
+    </div>
+    <div class="line">
+      <span>RAM</span><strong id="summary-ram">-</strong>
+    </div>
+    <div class="line">
+      <span>SSD/HDD</span><strong id="summary-storage">-</strong>
+    </div>
+    <div class="line">
+      <span>Keyboard and Mouse</span><strong id="summary-keyboard">-</strong>
+    </div>
+    <div class="line is-hidden" id="summary-discount-wrap">
+      <span>Chegirma</span><strong id="summary-discount">-</strong>
+    </div>
+    <div class="total">
+      <strong>Jami:</strong><strong id="summary-total">$0.00</strong>
+    </div>
+    <div class="total-uzs" id="summary-total-uzs-wrap" hidden>
+      <strong>Jami:</strong>
+      <strong id="summary-total-uzs">0 so'm</strong>
+    </div>
+    <div class="status" id="status"></div>
+    <div class="actions">
+      <button type="button" id="save-quote">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-floppy" viewBox="0 0 16 16" style="vertical-align:-2px;margin-right:6px">
+          <path d="M11 2H9v3h2z"/>
+          <path d="M1.5 0h11.586a1.5 1.5 0 0 1 1.06.44l1.415 1.414A1.5 1.5 0 0 1 16 2.914V14.5a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 14.5v-13A1.5 1.5 0 0 1 1.5 0M1 1.5v13a.5.5 0 0 0 .5.5H2v-4.5A1.5 1.5 0 0 1 3.5 9h9a1.5 1.5 0 0 1 1.5 1.5V15h.5a.5.5 0 0 0 .5-.5V2.914a.5.5 0 0 0-.146-.353l-1.415-1.415A.5.5 0 0 0 13.086 1H13v4.5A1.5 1.5 0 0 1 11.5 7h-7A1.5 1.5 0 0 1 3 5.5V1H1.5a.5.5 0 0 0-.5.5m3 4a.5.5 0 0 0 .5.5h7a.5.5 0 0 0 .5-.5V1H4zM3 15h10v-4.5a.5.5 0 0 0-.5-.5h-9a.5.5 0 0 0-.5.5z"/>
+        </svg>Saqlash
+      </button>
+      <button type="button" class="secondary" id="reset-form">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-eraser" viewBox="0 0 16 16" style="vertical-align:-2px;margin-right:6px">
+          <path d="M8.086 2.207a2 2 0 0 1 2.828 0l3.879 3.879a2 2 0 0 1 0 2.828l-5.5 5.5A2 2 0 0 1 7.879 15H5.12a2 2 0 0 1-1.414-.586l-2.5-2.5a2 2 0 0 1 0-2.828zm2.121.707a1 1 0 0 0-1.414 0L4.16 7.547l5.293 5.293 4.633-4.633a1 1 0 0 0 0-1.414zM8.746 13.547 3.453 8.254 1.914 9.793a1 1 0 0 0 0 1.414l2.5 2.5a1 1 0 0 0 .707.293H7.88a1 1 0 0 0 .707-.293z"/>
+        </svg>Tozalash
+      </button>
+      <button type="button" class="secondary" id="copy-image" title="Rasmni buferga olish" aria-label="Rasmni buferga olish">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-copy" viewBox="0 0 16 16">
+          <path fill-rule="evenodd" d="M4 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2zm2-1a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1zM2 5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1v-1h1v1a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h1v1z"/>
+        </svg>
+      </button>
+    </div>
+  </aside>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script id="bases-data" type="application/json">{{ base_data|safe }}</script>
+<script id="cpus-data" type="application/json">{{ cpu_data|safe }}</script>
+<script id="rams-data" type="application/json">{{ ram_data|safe }}</script>
+<script id="storages-data" type="application/json">{{ storage_data|safe }}</script>
+<script id="keyboard-mouse-data" type="application/json">{{ keyboard_mouse_data|safe }}</script>
+<script>
+  const bases = JSON.parse(document.getElementById("bases-data").textContent);
+  const cpus = JSON.parse(document.getElementById("cpus-data").textContent);
+  const rams = JSON.parse(document.getElementById("rams-data").textContent);
+  const storages = JSON.parse(document.getElementById("storages-data").textContent);
+  const keyboardMouse = JSON.parse(document.getElementById("keyboard-mouse-data").textContent);
+  const maps = {
+    base: new Map(bases.map((item) => [String(item.id), item])),
+    cpu: new Map(cpus.map((item) => [String(item.id), item])),
+    ram: new Map(rams.map((item) => [String(item.id), item])),
+    storage: new Map(storages.map((item) => [String(item.id), item])),
+    keyboardMouse: new Map(keyboardMouse.map((item) => [String(item.id), item])),
+  };
+  const form = document.getElementById("calculator-form");
+  const fields = {
+    base: document.getElementById("monoblock_base"),
+    cpu: document.getElementById("cpu"),
+    ram: document.getElementById("ram"),
+    keyboardMouse: document.getElementById("keyboard_mouse"),
+  };
+  const orderNumberEl = document.getElementById("summary-order-number");
+
+  function parseDiscountValue(raw) {
+    const text = String(raw).trim();
+    if (text === "") return null;
+    const discount = Number(text);
+    if (!Number.isInteger(discount) || discount < MIN_DISCOUNT || discount > MAX_DISCOUNT) return null;
+    return discount;
+  }
+
+  function readDiscountPercent() {
+    return parseDiscountValue(discountInput.value) ?? 0;
+  }
+
+  function sanitizeDiscountInput() {
+    const raw = discountInput.value.replace(/\D/g, "");
+    if (raw === "") { discountInput.value = ""; return; }
+    const number = Number(raw);
+    if (number > MAX_DISCOUNT) discountInput.value = String(MAX_DISCOUNT);
+    else discountInput.value = String(number);
+  }
+
+  function updateDiscountSummaryDisplay() {
+    const parsed = parseDiscountValue(discountInput.value);
+    const discountWrap = document.getElementById("summary-discount-wrap");
+    const discountLabel = document.getElementById("summary-discount");
+    const showDiscount = parsed !== null && parsed > 0;
+    discountWrap.classList.toggle("is-hidden", !showDiscount);
+    discountWrap.hidden = !showDiscount;
+    discountLabel.textContent = showDiscount ? `${parsed}%` : "-";
+  }
+
+  function onDiscountEdited() {
+    sanitizeDiscountInput();
+    refreshSummary();
+  }
+
+  function money(value) {
+    return `$${Number(value || 0).toFixed(2)}`;
+  }
+
+  function moneyUzs(value) {
+    const amount = Math.round(Number(value || 0) * readUsdRate());
+    return `${amount.toLocaleString("uz-UZ")} so'm`;
+  }
+
+  function nextOrderNumber(orderNumber) {
+    const match = String(orderNumber || "").match(/^(.*?)(\d+)$/);
+    if (!match) return orderNumber;
+    return `${match[1]}${Number(match[2]) + 1}`;
+  }
+
+  function drawWrappedRightText(ctx, text, rightX, y, maxWidth, lineHeight) {
+    const words = String(text || "-").split(/\s+/);
+    const lines = [];
+    let current = "";
+    words.forEach((word) => {
+      const next = current ? `${current} ${word}` : word;
+      if (ctx.measureText(next).width <= maxWidth || !current) {
+        current = next;
+      } else {
+        lines.push(current);
+        current = word;
+      }
+    });
+    if (current) lines.push(current);
+    lines.forEach((line, index) => {
+      ctx.fillText(line, rightX, y + index * lineHeight);
+    });
+    return Math.max(lines.length, 1) * lineHeight;
+  }
+
+  function roundedRect(ctx, x, y, width, height, radius) {
+    ctx.beginPath();
+    ctx.moveTo(x + radius, y);
+    ctx.lineTo(x + width - radius, y);
+    ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+    ctx.lineTo(x + width, y + height - radius);
+    ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+    ctx.lineTo(x + radius, y + height);
+    ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+    ctx.lineTo(x, y + radius);
+    ctx.quadraticCurveTo(x, y, x + radius, y);
+    ctx.closePath();
+  }
+
+  function downloadSummaryImage() {
+    const orderNumber = orderNumberEl.textContent.trim() || "AIO#";
+    const canvas = buildSummaryCanvas();
+    const link = document.createElement("a");
+    link.download = `${orderNumber.toLowerCase()}-configuration.png`;
+    link.href = canvas.toDataURL("image/png");
+    link.click();
+  }
+
+  function effectiveMarkupPercent() {
+    const parsed = parseDiscountValue(discountInput.value);
+    if (parsed === null || parsed === 0) return MARKUP_BASE;
+    return MARKUP_BASE - parsed;
+  }
+
+  function finalTotal(subtotal) {
+    return subtotal * (1 + effectiveMarkupPercent() / 100);
+  }
+
+  function selected(select, map) {
+    return map.get(select.value) || null;
+  }
+
+  function fillOptions(select, items, placeholder = "Tanlang", includeEmpty = false, autoSelect = true) {
+    const current = select.value;
+    select.innerHTML = "";
+    select.add(new Option(includeEmpty ? "Tanlanmagan" : placeholder, ""));
+    items.forEach((item) => { select.add(new Option(item.name, item.id)); });
+    if (items.some((item) => String(item.id) === current)) {
+      select.value = current;
+    } else if (autoSelect && !includeEmpty && items.length) {
+      select.value = items[0].id;
+    }
+    select.disabled = items.length === 0 && !includeEmpty;
+  }
+
+  function activeBase() { return selected(fields.base, maps.base); }
+  function activeCpu() { return selected(fields.cpu, maps.cpu); }
+
+  function createSelect(label, name, items, placeholder) {
+    const field = document.createElement("div");
+    field.className = "field";
+    const select = document.createElement("select");
+    select.name = name;
+    if (label === "nvme") select.id = "nvme-storage-select";
+    fillOptions(select, items, placeholder, true);
+    select.addEventListener("change", refreshSummary);
+    if (label && label !== "nvme") {
+      const labelEl = document.createElement("label");
+      labelEl.textContent = label;
+      field.append(labelEl);
+    }
+    field.append(select);
+    return field;
+  }
+
+  function renderRamSelect(base) {
+    fillOptions(fields.ram, rams.filter((item) => item.ram_type === base.ram_type), "RAM tanlang");
+  }
+
+  function renderStorageSlots(base) {
+    const nvmeGroup = document.getElementById("nvme-storage-group");
+    const sataGroup = document.getElementById("sata-storage-group");
+    const nvmeContainer = document.getElementById("nvme-storage-slot");
+    const sataContainer = document.getElementById("sata-storage-slot");
+    nvmeContainer.innerHTML = "";
+    sataContainer.innerHTML = "";
+    nvmeGroup.classList.toggle("is-hidden", !base.supports_nvme);
+    sataGroup.classList.toggle("is-hidden", !base.supports_sata);
+
+    if (base.supports_nvme) {
+      nvmeContainer.append(createSelect("nvme", "storage_slots", storages.filter((item) => item.interface === "nvme"), "Tanlanmagan"));
     }
 
-    themeToggleBtn.addEventListener('click', function () {
-      const current = document.documentElement.dataset.theme;
-      applyTheme(current === 'dark' ? 'light' : 'dark');
+    const sataItems = storages.filter((item) => item.interface === "sata");
+    if (base.supports_sata) {
+      const sataSection = document.createElement("div");
+      sataSection.className = "storage-port-section";
+      const toggle = document.createElement("div");
+      toggle.className = "storage-kind-toggle";
+
+      const ssdRadio = document.createElement("input");
+      ssdRadio.type = "radio"; ssdRadio.name = "storage_kind"; ssdRadio.value = "ssd"; ssdRadio.id = "storage_kind_ssd"; ssdRadio.checked = true;
+      const ssdLabel = document.createElement("label");
+      ssdLabel.htmlFor = "storage_kind_ssd"; ssdLabel.textContent = "SSD";
+
+      const hddRadio = document.createElement("input");
+      hddRadio.type = "radio"; hddRadio.name = "storage_kind"; hddRadio.value = "hdd"; hddRadio.id = "storage_kind_hdd";
+      const hddLabel = document.createElement("label");
+      hddLabel.htmlFor = "storage_kind_hdd"; hddLabel.textContent = "HDD";
+
+      toggle.append(ssdRadio, ssdLabel, hddRadio, hddLabel);
+      toggle.dataset.selected = "ssd";
+
+      const updateToggleSelected = () => {
+        toggle.dataset.selected = document.querySelector("input[name='storage_kind']:checked")?.value || "ssd";
+      };
+
+      sataSection.appendChild(toggle);
+      const sataField = document.createElement("div");
+      sataField.className = "field";
+      const sataSelect = document.createElement("select");
+      sataSelect.name = "storage_slots"; sataSelect.id = "sata-storage-select"; sataSelect.dataset.portType = "sata";
+
+      const updateSataOptions = () => {
+        const kind = document.querySelector("input[name='storage_kind']:checked")?.value || "ssd";
+        fillOptions(sataSelect, sataItems.filter(item => item.kind === kind), "Tanlanmagan", true);
+        refreshSummary();
+      };
+
+      ssdRadio.addEventListener("change", () => { updateToggleSelected(); updateSataOptions(); });
+      hddRadio.addEventListener("change", () => { updateToggleSelected(); updateSataOptions(); });
+      sataSelect.addEventListener("change", refreshSummary);
+      fillOptions(sataSelect, sataItems.filter(item => item.kind === "ssd"), "Tanlanmagan", true);
+
+      sataField.appendChild(sataSelect);
+      sataSection.appendChild(sataField);
+      sataContainer.appendChild(sataSection);
+    }
+  }
+
+  function refreshStorageVisibility(base) {
+    const nvmeGroup = document.getElementById("nvme-storage-group");
+    const sataGroup = document.getElementById("sata-storage-group");
+    const nvmeContainer = document.getElementById("nvme-storage-slot");
+    const sataContainer = document.getElementById("sata-storage-slot");
+    const nvmeRendered = nvmeContainer.querySelector("select") !== null;
+    const sataRendered = sataContainer.querySelector("select") !== null;
+
+    if (!nvmeRendered && !sataRendered) { renderStorageSlots(base); return; }
+
+    if (base.supports_nvme) {
+      if (!nvmeRendered) {
+        nvmeContainer.innerHTML = "";
+        nvmeContainer.append(createSelect("nvme", "storage_slots", storages.filter(item => item.interface === "nvme"), "Tanlanmagan"));
+      }
+      nvmeGroup.classList.remove("is-hidden");
+    } else {
+      nvmeGroup.classList.add("is-hidden");
+      nvmeContainer.querySelectorAll("select").forEach(s => { s.value = ""; });
+    }
+
+    if (base.supports_sata) {
+      if (!sataRendered) {
+        sataContainer.innerHTML = "";
+        const sataItems = storages.filter(item => item.interface === "sata");
+        const sataSection = document.createElement("div");
+        sataSection.className = "storage-port-section";
+        const toggle = document.createElement("div");
+        toggle.className = "storage-kind-toggle";
+        const ssdRadio = document.createElement("input");
+        ssdRadio.type = "radio"; ssdRadio.name = "storage_kind"; ssdRadio.value = "ssd"; ssdRadio.id = "storage_kind_ssd"; ssdRadio.checked = true;
+        const ssdLabel = document.createElement("label"); ssdLabel.htmlFor = "storage_kind_ssd"; ssdLabel.textContent = "SSD";
+        const hddRadio = document.createElement("input");
+        hddRadio.type = "radio"; hddRadio.name = "storage_kind"; hddRadio.value = "hdd"; hddRadio.id = "storage_kind_hdd";
+        const hddLabel = document.createElement("label"); hddLabel.htmlFor = "storage_kind_hdd"; hddLabel.textContent = "HDD";
+        toggle.append(ssdRadio, ssdLabel, hddRadio, hddLabel);
+        toggle.dataset.selected = "ssd";
+        const updateToggle2 = () => { toggle.dataset.selected = document.querySelector("input[name='storage_kind']:checked")?.value || "ssd"; };
+        sataSection.appendChild(toggle);
+        const sataField = document.createElement("div"); sataField.className = "field";
+        const sataSelect = document.createElement("select"); sataSelect.name = "storage_slots"; sataSelect.id = "sata-storage-select";
+        const updateSata2 = () => {
+          const kind = document.querySelector("input[name='storage_kind']:checked")?.value || "ssd";
+          fillOptions(sataSelect, sataItems.filter(item => item.kind === kind), "Tanlanmagan", true);
+          refreshSummary();
+        };
+        ssdRadio.addEventListener("change", () => { updateToggle2(); updateSata2(); });
+        hddRadio.addEventListener("change", () => { updateToggle2(); updateSata2(); });
+        sataSelect.addEventListener("change", refreshSummary);
+        fillOptions(sataSelect, sataItems.filter(item => item.kind === "ssd"), "Tanlanmagan", true);
+        sataField.appendChild(sataSelect); sataSection.appendChild(sataField); sataContainer.appendChild(sataSection);
+      }
+      sataGroup.classList.remove("is-hidden");
+    } else {
+      sataGroup.classList.add("is-hidden");
+      sataContainer.querySelectorAll("select").forEach(s => { s.value = ""; });
+    }
+  }
+
+  function refreshForCpu() {
+    const cpu = activeCpu();
+    if (!cpu) { clearSelections(); return; }
+    fillOptions(fields.base, bases.filter((item) => cpu.bases.includes(item.id)), "AIO tanlang");
+    fillOptions(fields.keyboardMouse, keyboardMouse, "Keyboard and Mouse", true);
+    const base = activeBase();
+    if (base) { renderRamSelect(base); refreshStorageVisibility(base); }
+    refreshSummary();
+  }
+
+  function selectedDynamic(name, map) {
+    return Array.from(form.querySelectorAll(`select[name="${name}"]`))
+      .map((select) => selected(select, map)).filter(Boolean);
+  }
+
+  function refreshSummary() {
+    const base = activeBase();
+    const cpu = selected(fields.cpu, maps.cpu);
+    const ramItem = selected(fields.ram, maps.ram);
+    const storageItems = selectedDynamic("storage_slots", maps.storage);
+    const keyboard = selected(fields.keyboardMouse, maps.keyboardMouse);
+    const subtotal = (base ? base.price : 0) + (cpu ? cpu.price : 0) + (ramItem ? ramItem.price : 0)
+      + storageItems.reduce((sum, item) => sum + item.price, 0) + (keyboard ? keyboard.price : 0);
+    const total = finalTotal(subtotal);
+    document.getElementById("summary-base").textContent = base ? base.name : "-";
+    document.getElementById("summary-cpu").textContent = cpu ? cpu.name : "-";
+    document.getElementById("summary-ram").textContent = ramItem ? ramItem.name : "-";
+    document.getElementById("summary-storage").textContent = storageItems.map((item) => item.name).join(", ") || "-";
+    document.getElementById("summary-keyboard").textContent = keyboard ? keyboard.name : "-";
+    updateDiscountSummaryDisplay();
+    document.getElementById("summary-total").textContent = money(total);
+    const uzsWrap = document.getElementById("summary-total-uzs-wrap");
+    const rate = readUsdRate();
+    if (rate > 0) {
+      uzsWrap.hidden = false;
+      document.getElementById("summary-total-uzs").textContent = moneyUzs(total);
+    } else {
+      uzsWrap.hidden = true;
+    }
+  }
+
+  function clearStatus() {
+    const status = document.getElementById("status");
+    status.textContent = "";
+    status.classList.remove("error");
+  }
+
+  function clearSelections() {
+    fillOptions(fields.base, [], "AIO tanlang", false, false);
+    fillOptions(fields.ram, [], "RAM tanlang", false, false);
+    fillOptions(fields.keyboardMouse, keyboardMouse, "Keyboard and Mouse", true, false);
+    fields.ram.value = "";
+    fields.keyboardMouse.value = "";
+    document.getElementById("nvme-storage-slot").innerHTML = "";
+    document.getElementById("sata-storage-slot").innerHTML = "";
+    document.getElementById("nvme-storage-group").classList.add("is-hidden");
+    document.getElementById("sata-storage-group").classList.add("is-hidden");
+    refreshSummary();
+  }
+
+  fillOptions(fields.cpu, cpus, "CPU tanlang", false, false);
+  clearSelections();
+
+  fields.cpu.addEventListener("change", () => { refreshForCpu(); clearStatus(); });
+  fields.base.addEventListener("change", () => {
+    const base = activeBase();
+    if (base) { renderRamSelect(base); refreshStorageVisibility(base); }
+    refreshSummary(); clearStatus();
+  });
+  fields.ram.addEventListener("change", refreshSummary);
+  fields.keyboardMouse.addEventListener("change", refreshSummary);
+
+  discountInput.addEventListener("input", onDiscountEdited);
+  discountInput.addEventListener("keyup", onDiscountEdited);
+  discountInput.addEventListener("change", onDiscountEdited);
+  discountInput.addEventListener("cut", onDiscountEdited);
+  discountInput.addEventListener("paste", () => { requestAnimationFrame(onDiscountEdited); });
+
+  usdRateInput.addEventListener("input", () => { refreshSummary(); updateUsdRateSaveVisibility(); });
+  usdRateInput.addEventListener("change", () => { refreshSummary(); updateUsdRateSaveVisibility(); });
+  updateUsdRateSaveVisibility();
+
+  document.getElementById("save-usd-rate").addEventListener("click", async () => {
+    const rateStatus = document.getElementById("rate-status");
+    const rate = parseUsdRateValue(usdRateInput.value);
+    if (rate === null) {
+      rateStatus.textContent = "Dollar kursini kiriting.";
+      rateStatus.classList.add("error");
+      return;
+    }
+    const body = new FormData();
+    body.append("usd_rate", String(rate));
+    body.append("csrfmiddlewaretoken", document.querySelector("[name=csrfmiddlewaretoken]").value);
+    const response = await fetch("{% url 'calculator:save_usd_rate' %}", {
+      method: "POST", body, headers: { "X-Requested-With": "XMLHttpRequest" },
     });
-    </script>
-  </body>
-</html>
+    const data = await response.json();
+    if (response.ok) {
+      const saved = setSavedUsdRate(data.usd_rate);
+      usdRateInput.value = String(saved);
+      rateStatus.textContent = "Dollar kursi saqlandi.";
+      rateStatus.classList.remove("error");
+      refreshSummary();
+      updateUsdRateSaveVisibility();
+    } else {
+      rateStatus.textContent = data.error || "Saqlashda xatolik yuz berdi.";
+      rateStatus.classList.add("error");
+    }
+  });
+
+  function buildSummaryCanvas() {
+    const orderNumber = orderNumberEl.textContent.trim() || "AIO#";
+    const rows = [
+      ["AIO", document.getElementById("summary-base").textContent],
+      ["CPU", document.getElementById("summary-cpu").textContent],
+      ["RAM", document.getElementById("summary-ram").textContent],
+      ["SSD / HDD", document.getElementById("summary-storage").textContent],
+      ["Keyboard and Mouse", document.getElementById("summary-keyboard").textContent],
+    ];
+    const discountWrap = document.getElementById("summary-discount-wrap");
+    if (!discountWrap.hidden && !discountWrap.classList.contains("is-hidden")) {
+      rows.push(["Chegirma", document.getElementById("summary-discount").textContent]);
+    }
+    const scale = 2;
+    const width = 720;
+    const padding = 36;
+    const rowGap = 18;
+    const lineHeight = 28;
+    const labelX = padding;
+    const valueRightX = width - padding;
+    const valueMaxWidth = 310;
+    const canvas = document.createElement("canvas");
+    const measuringCtx = canvas.getContext("2d");
+    let height = padding + 62;
+    measuringCtx.font = "700 24px Arial, Helvetica, sans-serif";
+    rows.forEach(([, value], index) => {
+      const wrappedHeight = Math.max(lineHeight, drawWrappedRightText(
+        { measureText: measuringCtx.measureText.bind(measuringCtx), fillText: () => {} },
+        value, 0, 0, index >= rows.length - 2 ? 250 : valueMaxWidth, lineHeight,
+      ));
+      height += Math.max(lineHeight, wrappedHeight) + rowGap;
+      if (index < rows.length - 1) height += 20;
+    });
+    height += 18;
+    canvas.width = width * scale;
+    canvas.height = height * scale;
+    canvas.style.width = `${width}px`;
+    canvas.style.height = `${height}px`;
+    const ctx = canvas.getContext("2d");
+    ctx.scale(scale, scale);
+    ctx.fillStyle = "#f5f7f8";
+    ctx.fillRect(0, 0, width, height);
+    roundedRect(ctx, 6, 6, width - 12, height - 12, 12);
+    ctx.fillStyle = "#ffffff";
+    ctx.fill();
+    ctx.strokeStyle = "#d9e0e5";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.fillStyle = "#000000";
+    ctx.font = "700 30px Arial, Helvetica, sans-serif";
+    ctx.textAlign = "left";
+    ctx.textBaseline = "top";
+    ctx.fillText("AIO Configuration", padding, padding);
+    ctx.fillStyle = "#0a5f59";
+    ctx.font = "700 26px Arial, Helvetica, sans-serif";
+    ctx.textAlign = "right";
+    ctx.fillText(orderNumber, width - padding, padding + 2);
+    let y = padding + 62;
+    rows.forEach(([label, value], index) => {
+      ctx.font = "400 24px Arial, Helvetica, sans-serif";
+      ctx.fillStyle = "#60707c";
+      ctx.textAlign = "left";
+      ctx.fillText(label, labelX, y);
+      ctx.font = "700 24px Arial, Helvetica, sans-serif";
+      ctx.fillStyle = "#000000";
+      ctx.textAlign = "right";
+      const usedHeight = drawWrappedRightText(ctx, value, valueRightX, y, valueMaxWidth, lineHeight);
+      y += Math.max(lineHeight, usedHeight) + rowGap;
+      if (index < rows.length - 1) {
+        ctx.strokeStyle = "#d9e0e5";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(padding, y - 3);
+        ctx.lineTo(width - padding, y - 3);
+        ctx.stroke();
+        y += 20;
+      }
+    });
+    return canvas;
+  }
+
+  document.getElementById("copy-image").addEventListener("click", async () => {
+    const status = document.getElementById("status");
+    const btn = document.getElementById("copy-image");
+    const canvas = buildSummaryCanvas();
+    try {
+      await new Promise((resolve, reject) => {
+        canvas.toBlob(async (blob) => {
+          if (!blob) { reject(new Error("blob error")); return; }
+          try {
+            await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+            resolve();
+          } catch (e) { reject(e); }
+        }, "image/png");
+      });
+      const origHtml = btn.innerHTML;
+      btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0"/></svg>`;
+      status.textContent = "Rasm buferga olindi.";
+      status.classList.remove("error");
+      setTimeout(() => { btn.innerHTML = origHtml; status.textContent = ""; }, 2000);
+    } catch (e) {
+      status.textContent = "Buferga olishda xatolik (HTTPS kerak bo'lishi mumkin).";
+      status.classList.add("error");
+    }
+  });
+
+  document.getElementById("reset-form").addEventListener("click", () => {
+    discountInput.value = "";
+    fields.cpu.value = "";
+    clearSelections();
+    clearStatus();
+  });
+
+  document.getElementById("save-quote").addEventListener("click", async () => {
+    const status = document.getElementById("status");
+    const saveButton = document.getElementById("save-quote");
+    const hasRam = fields.ram.value !== "";
+    const hasStorage = selectedDynamic("storage_slots", maps.storage).length > 0;
+    const hasKeyboardMouse = fields.keyboardMouse.value !== "";
+    const errors = [];
+    if (!fields.cpu.value) errors.push("CPU tanlanmadi");
+    if (!fields.base.value) errors.push("AIO tanlanmadi");
+    if (!hasRam) errors.push("RAM tanlanmadi");
+    if (!hasKeyboardMouse) errors.push("Keyboard and Mouse tanlanmadi");
+    if (!hasStorage) errors.push("SSD/HDD tanlanmadi");
+    if (errors.length > 0) {
+      status.textContent = errors.join(" • ");
+      status.classList.add("error");
+      return;
+    }
+    const body = new FormData(form);
+    body.append("discount_percent", String(readDiscountPercent()));
+    body.append("usd_rate", String(readUsdRate()));
+    saveButton.disabled = true;
+    try {
+      const response = await fetch("{% url 'calculator:save_quote' %}", {
+        method: "POST", body, headers: { "X-Requested-With": "XMLHttpRequest" },
+      });
+      const data = await response.json();
+      if (response.ok) {
+        orderNumberEl.textContent = data.order_number || `AIO#${data.id}`;
+        const savedOrderNumber = orderNumberEl.textContent;
+        status.textContent = `${orderNumberEl.textContent} saqlandi: $${data.total_price}`;
+        status.classList.remove("error");
+        downloadSummaryImage();
+        orderNumberEl.textContent = nextOrderNumber(savedOrderNumber);
+      } else {
+        status.textContent = "Saqlashda xatolik yuz berdi.";
+        status.classList.add("error");
+      }
+    } catch (error) {
+      status.textContent = "Saqlashda xatolik yuz berdi.";
+      status.classList.add("error");
+    } finally {
+      saveButton.disabled = false;
+    }
+  });
+</script>
+{% endblock %}
