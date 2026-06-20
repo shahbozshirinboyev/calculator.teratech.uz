@@ -25,6 +25,11 @@
   font-size: 16px;
 }
 
+.search-box input::placeholder {
+  color: var(--muted);
+  opacity: 1;
+}
+
 .search-box input:focus {
   outline: 2px solid var(--accent);
   outline-offset: -1px;
@@ -56,6 +61,8 @@
   cursor: pointer;
   transition: border-color 0.15s, box-shadow 0.15s;
   gap: 8px;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .product-card:hover {
@@ -73,6 +80,8 @@
   line-height: 1.4;
   flex: 1 1 auto;
   min-width: 0;
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .product-card .product-price {
@@ -80,7 +89,7 @@
   font-size: 15px;
   color: var(--accent-dark);
   white-space: nowrap;
-  width: 80px;
+  width: 72px;
   text-align: right;
   flex-shrink: 0;
 }
