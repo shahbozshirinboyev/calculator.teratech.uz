@@ -35,6 +35,9 @@ if not DEBUG:
 INSTALLED_APPS = [
     "products",
     "calculator",
+    "monitors",
+    "printers",
+    "laptops",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",

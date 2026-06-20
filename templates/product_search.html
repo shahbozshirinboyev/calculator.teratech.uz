@@ -1,0 +1,402 @@
+{% extends "base.html" %}
+
+{% block title %}{{ page_title }} — Calculator{% endblock %}
+
+{% block extra_css %}
+/* ── Search page styles ── */
+.search-layout {
+  margin-top: 20px;
+}
+
+.search-box {
+  position: relative;
+  margin-bottom: 16px;
+}
+
+.search-box input {
+  width: 100%;
+  min-height: 48px;
+  border: 1px solid var(--input-border);
+  border-radius: 8px;
+  padding: 12px 16px 12px 44px;
+  background: var(--input-bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 16px;
+}
+
+.search-box input:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: -1px;
+}
+
+.search-box .search-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted);
+  pointer-events: none;
+}
+
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 12px;
+}
+
+.product-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 18px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  gap: 8px;
+}
+
+.product-card:hover {
+  border-color: var(--accent);
+}
+
+.product-card.selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+.product-card .product-name {
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.product-card .product-price {
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--accent-dark);
+  white-space: nowrap;
+  margin-left: 12px;
+  flex-shrink: 0;
+}
+
+.product-card .copy-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  flex-shrink: 0;
+  margin-left: 8px;
+  min-height: unset;
+  padding: 0;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+
+.product-card .copy-btn:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--toggle-bg);
+}
+
+.product-card .copy-btn.copied {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.no-results {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--muted);
+  font-size: 15px;
+}
+
+/* ── Summary sidebar ── */
+.search-with-summary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 16px;
+  align-items: start;
+}
+
+.product-summary {
+  position: sticky;
+  top: 16px;
+  padding: 18px;
+}
+
+.product-summary h3 {
+  margin: 0 0 14px;
+  font-size: 18px;
+}
+
+.product-summary .line {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: 14px;
+  border-bottom: 1px solid var(--line);
+  padding: 10px 0;
+  font-size: 14px;
+}
+
+.product-summary .line span:first-child {
+  color: var(--muted);
+}
+
+.product-summary .total {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 16px;
+  margin-top: 14px;
+}
+
+.product-summary .total strong {
+  font-size: 14px;
+  color: var(--accent-dark);
+  white-space: nowrap;
+}
+
+.product-summary .total-uzs {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 16px;
+  margin-top: 8px;
+  color: var(--muted);
+}
+
+.product-summary .total-uzs strong {
+  font-size: 18px;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.product-summary .discount-line {
+  display: none;
+}
+
+.product-summary .discount-line.visible {
+  display: flex;
+}
+
+@media (max-width: 860px) {
+  .search-with-summary {
+    grid-template-columns: 1fr;
+  }
+  .product-summary {
+    position: static;
+  }
+}
+{% endblock %}
+
+{% block content %}
+<div class="search-layout">
+  <div class="search-with-summary">
+    <div>
+      <div class="search-box">
+        <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+          <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/>
+        </svg>
+        <input type="text" id="product-search" placeholder="{{ search_placeholder }}" autocomplete="off" />
+      </div>
+      <div class="product-grid" id="product-grid"></div>
+      <div class="no-results is-hidden" id="no-results">Hech narsa topilmadi</div>
+    </div>
+
+    <aside class="panel product-summary" id="product-summary">
+      <h3>{{ page_title }}</h3>
+      <div class="line">
+        <span>Tanlangan:</span>
+        <strong id="ps-selected-name">—</strong>
+      </div>
+      <div class="line discount-line" id="ps-discount-wrap">
+        <span>Chegirma:</span>
+        <strong id="ps-discount">0%</strong>
+      </div>
+      <div class="total">
+        <strong>Jami:</strong>
+        <strong id="ps-total">$0.00</strong>
+      </div>
+      <div class="total-uzs" id="ps-total-uzs-wrap" hidden>
+        <strong>Jami:</strong>
+        <strong id="ps-total-uzs">0 so'm</strong>
+      </div>
+      <div class="status" id="ps-status"></div>
+    </aside>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script id="product-data" type="application/json">{{ product_data|safe }}</script>
+<script>
+(function() {
+  const products = JSON.parse(document.getElementById("product-data").textContent);
+  const searchInput = document.getElementById("product-search");
+  const grid = document.getElementById("product-grid");
+  const noResults = document.getElementById("no-results");
+  let selectedProduct = null;
+
+  // Copy icon SVG
+  const copyIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+    <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1z"/>
+    <path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0z"/>
+  </svg>`;
+  const checkIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+    <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0"/>
+  </svg>`;
+
+  function calcPrice(basePrice) {
+    return finalTotal(basePrice);
+  }
+
+  function renderProducts(items) {
+    grid.innerHTML = "";
+    if (items.length === 0) {
+      noResults.classList.remove("is-hidden");
+      return;
+    }
+    noResults.classList.add("is-hidden");
+    items.forEach(item => {
+      const displayPrice = calcPrice(item.price);
+      const card = document.createElement("div");
+      card.className = "product-card" + (selectedProduct && selectedProduct.id === item.id ? " selected" : "");
+      card.dataset.id = item.id;
+
+      const nameSpan = document.createElement("span");
+      nameSpan.className = "product-name";
+      nameSpan.textContent = item.name;
+
+      const priceSpan = document.createElement("span");
+      priceSpan.className = "product-price";
+      priceSpan.dataset.basePrice = item.price;
+      priceSpan.textContent = `$${displayPrice.toFixed(2)}`;
+
+      const copyBtn = document.createElement("button");
+      copyBtn.className = "copy-btn";
+      copyBtn.type = "button";
+      copyBtn.title = "Nusxa olish";
+      copyBtn.setAttribute("aria-label", "Nusxa olish");
+      copyBtn.innerHTML = copyIconSvg;
+      copyBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const currentPrice = calcPrice(item.price);
+        const text = `${item.name}\n$${currentPrice.toFixed(2)}`;
+        navigator.clipboard.writeText(text).then(() => {
+          copyBtn.innerHTML = checkIconSvg;
+          copyBtn.classList.add("copied");
+          setTimeout(() => {
+            copyBtn.innerHTML = copyIconSvg;
+            copyBtn.classList.remove("copied");
+          }, 1500);
+        }).catch(() => {
+          // Fallback for older browsers
+          const ta = document.createElement("textarea");
+          ta.value = text;
+          ta.style.position = "fixed";
+          ta.style.opacity = "0";
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand("copy");
+          document.body.removeChild(ta);
+          copyBtn.innerHTML = checkIconSvg;
+          copyBtn.classList.add("copied");
+          setTimeout(() => {
+            copyBtn.innerHTML = copyIconSvg;
+            copyBtn.classList.remove("copied");
+          }, 1500);
+        });
+      });
+
+      card.appendChild(nameSpan);
+      card.appendChild(priceSpan);
+      card.appendChild(copyBtn);
+      card.addEventListener("click", () => selectProduct(item));
+      grid.appendChild(card);
+    });
+  }
+
+  function updateCardPrices() {
+    grid.querySelectorAll(".product-card").forEach(card => {
+      const priceSpan = card.querySelector(".product-price");
+      if (!priceSpan) return;
+      const base = parseFloat(priceSpan.dataset.basePrice);
+      if (!isNaN(base)) {
+        priceSpan.textContent = `$${calcPrice(base).toFixed(2)}`;
+      }
+    });
+  }
+
+  function selectProduct(item) {
+    selectedProduct = item;
+    document.querySelectorAll(".product-card").forEach(c => c.classList.remove("selected"));
+    const card = grid.querySelector(`[data-id="${item.id}"]`);
+    if (card) card.classList.add("selected");
+    refreshProductSummary();
+  }
+
+  window.refreshProductSummary = function() {
+    const nameEl = document.getElementById("ps-selected-name");
+    const totalEl = document.getElementById("ps-total");
+    const totalUzsEl = document.getElementById("ps-total-uzs");
+    const totalUzsWrap = document.getElementById("ps-total-uzs-wrap");
+    const discountWrap = document.getElementById("ps-discount-wrap");
+    const discountEl = document.getElementById("ps-discount");
+
+    // Always update card prices when discount/rate changes
+    updateCardPrices();
+
+    if (!selectedProduct) {
+      nameEl.textContent = "—";
+      totalEl.textContent = "$0.00";
+      totalUzsWrap.hidden = true;
+      discountWrap.classList.remove("visible");
+      return;
+    }
+
+    nameEl.textContent = selectedProduct.name;
+    const total = finalTotal(selectedProduct.price);
+    totalEl.textContent = money(total);
+
+    const discount = readDiscountPercent();
+    if (discount > 0) {
+      discountWrap.classList.add("visible");
+      discountEl.textContent = discount + "%";
+    } else {
+      discountWrap.classList.remove("visible");
+    }
+
+    const rate = readUsdRate();
+    if (rate > 0) {
+      totalUzsWrap.hidden = false;
+      const uzs = Math.round(total * rate);
+      totalUzsEl.textContent = uzs.toLocaleString("uz-UZ") + " so'm";
+    } else {
+      totalUzsWrap.hidden = true;
+    }
+  };
+
+  function filterProducts() {
+    const q = searchInput.value.trim().toLowerCase();
+    if (!q) {
+      renderProducts(products);
+      return;
+    }
+    const filtered = products.filter(p => p.name.toLowerCase().includes(q));
+    renderProducts(filtered);
+  }
+
+  searchInput.addEventListener("input", filterProducts);
+  renderProducts(products);
+})();
+</script>
+{% endblock %}

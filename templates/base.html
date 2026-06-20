@@ -1,0 +1,577 @@
+<!doctype html>
+<html lang="uz" data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{% block title %}Calculator{% endblock %}</title>
+    <script>
+      (function() {
+        var t = localStorage.getItem('theme');
+        if (t === 'dark' || t === 'light') {
+          document.documentElement.dataset.theme = t;
+        }
+      })();
+    </script>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f5f7f8;
+        --panel: #ffffff;
+        --line: #d9e0e5;
+        --text: #172026;
+        --muted: #60707c;
+        --accent: #0f766e;
+        --accent-dark: #0a5f59;
+        --danger: #b42318;
+        --input-bg: #ffffff;
+        --input-border: #bfccd4;
+        --select-bg: #ffffff;
+        --select-disabled-bg: #eef2f4;
+        --select-disabled-color: #7b8993;
+        --toggle-bg: #e3e4e7;
+        --toggle-label-color: #6b7178;
+        --toggle-checked-bg: #ffffff;
+        --toggle-checked-color: #172026;
+        --toggle-border: #c8cdd1;
+        --logout-bg: #ffffff;
+        --logout-hover-bg: #fbfdfe;
+        --logout-hover-border: #bfccd4;
+        --btn-secondary-bg: #e7ecef;
+        --btn-secondary-color: #172026;
+        --btn-secondary-border: #d0d9de;
+        --nav-active: #0f766e;
+        --nav-inactive: #60707c;
+      }
+
+      [data-theme="dark"] {
+        color-scheme: dark;
+        --bg: #0f172a;
+        --panel: #1e293b;
+        --line: #334155;
+        --text: #f1f5f9;
+        --muted: #94a3b8;
+        --accent: #14b8a6;
+        --accent-dark: #2dd4bf;
+        --danger: #f87171;
+        --input-bg: #1e293b;
+        --input-border: #475569;
+        --select-bg: #1e293b;
+        --select-disabled-bg: #0f172a;
+        --select-disabled-color: #64748b;
+        --toggle-bg: #1e293b;
+        --toggle-label-color: #94a3b8;
+        --toggle-checked-bg: #475569;
+        --toggle-checked-color: #f1f5f9;
+        --toggle-border: #334155;
+        --logout-bg: #1e293b;
+        --logout-hover-bg: #334155;
+        --logout-hover-border: #475569;
+        --btn-secondary-bg: #334155;
+        --btn-secondary-color: #e2e8f0;
+        --btn-secondary-border: #475569;
+        --nav-active: #14b8a6;
+        --nav-inactive: #94a3b8;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: Arial, Helvetica, sans-serif;
+      }
+
+      .shell {
+        width: min(1180px, calc(100% - 32px));
+        margin: 24px auto;
+      }
+
+      /* ── Topbar ── */
+      .topbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+
+      .topbar-left {
+        display: flex;
+        align-items: center;
+        gap: 24px;
+      }
+
+      .topbar-left h1 {
+        margin: 0;
+        font-size: clamp(20px, 3vw, 28px);
+        line-height: 1.1;
+        white-space: nowrap;
+      }
+
+      /* ── Navigation ── */
+      .nav-menu {
+        display: flex;
+        gap: 4px;
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+
+      .nav-menu a {
+        display: inline-block;
+        padding: 8px 14px;
+        border-radius: 6px;
+        text-decoration: none;
+        font-weight: 700;
+        font-size: 14px;
+        color: var(--nav-inactive);
+        transition: background 0.15s, color 0.15s;
+      }
+
+      .nav-menu a:hover {
+        background: var(--toggle-bg);
+        color: var(--text);
+      }
+
+      .nav-menu a.active {
+        background: var(--accent);
+        color: #ffffff;
+      }
+
+      [data-theme="dark"] .nav-menu a.active {
+        background: var(--accent);
+        color: #0f172a;
+      }
+
+      .top-actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .theme-toggle {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 42px;
+        height: 42px;
+        border-radius: 8px;
+        border: 1px solid var(--line);
+        background: var(--logout-bg);
+        color: var(--text);
+        cursor: pointer;
+        transition: background 0.2s, border-color 0.2s;
+        flex-shrink: 0;
+      }
+
+      .theme-toggle:hover {
+        border-color: var(--logout-hover-border);
+        background: var(--logout-hover-bg);
+      }
+
+      .theme-toggle .icon-sun,
+      .theme-toggle .icon-moon { display: none; }
+
+      [data-theme="light"] .theme-toggle .icon-moon { display: block; color: #7cb9e8; }
+      [data-theme="dark"] .theme-toggle .icon-sun { display: block; color: #fbbf24; }
+
+      .admin-link {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 42px;
+        height: 42px;
+        border-radius: 8px;
+        border: 1px solid var(--line);
+        background: var(--logout-bg);
+        color: var(--accent);
+        text-decoration: none;
+        transition: background 0.2s, border-color 0.2s;
+      }
+
+      .admin-link:hover {
+        border-color: var(--logout-hover-border);
+        background: var(--logout-hover-bg);
+      }
+
+      .logout-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 12px;
+        border-radius: 8px;
+        border: 1px solid var(--line);
+        background: var(--logout-bg);
+        color: var(--text);
+        text-decoration: none;
+        font-weight: 700;
+        font-size: 14px;
+        cursor: pointer;
+      }
+
+      .logout-link:hover {
+        border-color: var(--logout-hover-border);
+        background: var(--logout-hover-bg);
+      }
+
+      /* ── Rate bar ── */
+      .rate-bar {
+        display: flex;
+        align-items: flex-end;
+        justify-content: flex-start;
+        gap: 10px;
+        width: 100%;
+      }
+
+      .save_button {
+        width: auto;
+        margin: 0 auto 0 0;
+      }
+
+      .rate-bar label {
+        display: block;
+        margin-bottom: 4px;
+      }
+
+      input[type="number"] {
+        width: 100%;
+        min-height: 42px;
+        border: 1px solid var(--input-border);
+        border-radius: 6px;
+        padding: 9px 10px;
+        background: var(--input-bg);
+        color: var(--text);
+        font: inherit;
+      }
+
+      #usd-rate {
+        width: 150px;
+        max-width: 100%;
+      }
+
+      .rate-status {
+        min-height: 20px;
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--accent-dark);
+      }
+
+      .chegirma_input {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .rate-status.error { color: var(--danger); }
+      .is-hidden { display: none !important; }
+      .rate-save-btn { display: none; }
+      .rate-save-btn.is-visible { display: inline-block; }
+
+      /* ── Common elements ── */
+      label { font-weight: 700; font-size: 14px; }
+
+      select {
+        appearance: none;
+        -webkit-appearance: none;
+        width: 100%;
+        min-height: 42px;
+        border: 1px solid var(--input-border);
+        border-radius: 6px;
+        padding: 9px 42px 9px 10px;
+        background-color: var(--select-bg);
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23172026' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 12px center;
+        background-size: 14px 14px;
+        color: var(--text);
+        font: inherit;
+      }
+
+      [data-theme="dark"] select {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23f1f5f9' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+      }
+
+      select:disabled {
+        background-color: var(--select-disabled-bg);
+        color: var(--select-disabled-color);
+      }
+
+      .panel {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+      }
+
+      button {
+        border: 0;
+        border-radius: 6px;
+        min-height: 42px;
+        padding: 10px 14px;
+        cursor: pointer;
+        background: var(--accent);
+        color: white;
+        font-weight: 700;
+        font: inherit;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      button.secondary {
+        background: var(--btn-secondary-bg);
+        color: var(--btn-secondary-color);
+        border: 1px solid var(--btn-secondary-border);
+      }
+
+      .status {
+        min-height: 20px;
+        margin-top: 12px;
+        color: var(--accent-dark);
+        font-size: 14px;
+        font-weight: 700;
+      }
+
+      .status.error { color: var(--danger); }
+
+      @media (max-width: 860px) {
+        .topbar { flex-direction: column; align-items: flex-start; }
+        .nav-menu { flex-wrap: wrap; }
+      }
+
+      {% block extra_css %}{% endblock %}
+    </style>
+  </head>
+  <body>
+    <main class="shell">
+      <!-- Topbar -->
+      <div class="topbar">
+        <div class="topbar-left">
+          <nav>
+            <ul class="nav-menu">
+              <li><a href="{% url 'calculator:home' %}" class="{% if active_nav == 'aio' %}active{% endif %}">AIO</a></li>
+              <li><a href="{% url 'monitors:list' %}" class="{% if active_nav == 'monitors' %}active{% endif %}">Monitors</a></li>
+              <li><a href="{% url 'printers:list' %}" class="{% if active_nav == 'printers' %}active{% endif %}">Printers</a></li>
+              <li><a href="{% url 'laptops:list' %}" class="{% if active_nav == 'laptops' %}active{% endif %}">Laptops</a></li>
+            </ul>
+          </nav>
+        </div>
+        <div class="top-actions">
+          <button type="button" class="theme-toggle" id="theme-toggle" title="Mavzuni o'zgartirish" aria-label="Mavzuni o'zgartirish">
+            <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M8 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6m0 1a4 4 0 1 0 0-8 4 4 0 0 0 0 8M8 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 0m0 13a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 13m8-5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2a.5.5 0 0 1 .5.5M3 8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2A.5.5 0 0 1 3 8m10.657-5.657a.5.5 0 0 1 0 .707l-1.414 1.415a.5.5 0 1 1-.707-.708l1.414-1.414a.5.5 0 0 1 .707 0m-9.193 9.193a.5.5 0 0 1 0 .707L3.05 13.657a.5.5 0 0 1-.707-.707l1.414-1.414a.5.5 0 0 1 .707 0m9.193 2.121a.5.5 0 0 1-.707 0l-1.414-1.414a.5.5 0 0 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .707M4.464 4.465a.5.5 0 0 1-.707 0L2.343 3.05a.5.5 0 1 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .708"/>
+            </svg>
+            <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M6 .278a.77.77 0 0 1 .08.858 7.2 7.2 0 0 0-.878 3.46c0 4.021 3.278 7.277 7.318 7.277q.792-.001 1.533-.16a.79.79 0 0 1 .81.316.73.73 0 0 1-.031.893A8.35 8.35 0 0 1 8.344 16C3.734 16 0 12.286 0 7.71 0 4.266 2.114 1.312 5.124.06A.75.75 0 0 1 6 .278"/>
+            </svg>
+          </button>
+          <form method="post" action="{% url 'logout' %}" style="margin:0">
+            {% csrf_token %}
+            <button type="submit" class="logout-link">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M3 2a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v13h1.5a.5.5 0 0 1 0 1h-13a.5.5 0 0 1 0-1H3zm1 13h8V2H4z"/>
+                <path d="M9 9a1 1 0 1 0 2 0 1 1 0 0 0-2 0"/>
+              </svg>
+              Chiqish
+            </button>
+          </form>
+          {% if request.user.is_staff %}
+          <a class="admin-link" href="/admin/">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M11 5a3 3 0 1 1-6 0 3 3 0 0 1 6 0m-9 8c0 1 1 1 1 1h5.256A4.5 4.5 0 0 1 8 12.5a4.5 4.5 0 0 1 1.544-3.393Q8.844 9.002 8 9c-5 0-6 3-6 4m9.886-3.54c.18-.613 1.048-.613 1.229 0l.043.148a.64.64 0 0 0 .921.382l.136-.074c.561-.306 1.175.308.87.869l-.075.136a.64.64 0 0 0 .382.92l.149.045c.612.18.612 1.048 0 1.229l-.15.043a.64.64 0 0 0-.38.921l.074.136c.305.561-.309 1.175-.87.87l-.136-.075a.64.64 0 0 0-.92.382l-.045.149c-.18.612-1.048.612-1.229 0l-.043-.15a.64.64 0 0 0-.921-.38l-.136.074c-.561.305-1.175-.309-.87-.87l.075-.136a.64.64 0 0 0-.382-.92l-.148-.045c-.613-.18-.613-1.048 0-1.229l.148-.043a.64.64 0 0 0 .382-.921l-.074-.136c-.306-.561.308-1.175.869-.87l.136.075a.64.64 0 0 0 .92-.382zM14 12.5a1.5 1.5 0 1 0-3 0 1.5 1.5 0 0 0 3 0"/>
+            </svg>
+          </a>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Rate bar — umumiy barcha sahifalar uchun -->
+      <div class="rate-bar">
+        <div>
+          <label for="usd-rate" style="margin-bottom: 2px;">Dollar kursi(so'm):</label>
+          <input
+            type="number"
+            id="usd-rate"
+            name="usd_rate"
+            min="1"
+            step="1"
+            data-saved-rate="{% if usd_rate %}{{ usd_rate|floatformat:0 }}{% else %}0{% endif %}"
+            {% if usd_rate %}value="{{ usd_rate|floatformat:0 }}"{% endif %}
+            placeholder="Masalan: 12850"
+          />
+        </div>
+        <div class="save_button">
+          <div class="rate-status" id="rate-status"></div>
+          <button type="button" id="save-usd-rate" class="rate-save-btn">Saqlash</button>
+        </div>
+        <div class="chegirma_input">
+          <label for="discount-percent" style="margin-bottom: 2px;">Chegirma(%):</label>
+          <input
+            type="number"
+            id="discount-percent"
+            min="0"
+            max="{{ max_discount_percent }}"
+            step="1"
+            inputmode="numeric"
+            placeholder="0–{{ max_discount_percent }}"
+          />
+        </div>
+      </div>
+
+      {% block content %}{% endblock %}
+    </main>
+
+    <script>
+      // ── Theme toggle ──
+      const themeToggleBtn = document.getElementById('theme-toggle');
+      function applyTheme(theme) {
+        document.documentElement.dataset.theme = theme;
+        localStorage.setItem('theme', theme);
+      }
+      themeToggleBtn.addEventListener('click', function () {
+        const current = document.documentElement.dataset.theme;
+        applyTheme(current === 'dark' ? 'light' : 'dark');
+      });
+
+      // ── USD Rate shared logic ──
+      const MARKUP_BASE = {{ markup_percent }};
+      const MAX_DISCOUNT = {{ max_discount_percent }};
+      const MIN_DISCOUNT = 0;
+      const usdRateInput = document.getElementById("usd-rate");
+      const discountInput = document.getElementById("discount-percent");
+
+      function parseUsdRateValue(raw) {
+        const text = String(raw).trim().replace(",", ".");
+        if (text === "") return null;
+        const rate = Number(text);
+        if (!Number.isFinite(rate) || rate <= 0) return null;
+        return Math.round(rate);
+      }
+
+      function getSavedUsdRate() {
+        return parseUsdRateValue(usdRateInput.dataset.savedRate) ?? 0;
+      }
+
+      function setSavedUsdRate(rate) {
+        const normalized = Math.round(Number(rate)) || 0;
+        usdRateInput.dataset.savedRate = String(normalized);
+        return normalized;
+      }
+
+      function readUsdRate() {
+        const raw = usdRateInput.value.trim();
+        if (raw === "") return getSavedUsdRate();
+        return parseUsdRateValue(raw) ?? getSavedUsdRate();
+      }
+
+      function usdRateIsDirty() {
+        const saved = getSavedUsdRate();
+        const current = parseUsdRateValue(usdRateInput.value);
+        if (current === null) return saved !== 0;
+        return current !== saved;
+      }
+
+      function updateUsdRateSaveVisibility() {
+        document.getElementById("save-usd-rate").classList.toggle("is-visible", usdRateIsDirty());
+      }
+
+      function parseDiscountValue(raw) {
+        const text = String(raw).trim();
+        if (text === "") return null;
+        const discount = Number(text);
+        if (!Number.isInteger(discount) || discount < MIN_DISCOUNT || discount > MAX_DISCOUNT) return null;
+        return discount;
+      }
+
+      function readDiscountPercent() {
+        return parseDiscountValue(discountInput.value) ?? 0;
+      }
+
+      function sanitizeDiscountInput() {
+        const raw = discountInput.value.replace(/\D/g, "");
+        if (raw === "") { discountInput.value = ""; return; }
+        const number = Number(raw);
+        if (number > MAX_DISCOUNT) discountInput.value = String(MAX_DISCOUNT);
+        else discountInput.value = String(number);
+      }
+
+      function effectiveMarkupPercent() {
+        const parsed = parseDiscountValue(discountInput.value);
+        if (parsed === null || parsed === 0) return MARKUP_BASE;
+        return MARKUP_BASE - parsed;
+      }
+
+      function finalTotal(subtotal) {
+        const markup = effectiveMarkupPercent();
+        return subtotal * (1 + markup / 100);
+      }
+
+      function money(value) {
+        return `$${Number(value || 0).toFixed(2)}`;
+      }
+
+      function moneyUzs(value) {
+        const amount = Math.round(Number(value || 0) * readUsdRate());
+        return `${amount.toLocaleString("uz-UZ")} so'm`;
+      }
+
+      // USD rate save
+      document.getElementById("save-usd-rate").addEventListener("click", async () => {
+        const rateStatus = document.getElementById("rate-status");
+        const rate = parseUsdRateValue(usdRateInput.value);
+        if (rate === null) {
+          rateStatus.textContent = "Dollar kursini kiriting.";
+          rateStatus.classList.add("error");
+          return;
+        }
+        const body = new FormData();
+        body.append("usd_rate", String(rate));
+        const csrfEl = document.querySelector("[name=csrfmiddlewaretoken]");
+        if (csrfEl) body.append("csrfmiddlewaretoken", csrfEl.value);
+        const response = await fetch("{% url 'calculator:save_usd_rate' %}", {
+          method: "POST",
+          body,
+          headers: { "X-Requested-With": "XMLHttpRequest" },
+        });
+        const data = await response.json();
+        if (response.ok) {
+          const saved = setSavedUsdRate(data.usd_rate);
+          usdRateInput.value = String(saved);
+          rateStatus.textContent = "Dollar kursi saqlandi.";
+          rateStatus.classList.remove("error");
+          updateUsdRateSaveVisibility();
+          if (typeof refreshSummary === "function") refreshSummary();
+          if (typeof refreshProductSummary === "function") refreshProductSummary();
+        } else {
+          rateStatus.textContent = data.error || "Saqlashda xatolik yuz berdi.";
+          rateStatus.classList.add("error");
+        }
+      });
+
+      usdRateInput.addEventListener("input", function() {
+        updateUsdRateSaveVisibility();
+        if (typeof refreshSummary === "function") refreshSummary();
+        if (typeof refreshProductSummary === "function") refreshProductSummary();
+      });
+      usdRateInput.addEventListener("change", function() {
+        updateUsdRateSaveVisibility();
+        if (typeof refreshSummary === "function") refreshSummary();
+        if (typeof refreshProductSummary === "function") refreshProductSummary();
+      });
+
+      discountInput.addEventListener("input", function() {
+        sanitizeDiscountInput();
+        if (typeof refreshSummary === "function") refreshSummary();
+        if (typeof refreshProductSummary === "function") refreshProductSummary();
+      });
+      discountInput.addEventListener("change", function() {
+        sanitizeDiscountInput();
+        if (typeof refreshSummary === "function") refreshSummary();
+        if (typeof refreshProductSummary === "function") refreshProductSummary();
+      });
+
+      updateUsdRateSaveVisibility();
+    </script>
+    {% block extra_js %}{% endblock %}
+  </body>
+</html>

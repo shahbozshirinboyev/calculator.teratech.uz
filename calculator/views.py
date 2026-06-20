@@ -72,6 +72,7 @@ def calculator(request):
             "markup_percent": float(settings.markup_percent),
             "max_discount_percent": settings.max_discount_percent,
             "next_order_number": f"AIO#{next_quote_id}",
+            "active_nav": "aio",
         },
     )
 
