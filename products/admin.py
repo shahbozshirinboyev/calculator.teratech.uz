@@ -93,12 +93,22 @@ _products_order = {
     "Keyboard and Mouse": 4,
 }
 
+_app_order = {
+    "auth": 0,
+    "calculator": 1,
+    "products": 2,
+    "monitors": 3,
+    "printers": 4,
+    "laptops": 5,
+}
+
 
 def get_app_list(request, app_label=None):
     app_list = _original_get_app_list(request, app_label)
     for app in app_list:
         if app["app_label"] == "products":
             app["models"].sort(key=lambda model: _products_order.get(model["name"], 99))
+    app_list.sort(key=lambda app: _app_order.get(app["app_label"], 99))
     return app_list
 
 

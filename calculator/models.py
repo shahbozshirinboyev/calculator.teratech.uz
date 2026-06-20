@@ -23,8 +23,8 @@ class CalculatorSettings(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        verbose_name = "Calculator Settings"
-        verbose_name_plural = "Calculator Settings"
+        verbose_name = "AIO Calculator Settings"
+        verbose_name_plural = "AIO Calculator Settings"
 
     def __str__(self):
         return (
@@ -121,8 +121,8 @@ class BuildQuote(models.Model):
 
     class Meta:
         ordering = ["-created_at"]
-        verbose_name = "Saved Calculation"
-        verbose_name_plural = "Saved Calculations"
+        verbose_name = "AIO Calculation"
+        verbose_name_plural = "AIO Calculations"
 
     def __str__(self):
         label = self.order_number or f"AIO#{self.pk}"
