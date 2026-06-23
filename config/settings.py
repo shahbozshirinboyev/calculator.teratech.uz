@@ -38,6 +38,8 @@ INSTALLED_APPS = [
     "monitors",
     "printers",
     "laptops",
+    "branded_aio",
+    "branded_pc",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",

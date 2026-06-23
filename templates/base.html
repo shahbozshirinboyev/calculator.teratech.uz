@@ -353,9 +353,11 @@
           <nav>
             <ul class="nav-menu">
               <li><a href="{% url 'calculator:home' %}" class="{% if active_nav == 'aio' %}active{% endif %}">AIO Calculator</a></li>
+              <li><a href="{% url 'branded_aio:list' %}" class="{% if active_nav == 'branded_aio' %}active{% endif %}">Branded AIO</a></li>
+              <li><a href="{% url 'branded_pc:list' %}" class="{% if active_nav == 'branded_pc' %}active{% endif %}">Branded PC</a></li>
+              <li><a href="{% url 'laptops:list' %}" class="{% if active_nav == 'laptops' %}active{% endif %}">Laptops</a></li>
               <li><a href="{% url 'monitors:list' %}" class="{% if active_nav == 'monitors' %}active{% endif %}">Monitors</a></li>
               <li><a href="{% url 'printers:list' %}" class="{% if active_nav == 'printers' %}active{% endif %}">Printers</a></li>
-              <li><a href="{% url 'laptops:list' %}" class="{% if active_nav == 'laptops' %}active{% endif %}">Laptops</a></li>
             </ul>
           </nav>
         </div>
