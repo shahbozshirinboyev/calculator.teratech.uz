@@ -10,6 +10,8 @@ from calculator.models import CalculatorSettings
 
 from .models import Printer
 
+SECTION = "printers"
+
 
 @login_required
 def printer_list(request):
@@ -25,9 +27,9 @@ def printer_list(request):
         {
             "product_data": json.dumps(printer_data),
             "usd_rate": float(settings.usd_rate),
-            "markup_percent": float(settings.markup_percent),
+            "markup_percent": float(settings.get_markup_for(SECTION)),
             "max_discount_percent": settings.max_discount_percent,
-            "active_nav": "printers",
+            "active_nav": SECTION,
             "page_title": "Printers",
             "search_placeholder": "Printer qidirish...",
         },
@@ -44,21 +46,17 @@ def save_printer_quote(request):
 
     settings = CalculatorSettings.get_singleton()
     try:
-        discount = Decimal(
-            request.POST.get("discount_percent", "0").replace(",", ".").strip()
-        )
+        discount = Decimal(request.POST.get("discount_percent", "0").replace(",", ".").strip())
     except Exception:
         discount = Decimal("0")
     if discount < 0 or discount > settings.max_discount_percent:
         discount = Decimal("0")
 
     subtotal = printer.price
-    total = settings.apply_markup(subtotal, discount)
+    total = settings.apply_markup(subtotal, discount, SECTION)
 
     try:
-        usd_rate = Decimal(
-            request.POST.get("usd_rate", "0").replace(",", ".").strip()
-        )
+        usd_rate = Decimal(request.POST.get("usd_rate", "0").replace(",", ".").strip())
     except Exception:
         usd_rate = Decimal("0")
     if usd_rate < 0:
@@ -67,7 +65,6 @@ def save_printer_quote(request):
 
     return JsonResponse({
         "name": printer.name,
-        "subtotal": f"{subtotal:.2f}",
         "total": f"{total:.2f}",
         "total_uzs": str(total_uzs),
     })

@@ -7,6 +7,8 @@ from calculator.models import CalculatorSettings
 
 from .models import BrandedPc
 
+SECTION = "branded_pc"
+
 
 @login_required
 def branded_pc_list(request):
@@ -22,9 +24,9 @@ def branded_pc_list(request):
         {
             "product_data": json.dumps(product_data),
             "usd_rate": float(settings.usd_rate),
-            "markup_percent": float(settings.markup_percent),
+            "markup_percent": float(settings.get_markup_for(SECTION)),
             "max_discount_percent": settings.max_discount_percent,
-            "active_nav": "branded_pc",
+            "active_nav": SECTION,
             "page_title": "Branded PC",
             "search_placeholder": "Branded PC qidirish...",
         },

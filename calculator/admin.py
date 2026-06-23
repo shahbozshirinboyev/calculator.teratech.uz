@@ -5,8 +5,27 @@ from .models import BuildQuote, CalculatorSettings
 
 @admin.register(CalculatorSettings)
 class CalculatorSettingsAdmin(admin.ModelAdmin):
-    list_display = ("usd_rate", "markup_percent", "max_discount_percent", "updated_at")
-    fields = ("usd_rate", "markup_percent", "max_discount_percent")
+    list_display = (
+        "usd_rate", "markup_percent", "branded_aio_markup_percent",
+        "branded_pc_markup_percent", "monitors_markup_percent",
+        "printers_markup_percent", "laptops_markup_percent",
+        "max_discount_percent", "updated_at",
+    )
+    fieldsets = (
+        ("Umumiy", {
+            "fields": ("usd_rate", "max_discount_percent"),
+        }),
+        ("Ustama foizlari (%)", {
+            "fields": (
+                "markup_percent",
+                "branded_aio_markup_percent",
+                "branded_pc_markup_percent",
+                "monitors_markup_percent",
+                "printers_markup_percent",
+                "laptops_markup_percent",
+            ),
+        }),
+    )
 
     def has_add_permission(self, request):
         return not CalculatorSettings.objects.exists()

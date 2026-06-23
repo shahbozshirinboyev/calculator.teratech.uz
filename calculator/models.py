@@ -14,7 +14,37 @@ class CalculatorSettings(models.Model):
         max_digits=5,
         decimal_places=2,
         default=10,
-        verbose_name="Ustama (%)",
+        verbose_name="AIO ustama (%)",
+    )
+    branded_aio_markup_percent = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=10,
+        verbose_name="Branded AIO ustama (%)",
+    )
+    branded_pc_markup_percent = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=10,
+        verbose_name="Branded PC ustama (%)",
+    )
+    monitors_markup_percent = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=10,
+        verbose_name="Monitors ustama (%)",
+    )
+    printers_markup_percent = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=10,
+        verbose_name="Printers ustama (%)",
+    )
+    laptops_markup_percent = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=10,
+        verbose_name="Laptops ustama (%)",
     )
     max_discount_percent = models.PositiveSmallIntegerField(
         default=7,
@@ -40,24 +70,42 @@ class CalculatorSettings(models.Model):
             defaults={
                 "usd_rate": 0,
                 "markup_percent": 10,
+                "branded_aio_markup_percent": 10,
+                "branded_pc_markup_percent": 10,
+                "monitors_markup_percent": 10,
+                "printers_markup_percent": 10,
+                "laptops_markup_percent": 10,
                 "max_discount_percent": 7,
             },
         )
         return obj
 
-    def effective_markup_percent(self, discount_percent=0):
+    def get_markup_for(self, section="aio"):
+        """section: 'aio' | 'branded_aio' | 'branded_pc' | 'monitors' | 'printers' | 'laptops'"""
+        mapping = {
+            "aio": self.markup_percent,
+            "branded_aio": self.branded_aio_markup_percent,
+            "branded_pc": self.branded_pc_markup_percent,
+            "monitors": self.monitors_markup_percent,
+            "printers": self.printers_markup_percent,
+            "laptops": self.laptops_markup_percent,
+        }
+        return mapping.get(section, self.markup_percent)
+
+    def effective_markup_percent(self, discount_percent=0, section="aio"):
         from decimal import Decimal
 
+        base = Decimal(str(self.get_markup_for(section)))
         discount = min(
             max(Decimal("0"), Decimal(str(discount_percent))),
             Decimal(str(self.max_discount_percent)),
         )
-        return Decimal(str(self.markup_percent)) - discount
+        return base - discount
 
-    def apply_markup(self, subtotal, discount_percent=0):
+    def apply_markup(self, subtotal, discount_percent=0, section="aio"):
         from decimal import Decimal
 
-        markup = self.effective_markup_percent(discount_percent)
+        markup = self.effective_markup_percent(discount_percent, section)
         return subtotal * (Decimal("1") + markup / Decimal("100"))
 
 
