@@ -832,6 +832,23 @@
   document.getElementById("copy-image").addEventListener("click", async () => {
     const status = document.getElementById("status");
     const btn = document.getElementById("copy-image");
+
+    // Xuddi saqlash kabi tekshiruv
+    const hasRam = fields.ram.value !== "";
+    const hasStorage = selectedDynamic("storage_slots", maps.storage).length > 0;
+    const hasKeyboardMouse = fields.keyboardMouse.value !== "";
+    const errors = [];
+    if (!fields.cpu.value) errors.push("CPU tanlanmadi");
+    if (!fields.base.value) errors.push("AIO tanlanmadi");
+    if (!hasRam) errors.push("RAM tanlanmadi");
+    if (!hasKeyboardMouse) errors.push("Keyboard and Mouse tanlanmadi");
+    if (!hasStorage) errors.push("SSD/HDD tanlanmadi");
+    if (errors.length > 0) {
+      status.textContent = errors.join(" • ");
+      status.classList.add("error");
+      return;
+    }
+
     const canvas = buildSummaryCanvas();
     try {
       await new Promise((resolve, reject) => {
