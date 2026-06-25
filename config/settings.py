@@ -32,6 +32,12 @@ if not DEBUG:
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
 
+# Mobil brauzerlar uchun SameSite=Lax (default Strict ba'zan login formani bloklaydi)
+SESSION_COOKIE_SAMESITE = "Lax"
+CSRF_COOKIE_SAMESITE = "Lax"
+# CSRF cookie'ni JS orqali o'qilishini ta'minlash (kerak emas lekin xavfsiz)
+CSRF_COOKIE_HTTPONLY = False
+
 INSTALLED_APPS = [
     "products",
     "calculator",
