@@ -16,18 +16,6 @@ class CalculatorSettings(models.Model):
         default=10,
         verbose_name="AIO ustama (%)",
     )
-    branded_aio_markup_percent = models.DecimalField(
-        max_digits=5,
-        decimal_places=2,
-        default=10,
-        verbose_name="Branded AIO ustama (%)",
-    )
-    branded_pc_markup_percent = models.DecimalField(
-        max_digits=5,
-        decimal_places=2,
-        default=10,
-        verbose_name="Branded PC ustama (%)",
-    )
     monitors_markup_percent = models.DecimalField(
         max_digits=5,
         decimal_places=2,
@@ -39,12 +27,6 @@ class CalculatorSettings(models.Model):
         decimal_places=2,
         default=10,
         verbose_name="Printers ustama (%)",
-    )
-    laptops_markup_percent = models.DecimalField(
-        max_digits=5,
-        decimal_places=2,
-        default=10,
-        verbose_name="Laptops ustama (%)",
     )
     max_discount_percent = models.PositiveSmallIntegerField(
         default=7,
@@ -70,25 +52,19 @@ class CalculatorSettings(models.Model):
             defaults={
                 "usd_rate": 0,
                 "markup_percent": 10,
-                "branded_aio_markup_percent": 10,
-                "branded_pc_markup_percent": 10,
                 "monitors_markup_percent": 10,
                 "printers_markup_percent": 10,
-                "laptops_markup_percent": 10,
                 "max_discount_percent": 7,
             },
         )
         return obj
 
     def get_markup_for(self, section="aio"):
-        """section: 'aio' | 'branded_aio' | 'branded_pc' | 'monitors' | 'printers' | 'laptops'"""
+        """section: 'aio' | 'monitors' | 'printers'"""
         mapping = {
             "aio": self.markup_percent,
-            "branded_aio": self.branded_aio_markup_percent,
-            "branded_pc": self.branded_pc_markup_percent,
             "monitors": self.monitors_markup_percent,
             "printers": self.printers_markup_percent,
-            "laptops": self.laptops_markup_percent,
         }
         return mapping.get(section, self.markup_percent)
 

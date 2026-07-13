@@ -100,6 +100,7 @@ _app_order = {
     "monitors": 3,
     "printers": 4,
     "laptops": 5,
+    "orders": 6,
 }
 
 

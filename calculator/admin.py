@@ -6,10 +6,8 @@ from .models import BuildQuote, CalculatorSettings
 @admin.register(CalculatorSettings)
 class CalculatorSettingsAdmin(admin.ModelAdmin):
     list_display = (
-        "usd_rate", "markup_percent", "branded_aio_markup_percent",
-        "branded_pc_markup_percent", "monitors_markup_percent",
-        "printers_markup_percent", "laptops_markup_percent",
-        "max_discount_percent", "updated_at",
+        "usd_rate", "markup_percent", "monitors_markup_percent",
+        "printers_markup_percent", "max_discount_percent", "updated_at",
     )
     fieldsets = (
         ("Umumiy", {
@@ -18,11 +16,8 @@ class CalculatorSettingsAdmin(admin.ModelAdmin):
         ("Ustama foizlari (%)", {
             "fields": (
                 "markup_percent",
-                "branded_aio_markup_percent",
-                "branded_pc_markup_percent",
                 "monitors_markup_percent",
                 "printers_markup_percent",
-                "laptops_markup_percent",
             ),
         }),
     )

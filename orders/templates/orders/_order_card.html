@@ -1,0 +1,63 @@
+{% load order_tags %}
+<div class="order-card" id="order-{{ order.pk }}">
+  <div class="order-card-header">
+    <a href="{% url 'orders:detail' order.pk %}" class="order-number">{{ order.order_number }}</a>
+    <span class="badge {{ order.payment_status|payment_badge }}">
+      {{ order.get_payment_status_display }}
+    </span>
+    <span class="badge {{ order.production_status|status_badge }}">
+      {{ order.get_production_status_display }}
+    </span>
+    <span class="seller-tag">
+      {{ order.sold_by.get_full_name|default:order.sold_by.username }}
+    </span>
+    <span style="margin-left:auto;font-size:12px;color:var(--muted);">
+      {{ order.created_at|date:"d.m.Y H:i" }}
+    </span>
+  </div>
+
+  <div class="order-meta">
+    <span>👤 <strong>{{ order.customer_name }}</strong></span>
+    <span>📞 {{ order.customer_phone }}</span>
+    <span>📍 {{ order.region }}, {{ order.district }}, {{ order.city }}{% if order.landmark %} — {{ order.landmark }}{% endif %}</span>
+    <span>🚚 {{ order.get_delivery_type_display }}</span>
+    <span>💳 {{ order.get_payment_type_display }}</span>
+  </div>
+
+  <div class="order-items-list">
+    {% for item in order.items.all %}
+      <div class="order-item-row">
+        <span class="item-label">{{ item.config_label }}</span>
+        <span class="item-qty">{{ item.quantity }} ×</span>
+        <span style="font-weight:700;color:var(--accent-dark);">{% widthratio item.unit_price_usd 1 usd_rate %} so'm</span>
+      </div>
+    {% endfor %}
+  </div>
+
+  {% if order.notes %}
+    <div style="font-size:13px;color:var(--muted);margin-bottom:8px;">💬 {{ order.notes }}</div>
+  {% endif %}
+
+  <div class="order-footer">
+    <div>
+      <div class="order-total">{{ order.total_price_uzs|floatformat:0 }} so'm</div>
+    </div>
+
+    {% if show_status_btns %}
+      <div class="status-btns">
+        {% with next=order.production_status|next_status %}
+          {% if next %}
+            <button class="status-btn next-step" onclick="updateStatus({{ order.pk }}, '{{ next }}')">
+              {{ next|status_label }} →
+            </button>
+          {% endif %}
+        {% endwith %}
+        {% if order.production_status != 'CANCELLED' %}
+          <button class="status-btn cancel-btn" onclick="updateStatus({{ order.pk }}, 'CANCELLED')">
+            Bekor qilish
+          </button>
+        {% endif %}
+      </div>
+    {% endif %}
+  </div>
+</div>

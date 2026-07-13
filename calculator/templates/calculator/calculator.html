@@ -194,9 +194,13 @@
 }
 
 .total strong {
-  font-size: 14px;
+  font-size: 18px;
   color: var(--accent-dark);
   white-space: nowrap;
+}
+
+.total strong:last-child {
+  font-size: 22px;
 }
 
 .total-uzs {
@@ -255,6 +259,67 @@
     position: static;
   }
 }
+
+/* Qty input spinner yashirish */
+input.qty-input::-webkit-outer-spin-button,
+input.qty-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+/* Config card */
+.config-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--bg);
+  border-radius: 8px;
+  margin-bottom: 6px;
+  border: 1px solid transparent;
+  transition: border-color 0.15s;
+  cursor: default;
+}
+.config-card:hover { border-color: var(--accent); }
+.config-card .config-label {
+  flex: 1;
+  min-width: 0;
+  cursor: pointer;
+}
+.config-card .config-label .config-name {
+  font-weight: 600;
+  font-size: 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text);
+}
+.config-card .config-label .config-order {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.config-remove-btn {
+  background: none;
+  border: 1px solid var(--danger);
+  color: var(--danger);
+  border-radius: 6px;
+  padding: 4px 8px;
+  min-height: unset;
+  font-size: 14px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s, color 0.15s;
+}
+.config-remove-btn:hover {
+  background: var(--danger);
+  color: #fff;
+}
+
+#clear-all-configs-btn:hover {
+  background: var(--danger) !important;
+  color: #fff !important;
+  border-color: var(--danger) !important;
+}
+
 {% endblock %}
 
 {% block content %}
@@ -317,19 +382,14 @@
       <span>Chegirma</span><strong id="summary-discount">-</strong>
     </div>
     <div class="total">
-      <strong>Jami:</strong><strong id="summary-total">$0.00</strong>
-    </div>
-    <div class="total-uzs" id="summary-total-uzs-wrap" hidden>
-      <strong>Jami:</strong>
-      <strong id="summary-total-uzs">0 so'm</strong>
+      <strong>Jami:</strong><strong id="summary-total">0 so'm</strong>
     </div>
     <div class="status" id="status"></div>
     <div class="actions">
       <button type="button" id="save-quote">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-floppy" viewBox="0 0 16 16" style="vertical-align:-2px;margin-right:6px">
-          <path d="M11 2H9v3h2z"/>
-          <path d="M1.5 0h11.586a1.5 1.5 0 0 1 1.06.44l1.415 1.414A1.5 1.5 0 0 1 16 2.914V14.5a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 14.5v-13A1.5 1.5 0 0 1 1.5 0M1 1.5v13a.5.5 0 0 0 .5.5H2v-4.5A1.5 1.5 0 0 1 3.5 9h9a1.5 1.5 0 0 1 1.5 1.5V15h.5a.5.5 0 0 0 .5-.5V2.914a.5.5 0 0 0-.146-.353l-1.415-1.415A.5.5 0 0 0 13.086 1H13v4.5A1.5 1.5 0 0 1 11.5 7h-7A1.5 1.5 0 0 1 3 5.5V1H1.5a.5.5 0 0 0-.5.5m3 4a.5.5 0 0 0 .5.5h7a.5.5 0 0 0 .5-.5V1H4zM3 15h10v-4.5a.5.5 0 0 0-.5-.5h-9a.5.5 0 0 0-.5.5z"/>
-        </svg>Saqlash
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" style="vertical-align:-2px;margin-right:6px">
+          <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
+        </svg>Qo'shish
       </button>
       <button type="button" class="secondary" id="reset-form">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-eraser" viewBox="0 0 16 16" style="vertical-align:-2px;margin-right:6px">
@@ -344,6 +404,34 @@
     </div>
   </aside>
 </div>
+
+<!-- ── Qo'shilgan konfiguratsiyalar paneli ── -->
+<div id="configs-panel" style="display:none; margin-top:16px;">
+  <div class="panel" style="padding:18px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:12px;">
+      <h3 style="margin:0;font-size:16px;">Qo'shilgan konfiguratsiyalar</h3>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button type="button" id="clear-all-configs-btn" class="secondary" style="font-size:13px;border-color:var(--danger);color:var(--danger);">
+          Hammasini o'chirish
+        </button>
+        <button type="button" id="create-order-btn">
+        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" viewBox="0 0 16 16" style="vertical-align:-2px;margin-right:6px">
+          <path d="M0 1.5A.5.5 0 0 1 .5 1H2a.5.5 0 0 1 .485.379L2.89 3H14.5a.5.5 0 0 1 .491.592l-1.5 8A.5.5 0 0 1 13 12H4a.5.5 0 0 1-.491-.408L2.01 3.607 1.61 2H.5a.5.5 0 0 1-.5-.5M3.102 4l1.313 7h8.17l1.313-7zM5 12a2 2 0 1 0 0 4 2 2 0 0 0 0-4m7 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4m-7 1a1 1 0 1 1 0 2 1 1 0 0 1 0-2m7 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2"/>
+        </svg>Buyurtma yaratish
+      </button>
+      </div>
+    </div>
+    <div id="configs-list"></div>
+    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:14px;padding-top:12px;border-top:1px solid var(--line);">
+      <span style="font-size:14px;color:var(--muted);">Jami:</span>
+      <div style="text-align:right;">
+        <span id="configs-total-usd" style="font-weight:800;font-size:18px;color:var(--accent-dark);">$0.00</span>
+        <div id="configs-total-uzs" style="font-size:13px;color:var(--muted);"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
 {% endblock %}
 
 {% block extra_js %}
@@ -410,7 +498,12 @@
   }
 
   function money(value) {
-    return `$${Number(value || 0).toFixed(2)}`;
+    const rate = readUsdRate();
+    if (rate > 0) {
+      const amount = Math.round(Number(value || 0) * rate);
+      return `${amount.toLocaleString("uz-UZ")} so'm`;
+    }
+    return `${Math.round(Number(value || 0)).toLocaleString("uz-UZ")} so'm`;
   }
 
   function moneyUzs(value) {
@@ -669,14 +762,6 @@
     document.getElementById("summary-keyboard").textContent = keyboard ? keyboard.name : "-";
     updateDiscountSummaryDisplay();
     document.getElementById("summary-total").textContent = money(total);
-    const uzsWrap = document.getElementById("summary-total-uzs-wrap");
-    const rate = readUsdRate();
-    if (rate > 0) {
-      uzsWrap.hidden = false;
-      document.getElementById("summary-total-uzs").textContent = moneyUzs(total);
-    } else {
-      uzsWrap.hidden = true;
-    }
   }
 
   function clearStatus() {
@@ -829,54 +914,55 @@
     return canvas;
   }
 
-  document.getElementById("copy-image").addEventListener("click", async () => {
-    const status = document.getElementById("status");
+  (function() {
     const btn = document.getElementById("copy-image");
+    let clickTimer = null;
 
-    // Xuddi saqlash kabi tekshiruv
-    const hasRam = fields.ram.value !== "";
-    const hasStorage = selectedDynamic("storage_slots", maps.storage).length > 0;
-    const hasKeyboardMouse = fields.keyboardMouse.value !== "";
-    const errors = [];
-    if (!fields.cpu.value) errors.push("CPU tanlanmadi");
-    if (!fields.base.value) errors.push("AIO tanlanmadi");
-    if (!hasRam) errors.push("RAM tanlanmadi");
-    if (!hasKeyboardMouse) errors.push("Keyboard and Mouse tanlanmadi");
-    if (!hasStorage) errors.push("SSD/HDD tanlanmadi");
-    if (errors.length > 0) {
-      status.textContent = errors.join(" • ");
-      status.classList.add("error");
-      return;
+    function validate() {
+      const status = document.getElementById("status");
+      const errors = [];
+      if (!fields.cpu.value) errors.push("CPU tanlanmadi");
+      if (!fields.base.value) errors.push("AIO tanlanmadi");
+      if (!fields.ram.value) errors.push("RAM tanlanmadi");
+      if (!fields.keyboardMouse.value) errors.push("Keyboard and Mouse tanlanmadi");
+      if (!selectedDynamic("storage_slots", maps.storage).length) errors.push("SSD/HDD tanlanmadi");
+      if (errors.length > 0) { status.textContent = errors.join(" • "); status.classList.add("error"); return false; }
+      return true;
     }
 
-    const canvas = buildSummaryCanvas();
-    try {
-      await new Promise((resolve, reject) => {
-        canvas.toBlob(async (blob) => {
-          if (!blob) { reject(new Error("blob error")); return; }
-          try {
-            await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
-            resolve();
-          } catch (e) { reject(e); }
-        }, "image/png");
-      });
-      const origHtml = btn.innerHTML;
-      btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0"/></svg>`;
-      status.textContent = "Rasm buferga olindi.";
-      status.classList.remove("error");
-      setTimeout(() => { btn.innerHTML = origHtml; status.textContent = ""; }, 2000);
-    } catch (e) {
-      status.textContent = "Buferga olishda xatolik (HTTPS kerak bo'lishi mumkin).";
-      status.classList.add("error");
-    }
-  });
+    btn.addEventListener("click", async (e) => {
+      if (clickTimer) { clearTimeout(clickTimer); clickTimer = null; return; }
+      clickTimer = setTimeout(async () => {
+        clickTimer = null;
+        if (!validate()) return;
+        const status = document.getElementById("status");
+        const canvas = buildSummaryCanvas();
+        try {
+          await new Promise((resolve, reject) => {
+            canvas.toBlob(async (blob) => {
+              if (!blob) { reject(new Error("blob error")); return; }
+              try { await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]); resolve(); }
+              catch (e) { reject(e); }
+            }, "image/png");
+          });
+          const origHtml = btn.innerHTML;
+          btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0"/></svg>`;
+          status.textContent = "Rasm buferga olindi.";
+          status.classList.remove("error");
+          setTimeout(() => { btn.innerHTML = origHtml; status.textContent = ""; }, 2000);
+        } catch (e) {
+          status.textContent = "Buferga olishda xatolik (HTTPS kerak bo'lishi mumkin).";
+          status.classList.add("error");
+        }
+      }, 250);
+    });
 
-  document.getElementById("reset-form").addEventListener("click", () => {
-    discountInput.value = "";
-    fields.cpu.value = "";
-    clearSelections();
-    clearStatus();
-  });
+    btn.addEventListener("dblclick", () => {
+      if (clickTimer) { clearTimeout(clickTimer); clickTimer = null; }
+      if (!validate()) return;
+      downloadSummaryImage();
+    });
+  })();
 
   document.getElementById("save-quote").addEventListener("click", async () => {
     const status = document.getElementById("status");
@@ -907,11 +993,25 @@
       if (response.ok) {
         orderNumberEl.textContent = data.order_number || `AIO#${data.id}`;
         const savedOrderNumber = orderNumberEl.textContent;
-        status.textContent = `${orderNumberEl.textContent} saqlandi: $${data.total_price}`;
+        const totalUzs = Math.round(Number(data.total_price) * readUsdRate());
+        status.textContent = `${savedOrderNumber} saqlandi: ${totalUzs.toLocaleString("uz-UZ")} so'm`;
         status.classList.remove("error");
-        downloadSummaryImage();
         orderNumberEl.textContent = nextOrderNumber(savedOrderNumber);
-      } else {
+
+        // Pastdagi panelga qo'sh, calculatorni tozala
+        addConfigToPool({
+          label: buildConfigLabel(),
+          price: Number(data.total_price),
+          uzs: Math.round(Number(data.total_price) * readUsdRate()),
+          orderNumber: savedOrderNumber,
+          // Qayta yuklash uchun ID lar
+          state: captureCalculatorState(),
+        });
+        renderConfigsPanel();
+        discountInput.value = "";
+        fields.cpu.value = "";
+        clearSelections();
+        clearStatus();      } else {
         status.textContent = "Saqlashda xatolik yuz berdi.";
         status.classList.add("error");
       }
@@ -921,6 +1021,193 @@
     } finally {
       saveButton.disabled = false;
     }
+  });
+
+  // ── Konfiguratsiyalar to'plami ──
+  const POOL_KEY = "order_configs_pool";
+  function getConfigPool() { try { return JSON.parse(localStorage.getItem(POOL_KEY) || "[]"); } catch { return []; } }
+  function saveConfigPool(p) { localStorage.setItem(POOL_KEY, JSON.stringify(p)); }
+  function addConfigToPool(cfg) { const p = getConfigPool(); p.push(cfg); saveConfigPool(p); }
+  function clearConfigPool() { localStorage.removeItem(POOL_KEY); }
+
+  function removeConfigFromPool(index) {
+    const p = getConfigPool(); p.splice(index, 1); saveConfigPool(p);
+    renderConfigsPanel();
+  }
+
+  function editConfig(index) {
+    const pool = getConfigPool();
+    const cfg = pool[index];
+    if (!cfg || !cfg.state) {
+      // State yo'q — faqat scrollga ko'tarish
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+    // O'chirib qayta yuklash — foydalanuvchi o'zgartirib qayta "Qo'shish" bosadi
+    pool.splice(index, 1);
+    saveConfigPool(pool);
+    renderConfigsPanel();
+    restoreCalculatorState(cfg.state);
+  }
+
+  function captureCalculatorState() {
+    return {
+      cpu: fields.cpu.value,
+      base: fields.base.value,
+      ram: fields.ram.value,
+      keyboardMouse: fields.keyboardMouse.value,
+      nvme: document.querySelector('#nvme-storage-slot select')?.value || "",
+      sata: document.querySelector('#sata-storage-slot select')?.value || "",
+      storageKind: document.querySelector('input[name="storage_kind"]:checked')?.value || "ssd",
+      discount: discountInput.value,
+    };
+  }
+
+  async function restoreCalculatorState(state) {
+    if (!state) return;
+    // CPU seçimini o'rnat va base lar yuklansin
+    if (state.cpu) {
+      fields.cpu.value = state.cpu;
+      refreshForCpu();
+      // Base ni o'rnat
+      await new Promise(r => setTimeout(r, 50));
+      if (state.base) {
+        fields.base.value = state.base;
+        const base = activeBase();
+        if (base) {
+          renderRamSelect(base);
+          renderStorageSlots(base);
+          await new Promise(r => setTimeout(r, 50));
+        }
+      }
+    }
+    if (state.ram) fields.ram.value = state.ram;
+    if (state.keyboardMouse) fields.keyboardMouse.value = state.keyboardMouse;
+    if (state.discount) discountInput.value = state.discount;
+    // Storage
+    if (state.storageKind) {
+      const radio = document.querySelector(`input[name="storage_kind"][value="${state.storageKind}"]`);
+      if (radio) { radio.checked = true; radio.dispatchEvent(new Event('change')); }
+    }
+    await new Promise(r => setTimeout(r, 50));
+    if (state.nvme) {
+      const nvmeSel = document.querySelector('#nvme-storage-slot select');
+      if (nvmeSel) nvmeSel.value = state.nvme;
+    }
+    if (state.sata) {
+      const sataSel = document.querySelector('#sata-storage-slot select');
+      if (sataSel) sataSel.value = state.sata;
+    }
+    refreshSummary();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function buildConfigLabel() {
+    const base = activeBase(), cpu = selected(fields.cpu, maps.cpu);
+    const ramItem = selected(fields.ram, maps.ram);
+    const storageItems = selectedDynamic("storage_slots", maps.storage);
+    const keyboard = selected(fields.keyboardMouse, maps.keyboardMouse);
+    const parts = [];
+    if (base) parts.push(base.name);
+    if (cpu) parts.push(cpu.name);
+    if (ramItem) parts.push(ramItem.name);
+    if (storageItems.length) parts.push(storageItems.map(s => s.name).join(" + "));
+    if (keyboard) parts.push(keyboard.name);
+    return parts.join(" / ");
+  }
+
+  function renderConfigsPanel() {
+    const pool = getConfigPool();
+    const panel = document.getElementById("configs-panel");
+    const list = document.getElementById("configs-list");
+    if (!pool.length) { panel.style.display = "none"; return; }
+    panel.style.display = "block";
+    list.innerHTML = pool.map((cfg, i) => `
+      <div class="config-card">
+        <div class="config-label" onclick="editConfig(${i})" title="Tahrirlash uchun bosing">
+          <div class="config-name" title="${cfg.label.replace(/"/g,'&quot;')}">${cfg.label}</div>
+          <div class="config-order">${cfg.orderNumber}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+          <button type="button" onclick="changeQty(${i},-1)"
+            style="background:var(--btn-secondary-bg);border:1px solid var(--btn-secondary-border);color:var(--btn-secondary-color);border-radius:4px;width:28px;height:28px;min-height:unset;padding:0;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;">−</button>
+          <input type="number" id="qty-${i}" value="${cfg.qty || 1}" min="1" class="qty-input"
+            onchange="setQty(${i}, this.value)"
+            oninput="setQty(${i}, this.value)"
+            style="width:52px;height:32px;min-height:unset;text-align:center;font-weight:700;font-size:14px;padding:0 4px;border:1px solid var(--input-border);border-radius:4px;background:var(--input-bg);color:var(--text);appearance:none;-moz-appearance:textfield;">
+          <button type="button" onclick="changeQty(${i},1)"
+            style="background:var(--btn-secondary-bg);border:1px solid var(--btn-secondary-border);color:var(--btn-secondary-color);border-radius:4px;width:28px;height:28px;min-height:unset;padding:0;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;">+</button>
+        </div>
+        <div style="text-align:right;flex-shrink:0;min-width:80px;">
+          <div style="font-weight:700;font-size:15px;color:var(--accent-dark);">${((cfg.qty||1)*cfg.uzs).toLocaleString('uz-UZ')} so'm</div>
+        </div>
+        <button type="button" class="config-remove-btn" onclick="removeConfigFromPool(${i})">×</button>
+      </div>`).join("");
+    updateConfigsTotal();
+  }
+
+  function updateConfigsTotal() {
+    const pool = getConfigPool();
+    const totalUsd = pool.reduce((s, c) => s + (c.qty||1) * c.price, 0);
+    const totalUzs = pool.reduce((s, c) => s + (c.qty||1) * (c.uzs||0), 0);
+    document.getElementById("configs-total-usd").textContent = totalUzs ? `${totalUzs.toLocaleString('uz-UZ')} so'm` : "0 so'm";
+    document.getElementById("configs-total-uzs").textContent = "";
+  }
+
+  function changeQty(index, delta) {
+    const pool = getConfigPool();
+    const current = pool[index].qty || 1;
+    const newQty = Math.max(1, current + delta);
+    pool[index].qty = newQty;
+    saveConfigPool(pool);
+    renderConfigsPanel();
+  }
+
+  function setQty(index, value) {
+    const qty = Math.max(1, parseInt(value) || 1);
+    const pool = getConfigPool();
+    pool[index].qty = qty;
+    saveConfigPool(pool);
+    updateConfigsTotal();
+    // Input ni to'g'ri qiymatga qaytarish (1 dan kichik bo'lsa)
+    const input = document.getElementById(`qty-${index}`);
+    if (input && parseInt(input.value) < 1) input.value = qty;
+  }
+
+  renderConfigsPanel();
+
+  document.getElementById("clear-all-configs-btn").addEventListener("click", () => {
+    if (!confirm("Barcha konfiguratsiyalar o'chirilsinmi?")) return;
+    clearConfigPool();
+    renderConfigsPanel();
+  });
+
+  document.getElementById("create-order-btn").addEventListener("click", () => {
+    // Avval barcha inputlardan joriy sonlarni o'qib olish
+    const pool = getConfigPool();
+    pool.forEach((cfg, i) => {
+      const input = document.getElementById(`qty-${i}`);
+      if (input) cfg.qty = Math.max(1, parseInt(input.value) || 1);
+    });
+    saveConfigPool(pool);
+
+    if (!pool.length) return;
+
+    // URL parametrlarini yaratish
+    const params = new URLSearchParams();
+    pool.forEach((cfg, i) => {
+      params.append(`config_label`, cfg.label);
+      params.append(`quantity`, cfg.qty || 1);
+      params.append(`unit_price_usd`, cfg.price.toFixed(2));
+    });
+    
+    const totalUsd = pool.reduce((s, c) => s + (c.qty||1) * c.price, 0);
+    const totalUzs = pool.reduce((s, c) => s + (c.qty||1) * (c.uzs||0), 0);
+    params.append('total_price_usd', totalUsd.toFixed(2));
+    if (totalUzs) params.append('total_price_uzs', totalUzs);
+
+    // Buyurtma yaratish sahifasiga yo'naltirish
+    window.location.href = `{% url 'orders:create' %}?${params.toString()}`;
   });
 </script>
 {% endblock %}

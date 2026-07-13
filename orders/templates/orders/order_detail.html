@@ -1,0 +1,248 @@
+{% extends "base.html" %}
+{% load order_tags %}
+{% block title %}{{ order.order_number }} — Buyurtma{% endblock %}
+
+{% block extra_css %}
+.detail-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 20px;
+  align-items: start;
+  margin-top: 20px;
+}
+
+.detail-section { padding: 20px; margin-bottom: 16px; }
+.detail-section h3 {
+  margin: 0 0 14px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--accent-dark);
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 8px;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 14px;
+  gap: 10px;
+}
+.detail-row:last-child { border-bottom: none; }
+.detail-row span:first-child { color: var(--muted); white-space: nowrap; }
+.detail-row strong { text-align: right; }
+
+.config-item {
+  display: grid;
+  grid-template-columns: 1fr 60px 90px;
+  gap: 8px;
+  align-items: center;
+  padding: 8px 12px;
+  background: var(--bg);
+  border-radius: 8px;
+  margin-bottom: 6px;
+  font-size: 14px;
+}
+.config-item .label { font-weight: 600; }
+.config-item .qty { color: var(--muted); text-align: center; }
+.config-item .price { font-weight: 700; color: var(--accent-dark); text-align: right; }
+
+.status-sidebar { padding: 20px; position: sticky; top: 16px; }
+.status-sidebar h3 { margin: 0 0 14px; font-size: 15px; }
+
+.status-step {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  font-size: 14px;
+  color: var(--muted);
+}
+.status-step.done { color: var(--accent-dark); font-weight: 700; }
+.status-step.current { color: var(--text); font-weight: 700; }
+.status-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--line); flex-shrink: 0;
+}
+.status-dot.done { background: var(--accent); }
+.status-dot.current { background: var(--accent-dark); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 30%, transparent); }
+
+.action-btns { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
+.action-btn {
+  width: 100%; display: flex; align-items: center; justify-content: center;
+  gap: 6px; padding: 10px; border-radius: 8px;
+  font-weight: 700; font-size: 14px; cursor: pointer;
+  border: none; background: var(--accent); color: #fff;
+  text-decoration: none; transition: background 0.15s;
+}
+.action-btn.secondary {
+  background: var(--btn-secondary-bg); color: var(--btn-secondary-color);
+  border: 1px solid var(--btn-secondary-border);
+}
+.action-btn.danger { background: none; border: 1px solid var(--danger); color: var(--danger); }
+.action-btn.danger:hover { background: #fee2e2; }
+
+.badge {
+  display: inline-flex; align-items: center;
+  padding: 3px 10px; border-radius: 999px;
+  font-size: 12px; font-weight: 700; white-space: nowrap;
+}
+.badge-paid    { background:#dcfce7;color:#166534; }
+.badge-partial { background:#fef9c3;color:#854d0e; }
+.badge-on-del  { background:#f1f5f9;color:#475569; }
+.badge-queued      { background:#e0f2fe;color:#0369a1; }
+.badge-in-progress { background:#fef3c7;color:#92400e; }
+.badge-ready       { background:#d1fae5;color:#065f46; }
+.badge-shipping    { background:#ede9fe;color:#5b21b6; }
+.badge-delivered   { background:#dcfce7;color:#166534; }
+.badge-cancelled   { background:#fee2e2;color:#991b1b; }
+[data-theme="dark"] .badge-paid    { background:#14532d;color:#86efac; }
+[data-theme="dark"] .badge-partial { background:#713f12;color:#fde68a; }
+[data-theme="dark"] .badge-on-del  { background:#1e293b;color:#94a3b8; }
+[data-theme="dark"] .badge-queued      { background:#0c4a6e;color:#7dd3fc; }
+[data-theme="dark"] .badge-in-progress { background:#78350f;color:#fcd34d; }
+[data-theme="dark"] .badge-ready       { background:#064e3b;color:#6ee7b7; }
+[data-theme="dark"] .badge-shipping    { background:#4c1d95;color:#c4b5fd; }
+[data-theme="dark"] .badge-delivered   { background:#14532d;color:#86efac; }
+[data-theme="dark"] .badge-cancelled   { background:#7f1d1d;color:#fca5a5; }
+
+@media (max-width:860px) {
+  .detail-layout { grid-template-columns: 1fr; }
+  .status-sidebar { position: static; }
+}
+{% endblock %}
+
+{% block content %}
+<div style="margin-top:20px;">
+  <!-- Header -->
+  <div style="display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:16px;">
+    <a href="{% url 'orders:list' %}" style="color:var(--muted);text-decoration:none;font-size:14px;">← Navbat</a>
+    <h2 style="margin:0;font-size:22px;">{{ order.order_number }}</h2>
+    <span class="badge {{ order.payment_status|payment_badge }}">{{ order.get_payment_status_display }}</span>
+    <span class="badge {{ order.production_status|status_badge }}">{{ order.get_production_status_display }}</span>
+    <span style="font-size:13px;color:var(--muted);margin-left:auto;">
+      {{ order.sold_by.get_full_name|default:order.sold_by.username }} •
+      {{ order.created_at|date:"d.m.Y H:i" }}
+    </span>
+  </div>
+
+  <div class="detail-layout">
+    <div>
+      <!-- Mijoz -->
+      <div class="panel detail-section">
+        <h3>👤 Mijoz</h3>
+        <div class="detail-row"><span>Ismi</span><strong>{{ order.customer_name }}</strong></div>
+        <div class="detail-row"><span>Telefon</span><strong>{{ order.customer_phone }}</strong></div>
+      </div>
+
+      <!-- Manzil -->
+      <div class="panel detail-section">
+        <h3>📍 Manzil</h3>
+        <div class="detail-row"><span>Viloyat</span><strong>{{ order.region }}</strong></div>
+        <div class="detail-row"><span>Tuman</span><strong>{{ order.district }}</strong></div>
+        <div class="detail-row"><span>Shahar</span><strong>{{ order.city }}</strong></div>
+        {% if order.landmark %}
+          <div class="detail-row"><span>Mo'ljal</span><strong>{{ order.landmark }}</strong></div>
+        {% endif %}
+        <div class="detail-row"><span>Yetkazish</span><strong>{{ order.get_delivery_type_display }}</strong></div>
+        <div class="detail-row"><span>To'lov turi</span><strong>{{ order.get_payment_type_display }}</strong></div>
+      </div>
+
+      <!-- Konfiguratsiyalar -->
+      <div class="panel detail-section">
+        <h3>🖥 Konfiguratsiyalar</h3>
+        {% for item in order.items.all %}
+          <div class="config-item">
+            <span class="label">{{ item.config_label }}</span>
+            <span class="qty">× {{ item.quantity }}</span>
+            <span class="price">{% widthratio item.unit_price_usd 1 usd_rate %} so'm</span>
+          </div>
+        {% endfor %}
+        <div style="display:flex;justify-content:space-between;margin-top:12px;padding-top:10px;border-top:1px solid var(--line);">
+          <strong style="font-size:15px;">Jami:</strong>
+          <div style="text-align:right;">
+            <div style="font-weight:800;font-size:17px;color:var(--accent-dark)">{{ order.total_price_uzs|floatformat:0 }} so'm</div>
+          </div>
+        </div>
+      </div>
+
+      {% if order.notes %}
+        <div class="panel detail-section">
+          <h3>💬 Izoh</h3>
+          <p style="margin:0;font-size:14px;color:var(--muted);">{{ order.notes }}</p>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Right sidebar: status & actions -->
+    <aside>
+      <div class="panel status-sidebar">
+        <h3>Holat</h3>
+        {% for s in status_flow %}
+          <div class="status-step
+            {% if order.production_status == s %}current
+            {% elif order.production_status|status_badge > s|status_badge %}done
+            {% endif %}">
+            <div class="status-dot
+              {% if order.production_status == s %}current
+              {% endif %}">
+            </div>
+            {{ s|status_label }}
+          </div>
+        {% endfor %}
+        {% if order.production_status == 'CANCELLED' %}
+          <div class="status-step" style="color:var(--danger);font-weight:700;">
+            <div class="status-dot" style="background:var(--danger);"></div>
+            Bekor qilindi
+          </div>
+        {% endif %}
+
+        <div class="action-btns">
+          {% with next=order.production_status|next_status %}
+            {% if next %}
+              <button class="action-btn" onclick="updateStatus('{{ next }}')">
+                {{ next|status_label }} →
+              </button>
+            {% endif %}
+          {% endwith %}
+
+          <a href="{% url 'orders:detail' order.pk %}?edit=1" class="action-btn secondary"
+             onclick="event.preventDefault(); document.getElementById('edit-modal').style.display='flex'">
+            ✏️ Tahrirlash
+          </a>
+
+          {% if order.production_status != 'CANCELLED' %}
+            <button class="action-btn danger" onclick="updateStatus('CANCELLED')">
+              ✕ Bekor qilish
+            </button>
+          {% endif %}
+        </div>
+      </div>
+
+      {% if order.delivered_at %}
+        <div class="panel" style="padding:14px 18px;margin-top:10px;font-size:13px;color:var(--muted);text-align:center;">
+          Yetkazib berildi: <strong style="color:var(--text);">{{ order.delivered_at|date:"d.m.Y H:i" }}</strong>
+        </div>
+      {% endif %}
+    </aside>
+  </div>
+</div>
+
+<!-- Status update form (hidden) -->
+<form id="status-form" method="post" action="{% url 'orders:update_status' order.pk %}" style="display:none;">
+  {% csrf_token %}
+  <input type="hidden" name="status" id="status-input">
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function updateStatus(status) {
+  if (!confirm(`Holatni "${status}" ga o'zgartirish?`)) return;
+  document.getElementById('status-input').value = status;
+  document.getElementById('status-form').submit();
+}
+</script>
+{% endblock %}

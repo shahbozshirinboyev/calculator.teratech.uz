@@ -1,0 +1,320 @@
+{% extends "base.html" %}
+{% block title %}Buyurtmalar — Navbat{% endblock %}
+
+{% block extra_css %}
+.rate-bar {
+  display: none !important;
+}
+.orders-layout { margin-top: 20px; }
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 16px;
+  border-bottom: 2px solid var(--line);
+  padding-bottom: 0;
+}
+
+.tab-btn {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  padding: 10px 18px;
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--muted);
+  cursor: pointer;
+  border-radius: 0;
+  min-height: unset;
+  transition: color 0.15s, border-color 0.15s;
+}
+.tab-btn:hover { color: var(--text); }
+.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+.filters-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 16px;
+  align-items: flex-end;
+}
+.filters-bar select,
+.filters-bar input[type="date"] {
+  min-height: 38px;
+  font-size: 13px;
+  padding: 6px 36px 6px 10px;
+  width: auto;
+  min-width: 140px;
+}
+.filters-bar button {
+  min-height: 38px;
+  padding: 6px 14px;
+  font-size: 13px;
+}
+.filter-label { font-size: 12px; color: var(--muted); margin-bottom: 3px; display: block; }
+
+.new-order-btn {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.order-card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 16px 18px;
+  margin-bottom: 10px;
+  transition: border-color 0.15s;
+}
+.order-card:hover { border-color: var(--accent); }
+
+.order-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+.order-number {
+  font-weight: 800;
+  font-size: 15px;
+  color: var(--accent-dark);
+  text-decoration: none;
+}
+.order-number:hover { text-decoration: underline; }
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.badge-paid    { background: #dcfce7; color: #166534; }
+.badge-partial { background: #fef9c3; color: #854d0e; }
+.badge-on-del  { background: #f1f5f9; color: #475569; }
+.badge-queued      { background: #e0f2fe; color: #0369a1; }
+.badge-in-progress { background: #fef3c7; color: #92400e; }
+.badge-ready       { background: #d1fae5; color: #065f46; }
+.badge-shipping    { background: #ede9fe; color: #5b21b6; }
+.badge-delivered   { background: #dcfce7; color: #166534; }
+.badge-cancelled   { background: #fee2e2; color: #991b1b; }
+
+[data-theme="dark"] .badge-paid    { background: #14532d; color: #86efac; }
+[data-theme="dark"] .badge-partial { background: #713f12; color: #fde68a; }
+[data-theme="dark"] .badge-on-del  { background: #1e293b; color: #94a3b8; }
+[data-theme="dark"] .badge-queued      { background: #0c4a6e; color: #7dd3fc; }
+[data-theme="dark"] .badge-in-progress { background: #78350f; color: #fcd34d; }
+[data-theme="dark"] .badge-ready       { background: #064e3b; color: #6ee7b7; }
+[data-theme="dark"] .badge-shipping    { background: #4c1d95; color: #c4b5fd; }
+[data-theme="dark"] .badge-delivered   { background: #14532d; color: #86efac; }
+[data-theme="dark"] .badge-cancelled   { background: #7f1d1d; color: #fca5a5; }
+
+.order-meta {
+  font-size: 13px;
+  color: var(--muted);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  margin-bottom: 10px;
+}
+.order-meta strong { color: var(--text); }
+
+.order-items-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+.order-item-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  background: var(--bg);
+  border-radius: 6px;
+  padding: 5px 10px;
+  gap: 8px;
+}
+.order-item-row .item-label { flex: 1; font-weight: 600; }
+.order-item-row .item-qty   { color: var(--muted); white-space: nowrap; }
+
+.order-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+.order-total { font-weight: 700; font-size: 15px; }
+.order-total-uzs { font-size: 13px; color: var(--muted); }
+
+.status-btns {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.status-btn {
+  font-size: 12px;
+  font-weight: 700;
+  min-height: 34px;
+  padding: 5px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  background: var(--btn-secondary-bg);
+  color: var(--btn-secondary-color);
+  border: 1px solid var(--btn-secondary-border);
+  transition: background 0.15s, border-color 0.15s;
+}
+.status-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--toggle-bg); }
+.status-btn.next-step { background: var(--accent); color: #fff; border-color: var(--accent); }
+.status-btn.cancel-btn { border-color: var(--danger); color: var(--danger); }
+.status-btn.cancel-btn:hover { background: #fee2e2; }
+
+.seller-tag {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.empty-state {
+  text-align: center;
+  padding: 48px 20px;
+  color: var(--muted);
+  font-size: 15px;
+}
+
+@media (max-width: 640px) {
+  .filters-bar select, .filters-bar input[type="date"] { width: 100%; }
+  .new-order-btn { margin-left: 0; width: 100%; justify-content: center; }
+}
+{% endblock %}
+
+{% block content %}
+<div class="orders-layout">
+
+  <!-- Tabs -->
+  <div style="display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:0;">
+    <div class="tabs" style="flex:1;min-width:200px;">
+      <button class="tab-btn {% if tab == 'queue' %}active{% endif %}" onclick="switchTab('queue')">
+        Navbat
+        <span style="margin-left:4px;opacity:0.7;font-weight:400;">({{ queue_count }})</span>
+      </button>
+      <button class="tab-btn {% if tab == 'done' %}active{% endif %}" onclick="switchTab('done')">
+        Yakunlangan
+        <span style="margin-left:4px;opacity:0.7;font-weight:400;">({{ done_count }})</span>
+      </button>
+    </div>
+    <a href="{% url 'orders:create' %}" class="new-order-btn" style="display:inline-flex;align-items:center;gap:6px;padding:10px 16px;border-radius:8px;background:var(--accent);color:#fff;text-decoration:none;font-weight:700;font-size:14px;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+        <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
+      </svg>
+      Yangi buyurtma
+    </a>
+  </div>
+
+  <!-- Filters -->
+  <form method="get" id="filter-form">
+    <input type="hidden" name="tab" value="{{ tab }}">
+    <div class="filters-bar" style="margin-top:14px;">
+      <div>
+        <span class="filter-label">Sotuvchi</span>
+        <select name="sold_by" onchange="this.form.submit()">
+          <option value="">Barchasi</option>
+          {% for seller in sellers %}
+            <option value="{{ seller.pk }}" {% if filters.sold_by == seller.pk|stringformat:"s" %}selected{% endif %}>
+              {{ seller.get_full_name|default:seller.username }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <span class="filter-label">Yetkazish</span>
+        <select name="delivery_type" onchange="this.form.submit()">
+          <option value="">Barchasi</option>
+          {% for val, label in delivery_choices %}
+            <option value="{{ val }}" {% if filters.delivery_type == val %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <span class="filter-label">To'lov holati</span>
+        <select name="payment_status" onchange="this.form.submit()">
+          <option value="">Barchasi</option>
+          {% for val, label in payment_status_choices %}
+            <option value="{{ val }}" {% if filters.payment_status == val %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <span class="filter-label">Dan</span>
+        <input type="date" name="date_from" value="{{ filters.date_from }}" onchange="this.form.submit()">
+      </div>
+      <div>
+        <span class="filter-label">Gacha</span>
+        <input type="date" name="date_to" value="{{ filters.date_to }}" onchange="this.form.submit()">
+      </div>
+      {% if filters.sold_by or filters.delivery_type or filters.payment_status or filters.date_from or filters.date_to %}
+        <a href="?tab={{ tab }}" style="display:inline-flex;align-items:center;font-size:13px;color:var(--danger);text-decoration:none;padding:6px 0;">
+          ✕ Tozalash
+        </a>
+      {% endif %}
+    </div>
+  </form>
+
+  <!-- Queue tab -->
+  <div id="tab-queue" {% if tab != 'queue' %}style="display:none"{% endif %}>
+    {% for order in queue_orders %}
+      {% include "orders/_order_card.html" with order=order show_status_btns=True %}
+    {% empty %}
+      <div class="empty-state">Navbatda buyurtma yo'q</div>
+    {% endfor %}
+  </div>
+
+  <!-- Done tab -->
+  <div id="tab-done" {% if tab != 'done' %}style="display:none"{% endif %}>
+    {% for order in done_orders %}
+      {% include "orders/_order_card.html" with order=order show_status_btns=False %}
+    {% empty %}
+      <div class="empty-state">Yakunlangan buyurtma yo'q</div>
+    {% endfor %}
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function switchTab(tab) {
+  const form = document.getElementById('filter-form');
+  form.querySelector('[name="tab"]').value = tab;
+  form.submit();
+}
+
+function updateStatus(orderId, status) {
+  const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]') 
+    ? document.querySelector('[name=csrfmiddlewaretoken]').value
+    : '{{ csrf_token }}';
+  fetch(`/orders/${orderId}/status/`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'X-CSRFToken': csrfToken,
+    },
+    body: `status=${encodeURIComponent(status)}`,
+  }).then(r => r.json()).then(data => {
+    if (data.status) location.reload();
+  });
+}
+</script>
+{% csrf_token %}
+{% endblock %}

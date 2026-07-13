@@ -32,8 +32,6 @@ urlpatterns = [
     path('', include('calculator.urls')),
     path('monitors/', include('monitors.urls')),
     path('printers/', include('printers.urls')),
-    path('laptops/', include('laptops.urls')),
-    path('branded-aio/', include('branded_aio.urls')),
-    path('branded-pc/', include('branded_pc.urls')),
+    path('orders/', include('orders.urls')),
     path('admin/', admin.site.urls),
 ]

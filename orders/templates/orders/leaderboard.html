@@ -1,0 +1,275 @@
+{% extends "base.html" %}
+{% block title %}Sotuv reytingi{% endblock %}
+
+{% block extra_css %}
+.lb-layout { margin-top: 20px; }
+
+.lb-header {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.lb-header h2 { margin: 0; font-size: 22px; }
+
+.period-tabs {
+  display: flex;
+  gap: 4px;
+  background: var(--toggle-bg);
+  border-radius: 8px;
+  padding: 4px;
+  margin-left: auto;
+}
+
+.period-tab {
+  padding: 7px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted);
+  text-decoration: none;
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+
+.period-tab:hover { color: var(--text); }
+.period-tab.active {
+  background: var(--panel);
+  color: var(--text);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+}
+
+.podium {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 12px;
+  margin-bottom: 32px;
+  flex-wrap: wrap;
+}
+
+.podium-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 160px;
+}
+
+.podium-medal {
+  font-size: 36px;
+  margin-bottom: 6px;
+}
+
+.podium-name {
+  font-weight: 800;
+  font-size: 15px;
+  text-align: center;
+  margin-bottom: 4px;
+}
+
+.podium-units {
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+.podium-bar-wrap {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.podium-bar {
+  width: 100%;
+  border-radius: 8px 8px 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 16px;
+  color: #fff;
+  min-height: 40px;
+}
+
+.podium-1st .podium-bar { background: linear-gradient(135deg, #f59e0b, #d97706); height: 120px; }
+.podium-2nd .podium-bar { background: linear-gradient(135deg, #94a3b8, #64748b); height: 90px; }
+.podium-3rd .podium-bar { background: linear-gradient(135deg, #b45309, #92400e); height: 70px; }
+
+.lb-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.lb-table th {
+  text-align: left;
+  padding: 10px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  border-bottom: 2px solid var(--line);
+}
+
+.lb-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--line);
+  font-size: 14px;
+  vertical-align: middle;
+}
+
+.lb-table tr:last-child td { border-bottom: none; }
+.lb-table tr:hover td { background: var(--bg); }
+
+.rank-num {
+  font-weight: 800;
+  font-size: 18px;
+  color: var(--muted);
+  width: 40px;
+  text-align: center;
+}
+
+.progress-bar-wrap {
+  background: var(--toggle-bg);
+  border-radius: 4px;
+  height: 6px;
+  width: 100%;
+  margin-top: 4px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  background: var(--accent);
+  transition: width 0.4s ease;
+}
+
+.seller-name { font-weight: 700; }
+.seller-units { font-size: 13px; color: var(--muted); }
+
+.cancelled-note {
+  font-size: 12px;
+  color: var(--danger);
+  margin-top: 2px;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--muted);
+  font-size: 15px;
+}
+
+@media (max-width: 640px) {
+  .period-tabs { margin-left: 0; width: 100%; }
+  .podium-item { width: 100px; }
+  .lb-table th:nth-child(4),
+  .lb-table td:nth-child(4) { display: none; }
+}
+{% endblock %}
+
+{% block content %}
+<div class="lb-layout">
+  <div class="lb-header">
+    <h2>🏆 Sotuv reytingi</h2>
+    <div class="period-tabs">
+      <a href="?period=today" class="period-tab {% if period == 'today' %}active{% endif %}">Bugun</a>
+      <a href="?period=week"  class="period-tab {% if period == 'week'  %}active{% endif %}">Hafta</a>
+      <a href="?period=month" class="period-tab {% if period == 'month' %}active{% endif %}">Oy</a>
+      <a href="?period=all"   class="period-tab {% if period == 'all'   %}active{% endif %}">Barchasi</a>
+    </div>
+  </div>
+
+  {% if board %}
+    <!-- Podium: top 3 -->
+    {% if board|length >= 2 %}
+    <div class="podium">
+      {% if board|length >= 2 %}
+        <div class="podium-item podium-2nd">
+          <div class="podium-medal">🥈</div>
+          <div class="podium-name">{{ board.1.seller.get_full_name|default:board.1.seller.username }}</div>
+          <div class="podium-units">{{ board.1.units_sold }} ta</div>
+          <div class="podium-bar-wrap">
+            <div class="podium-bar">{{ board.1.total_uzs|floatformat:0 }} so'm</div>
+          </div>
+        </div>
+      {% endif %}
+      <div class="podium-item podium-1st">
+        <div class="podium-medal">🥇</div>
+        <div class="podium-name">{{ board.0.seller.get_full_name|default:board.0.seller.username }}</div>
+        <div class="podium-units">{{ board.0.units_sold }} ta</div>
+        <div class="podium-bar-wrap">
+          <div class="podium-bar">{{ board.0.total_uzs|floatformat:0 }} so'm</div>
+        </div>
+      </div>
+      {% if board|length >= 3 %}
+        <div class="podium-item podium-3rd">
+          <div class="podium-medal">🥉</div>
+          <div class="podium-name">{{ board.2.seller.get_full_name|default:board.2.seller.username }}</div>
+          <div class="podium-units">{{ board.2.units_sold }} ta</div>
+          <div class="podium-bar-wrap">
+            <div class="podium-bar">{{ board.2.total_uzs|floatformat:0 }} so'm</div>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Full table -->
+    <div class="panel" style="overflow-x:auto;">
+      <table class="lb-table">
+        <thead>
+          <tr>
+            <th style="width:48px;">#</th>
+            <th>Sotuvchi</th>
+            <th>Dona soni</th>
+            <th>Buyurtmalar</th>
+            <th>Jami (USD)</th>
+            <th>Jami (so'm)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for entry in board %}
+          {% with max_units=board.0.units_sold %}
+          <tr>
+            <td class="rank-num">
+              {% if forloop.counter == 1 %}🥇
+              {% elif forloop.counter == 2 %}🥈
+              {% elif forloop.counter == 3 %}🥉
+              {% else %}{{ forloop.counter }}{% endif %}
+            </td>
+            <td>
+              <div class="seller-name">
+                {{ entry.seller.get_full_name|default:entry.seller.username }}
+              </div>
+              {% if entry.cancelled > 0 %}
+                <div class="cancelled-note">{{ entry.cancelled }} ta bekor qilindi</div>
+              {% endif %}
+              {% if max_units > 0 %}
+                <div class="progress-bar-wrap">
+                  <div class="progress-bar-fill" style="width:{% widthratio entry.units_sold max_units 100 %}%"></div>
+                </div>
+              {% endif %}
+            </td>
+            <td>
+              <strong style="font-size:18px;">{{ entry.units_sold }}</strong>
+              <span style="color:var(--muted);font-size:12px;"> ta</span>
+            </td>
+            <td>{{ entry.order_count }}</td>
+            <td><strong style="color:var(--accent-dark);">{{ entry.total_uzs|floatformat:0 }} so'm</strong></td>
+          </tr>
+          {% endwith %}
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="empty-state">
+      Bu davr uchun sotuv ma'lumotlari yo'q
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

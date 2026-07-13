@@ -1,0 +1,603 @@
+{% extends "base.html" %}
+{% block title %}{% if order %}Buyurtmani tahrirlash{% else %}Yangi buyurtma{% endif %}{% endblock %}
+
+{% block extra_css %}
+.rate-bar {
+  display: none !important;
+}
+.order-form-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 20px;
+  align-items: start;
+  margin-top: 20px;
+}
+.form-section { padding: 20px; }
+.form-section h3 {
+  margin: 0 0 16px; font-size: 16px; font-weight: 700;
+  color: var(--accent-dark); border-bottom: 1px solid var(--line); padding-bottom: 10px;
+}
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+.form-row.full { grid-template-columns: 1fr; }
+.form-row.three { grid-template-columns: 1fr 1fr 1fr; }
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field label { font-weight: 700; font-size: 13px; }
+.field input[type="text"],
+.field input[type="tel"],
+.field input[type="number"],
+.field textarea,
+.field select {
+  min-height: 40px; border: 1px solid var(--input-border); border-radius: 6px;
+  padding: 8px 10px; background: var(--input-bg); color: var(--text);
+  font: inherit; font-size: 14px; width: 100%;
+}
+#customer_phone {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  font-size: 15px;
+  letter-spacing: 0.3px;
+}
+.field textarea { min-height: 80px; resize: vertical; }
+
+/* Custom autocomplete dropdown */
+.autocomplete-wrapper { position: relative; }
+.autocomplete-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--panel);
+  border: 1px solid var(--input-border);
+  border-top: none;
+  border-radius: 0 0 6px 6px;
+  max-height: 250px;
+  overflow-y: auto;
+  z-index: 1000;
+  display: none;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+.autocomplete-dropdown.active { display: block; }
+.autocomplete-item {
+  padding: 10px 12px;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--text);
+  border-bottom: 1px solid var(--line);
+}
+.autocomplete-item:last-child { border-bottom: none; }
+.autocomplete-item:hover,
+.autocomplete-item.selected {
+  background: var(--toggle-bg);
+}
+.autocomplete-empty {
+  padding: 12px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.item-row {
+  display: grid; grid-template-columns: 1fr 80px 110px 38px;
+  gap: 8px; align-items: end; margin-bottom: 10px;
+  background: var(--bg); border-radius: 8px; padding: 10px;
+}
+.item-row .field label { font-size: 12px; }
+.remove-item-btn {
+  background: none; border: 1px solid var(--danger); color: var(--danger);
+  border-radius: 6px; min-height: 40px; width: 38px; padding: 0; font-size: 18px;
+  display: flex; align-items: center; justify-content: center; cursor: pointer;
+}
+.remove-item-btn:hover { background: #fee2e2; }
+.add-item-btn {
+  background: none; border: 1px dashed var(--accent); color: var(--accent);
+  border-radius: 8px; width: 100%; padding: 10px; font-weight: 700;
+  font-size: 13px; cursor: pointer; min-height: 40px; margin-top: 4px;
+}
+.add-item-btn:hover { background: var(--toggle-bg); }
+.summary-panel { padding: 20px; position: sticky; top: 16px; }
+.summary-panel h3 { margin: 0 0 14px; font-size: 16px; }
+.summary-line {
+  display: flex; justify-content: space-between; align-items: baseline;
+  padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 14px; gap: 10px;
+}
+.summary-line span:first-child { color: var(--muted); }
+.summary-total { display: flex; justify-content: space-between; align-items: baseline; margin-top: 14px; font-size: 15px; font-weight: 700; }
+.summary-total strong { color: var(--accent-dark); }
+.form-actions { display: flex; gap: 10px; margin-top: 20px; }
+.error-box {
+  background: #fee2e2; border: 1px solid #fca5a5; border-radius: 8px;
+  padding: 12px 16px; color: #991b1b; font-size: 14px; margin-bottom: 16px;
+}
+[data-theme="dark"] .error-box { background: #7f1d1d; border-color: #b91c1c; color: #fca5a5; }
+@media (max-width: 860px) {
+  .order-form-layout { grid-template-columns: 1fr; }
+  .summary-panel { position: static; }
+  .form-row, .form-row.three { grid-template-columns: 1fr; }
+  .item-row { grid-template-columns: 1fr 70px 100px 38px; }
+}
+@media (max-width: 480px) {
+  .item-row { grid-template-columns: 1fr; }
+  .remove-item-btn { width: 100%; }
+}
+{% endblock %}
+
+{% block content %}
+<div style="margin-top:20px;">
+  {% if error %}
+    <div class="error-box">{{ error }}</div>
+  {% endif %}
+
+  <form method="post" id="order-form">
+    {% csrf_token %}
+    {% if order %}
+      <input type="hidden" name="production_status" value="{{ order.production_status }}">
+    {% endif %}
+
+    <div class="order-form-layout">
+      <div>
+        <!-- I. Mijoz ma'lumotlari -->
+        <div class="panel form-section" style="margin-bottom:16px;">
+          <h3>I. Mijoz ma'lumotlari</h3>
+          <div class="form-row">
+            <div class="field">
+              <label>Ismi *</label>
+              <input type="text" name="customer_name" value="{{ v_customer_name }}" placeholder="Ism Familiya" required>
+            </div>
+            <div class="field">
+              <label>Telefon raqami *</label>
+              <input type="tel" name="customer_phone" id="customer_phone" value="{{ v_customer_phone }}" placeholder="+998 −− −−− −− −−" pattern="\d{9}" required>
+            </div>
+          </div>
+        </div>
+
+        <!-- II. Manzil ma'lumotlari -->
+        <div class="panel form-section" style="margin-bottom:16px;">
+          <h3>II. Manzil ma'lumotlari</h3>
+          <div class="form-row">
+            <div class="field">
+              <label>Viloyat *</label>
+              <div class="autocomplete-wrapper">
+                <input type="text" name="region" id="region-input" value="{{ v_region }}" placeholder="Tanlang yoki yozing" required autocomplete="off">
+                <div class="autocomplete-dropdown" id="region-dropdown"></div>
+              </div>
+            </div>
+            <div class="field">
+              <label>Shahar / Tuman *</label>
+              <div class="autocomplete-wrapper">
+                <input type="text" name="district" id="district-input" value="{{ v_district }}" placeholder="Avval viloyatni tanlang" required autocomplete="off">
+                <div class="autocomplete-dropdown" id="district-dropdown"></div>
+              </div>
+            </div>
+          </div>
+          <div class="form-row full">
+            <div class="field">
+              <label>Qo'shimcha manzil (ixtiyoriy)</label>
+              <input type="text" name="city" value="{{ v_city }}" placeholder="Ko'cha, uy raqami, orientir...">
+            </div>
+          </div>
+          <input type="hidden" name="landmark" value="{{ v_landmark }}">
+        </div>
+
+        <!-- III. AIO ma'lumotlari -->
+        <div class="panel form-section" style="margin-bottom:16px;">
+          <h3>III. AIO ma'lumotlari</h3>
+          <div id="items-container">
+            {% if order %}
+              {% for item in order.items.all %}
+                <div class="item-row">
+                  <div class="field"><label>Konfiguratsiya *</label>
+                    <input type="text" name="config_label" value="{{ item.config_label }}" placeholder="i5 / 16GB / 512GB SSD" required></div>
+                  <div class="field"><label>Soni</label>
+                    <input type="number" name="quantity" value="{{ item.quantity }}" min="1" required oninput="calcTotal()"></div>
+                  <div class="field"><label>Dona narxi (so'm)</label>
+                    <input type="number" name="unit_price_uzs" value="{% widthratio item.unit_price_usd 1 usd_rate %}" step="1000" min="0" oninput="calcTotal()"></div>
+                  <button type="button" class="remove-item-btn" onclick="removeItem(this)" title="O'chirish">×</button>
+                </div>
+              {% endfor %}
+            {% elif initial_items %}
+              {% for item in initial_items %}
+                <div class="item-row">
+                  <div class="field"><label>Konfiguratsiya *</label>
+                    <input type="text" name="config_label" value="{{ item.config_label }}" placeholder="i5 / 16GB / 512GB SSD" required></div>
+                  <div class="field"><label>Soni</label>
+                    <input type="number" name="quantity" value="{{ item.quantity }}" min="1" required oninput="calcTotal()"></div>
+                  <div class="field"><label>Dona narxi (so'm)</label>
+                    <input type="number" name="unit_price_uzs" value="{% widthratio item.unit_price_usd 1 usd_rate %}" step="1000" min="0" oninput="calcTotal()"></div>
+                  <button type="button" class="remove-item-btn" onclick="removeItem(this)" title="O'chirish">×</button>
+                </div>
+              {% endfor %}
+            {% else %}
+              <div class="item-row">
+                <div class="field"><label>Konfiguratsiya *</label>
+                  <input type="text" name="config_label" placeholder="i5 / 16GB / 512GB SSD" required></div>
+                <div class="field"><label>Soni</label>
+                  <input type="number" name="quantity" value="1" min="1" required oninput="calcTotal()"></div>
+                <div class="field"><label>Dona narxi (so'm)</label>
+                  <input type="number" name="unit_price_uzs" value="0" step="1000" min="0" oninput="calcTotal()"></div>
+                <button type="button" class="remove-item-btn" onclick="removeItem(this)" title="O'chirish">×</button>
+              </div>
+            {% endif %}
+          </div>
+          <button type="button" class="add-item-btn" onclick="addItem()">+ Yana konfiguratsiya qo'shish</button>
+        </div>
+
+        <!-- IV. To'lov ma'lumotlari -->
+        <div class="panel form-section" style="margin-bottom:16px;">
+          <h3>IV. To'lov ma'lumotlari</h3>
+          <div class="form-row">
+            <div class="field">
+              <label>Jami narx (so'm) *</label>
+              <input type="number" name="total_price_uzs" id="total_price_uzs" value="{{ v_total_uzs }}" step="1000" min="0" required>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="field">
+              <label>To'lov turi *</label>
+              <select name="payment_type" required>
+                <option value="">Tanlang</option>
+                {% for val, label in payment_type_choices %}
+                  <option value="{{ val }}" {% if v_payment_type == val %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="field">
+              <label>To'lov holati *</label>
+              <select name="payment_status" required>
+                {% for val, label in payment_status_choices %}
+                  <option value="{{ val }}" {% if v_payment_status == val %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- V. Qo'shimcha ma'lumotlar -->
+        <div class="panel form-section" style="margin-bottom:16px;">
+          <h3>V. Qo'shimcha ma'lumotlar</h3>
+          <div class="form-row">
+            <div class="field">
+              <label>Yetkazish turi *</label>
+              <select name="delivery_type" required>
+                <option value="">Tanlang</option>
+                {% for val, label in delivery_choices %}
+                  <option value="{{ val }}" {% if v_delivery_type == val %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+          <div class="form-row full">
+            <div class="field">
+              <label>Izoh (ixtiyoriy)</label>
+              <textarea name="notes" placeholder="Maxsus talablar, eslatmalar...">{{ v_notes }}</textarea>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit">{% if order %}Saqlash{% else %}Buyurtma yaratish{% endif %}</button>
+          <a href="{% if order %}{% url 'orders:detail' order.pk %}{% else %}{% url 'orders:list' %}{% endif %}"
+             style="display:inline-flex;align-items:center;padding:10px 16px;border-radius:6px;background:var(--btn-secondary-bg);color:var(--btn-secondary-color);border:1px solid var(--btn-secondary-border);font-weight:700;text-decoration:none;font-size:14px;">
+            Bekor qilish
+          </a>
+        </div>
+      </div>
+
+      <!-- Summary sidebar -->
+      <aside class="panel summary-panel">
+        <h3>Buyurtma xulosasi</h3>
+        <div class="summary-line"><span>Mijoz:</span><strong id="s-customer">—</strong></div>
+        <div class="summary-line"><span>Yetkazish:</span><strong id="s-delivery">—</strong></div>
+        <div class="summary-line"><span>To'lov:</span><strong id="s-payment">—</strong></div>
+        <div class="summary-line"><span>Holati:</span><strong id="s-status">—</strong></div>
+        <div id="s-items-list" style="margin:8px 0;"></div>
+        <div class="summary-total"><span>Jami:</span><strong id="s-total">0 so'm</strong></div>
+      </aside>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/imask@7.1.3/dist/imask.min.js"></script>
+<script>
+const deliveryLabels = { {% for v,l in delivery_choices %}"{{ v }}":"{{ l }}"{% if not forloop.last %},{% endif %}{% endfor %} };
+const paymentTypeLabels = { {% for v,l in payment_type_choices %}"{{ v }}":"{{ l }}"{% if not forloop.last %},{% endif %}{% endfor %} };
+const paymentStatusLabels = { {% for v,l in payment_status_choices %}"{{ v }}":"{{ l }}"{% if not forloop.last %},{% endif %}{% endfor %} };
+
+function addItem() {
+  const container = document.getElementById('items-container');
+  const row = document.createElement('div');
+  row.className = 'item-row';
+  row.innerHTML = `
+    <div class="field"><label>Konfiguratsiya *</label>
+      <input type="text" name="config_label" placeholder="i5/16GB/512GB SSD" required></div>
+    <div class="field"><label>Soni</label>
+      <input type="number" name="quantity" value="1" min="1" required oninput="calcTotal()"></div>
+    <div class="field"><label>Dona narxi (so'm)</label>
+      <input type="number" name="unit_price_uzs" value="0" step="1000" min="0" oninput="calcTotal()"></div>
+    <button type="button" class="remove-item-btn" onclick="removeItem(this)">×</button>`;
+  container.appendChild(row);
+  row.querySelector('input[name="config_label"]').focus();
+}
+
+function removeItem(btn) {
+  if (document.querySelectorAll('.item-row').length <= 1) return;
+  btn.closest('.item-row').remove();
+  calcTotal();
+}
+
+function calcTotal() {
+  let sum = 0;
+  const itemsHtml = [];
+  document.querySelectorAll('.item-row').forEach(row => {
+    const label = row.querySelector('[name="config_label"]')?.value || '';
+    const qty = parseInt(row.querySelector('[name="quantity"]')?.value || '1');
+    const priceUzs = parseFloat(row.querySelector('[name="unit_price_uzs"]')?.value || '0');
+    const line = priceUzs * qty;
+    sum += line;
+    if (label) itemsHtml.push(`<div style="display:flex;justify-content:space-between;font-size:13px;padding:4px 0;border-bottom:1px solid var(--line);gap:8px;"><span style="flex:1;color:var(--muted);">${label} ×${qty}</span><strong>${line.toLocaleString('uz-UZ')} so'm</strong></div>`);
+  });
+  document.getElementById('s-items-list').innerHTML = itemsHtml.join('');
+  document.getElementById('s-total').textContent = `${sum.toLocaleString('uz-UZ')} so'm`;
+  const uzsField = document.getElementById('total_price_uzs');
+  if (uzsField && sum > 0) uzsField.value = Math.round(sum);
+}
+
+function updateSummary() {
+  const name = document.querySelector('[name="customer_name"]')?.value || '—';
+  const dt = document.querySelector('[name="delivery_type"]')?.value || '';
+  const pt = document.querySelector('[name="payment_type"]')?.value || '';
+  const ps = document.querySelector('[name="payment_status"]')?.value || '';
+  document.getElementById('s-customer').textContent = name;
+  document.getElementById('s-delivery').textContent = deliveryLabels[dt] || '—';
+  document.getElementById('s-payment').textContent = [paymentTypeLabels[pt], paymentStatusLabels[ps]].filter(Boolean).join(' / ') || '—';
+  document.getElementById('s-status').textContent = paymentStatusLabels[ps] || '—';
+  calcTotal();
+}
+
+document.getElementById('order-form').addEventListener('input', updateSummary);
+document.getElementById('total_price_uzs')?.addEventListener('input', () => {
+  const uzs = parseInt(document.getElementById('total_price_uzs').value || '0');
+  document.getElementById('s-total-uzs').textContent = uzs > 0 ? `${uzs.toLocaleString('uz-UZ')} so'm` : '';
+});
+updateSummary();
+
+// Custom Autocomplete for Regions and Districts (OLX-style)
+(function() {
+  const regionsData = {
+    "Andijon viloyati": ["Oqoltin", "Oltinko'l", "Andijon", "Asaka", "Ahunboboyev", "Baliqchi", "Boz", "Buloqboshi", "Qorasuv", "Kuyganyor", "Kurgantepa", "Marhamat", "Paytug'", "Pahtaobod", "Xonobod", "Xo'jaobod", "Shahrixon"],
+    "Buxoro viloyati": ["Alat", "Buxoro", "Vobkent", "G'azli", "G'ijduvon", "Jondor", "Kogon", "Qorako'l", "Qorovulbozor", "Romitan", "Shofirkon"],
+    "Jizzax viloyati": ["Aydarko'l", "Baland Chaqir", "Gagarin", "G'allaorol", "G'oliblar", "Dashtobod", "Jizzax", "Do'stlik", "Zomin", "Zarbdor", "Zafarobod", "Marjonbuloq", "Paxtakor", "Osmat", "Uchtepa", "Yangiqishloq"],
+    "Qoraqalpog'iston Respublikasi": ["Oqmang'it", "Beruniy", "Bo'ston", "Qanliko'l", "Qorao'zak", "Kegayli", "Qo'ng'irot", "Mang'it", "Mo'ynoq", "Nukus", "Taxiatosh", "Taxtako'pir", "To'rtko'l", "Xo'jayli", "Chimboy", "Shumanay"],
+    "Qashqadaryo viloyati": ["Beshkent", "G'uzor", "Dehqonobod", "Kamashi", "Qarshi", "Koson", "Kasbi", "Kitob", "Muborak", "Mug'lon", "Ta'limarjon", "Chiroqchi", "Shahrisabz", "Yakkabog'", "Yangi Mirishkor", "Yangi Nishon"],
+    "Navoiy viloyati": ["Beshrabot", "Zarafshon", "Konimex", "Karmana", "Qiziltepa", "Navoiy", "Nurota", "Tomdibuloq", "Uchquduq", "Yangirabot"],
+    "Namangan viloyati": ["Jumashuy", "Kosonsoy", "Namangan", "Pop", "Toshbuloq", "To'raqo'rg'on", "Uchqo'rg'on", "Haqqulobod", "Chortoq", "Chust"],
+    "Samarqand viloyati": ["Oqtosh", "Bulung'ur", "Go'zalkent", "Gulobod", "Darband", "Jomboy", "Juma", "Ziyodin", "Ishtixon", "Kattaqo'rg'on", "Qo'shrabot", "Loyish", "Nurobod", "Payariq", "Payshanba", "Samarqand", "Tayloq", "Urgut", "Chelak"],
+    "Surxondaryo viloyati": ["Angor", "Boysun", "Bandixon", "Denov", "Jarqo'rg'on", "Qorliq", "Qiziriq", "Qumqo'rg'on", "Muzrabod", "Sariosiyo", "Sariq", "Termiz", "Uzun", "Uchqizil", "Xalqobod", "Sharg'un", "Sherobod", "Sho'rchi"],
+    "Sirdaryo viloyati": ["Sirdaryo", "Baxt", "Boyovut", "Guliston", "Navro'z", "Sayxun", "Sardoba", "Terenozek", "Xovos", "Shirin", "Yangiyer"],
+    "Toshkent viloyati": ["Oqqo'rg'on", "Olmaliq", "Angren", "Ohangaron", "Bekobod", "Katta Chimyon", "Bo'ka", "G'azalkent", "Gulbahor", "Durmen", "Do'stobod", "Zangiota", "Zafar", "Iskandar", "Qorasuv", "Keles", "Qibray", "Ko'ksaroy", "Krasnogorsk", "Mirobod", "Nazarbek", "Nurafshon (To'ytepa)", "Parkent", "Piskent", "Solar", "Tashmore", "Turkiston", "O'rtaovul", "Xo'jakent", "Chorvoq", "Chinoz", "Chirchiq", "Eshonguzar", "Yangiobod", "Yangibozor", "Yangiyo'l"],
+    "Toshkent shahri": ["Yunusobod tumani", "Mirzo Ulug'bek tumani", "Chilonzor tumani", "Sergeli tumani", "Olmazor tumani", "Yashnobod tumani", "Shayxontohur tumani", "Yakkasaroy tumani", "Mirobod tumani", "Uchtepa tumani", "Bektemir tumani"],
+    "Farg'ona viloyati": ["Oltiariq", "Bog'dod", "Beshariq", "Vodil", "Dang'ara", "Qo'qon", "Quva", "Quvasoy", "Langar", "Marg'ilon", "Navbahor", "Ravon", "Rishton", "Toshloq", "Uchko'prik", "Farg'ona", "Hamza", "Shohimardon", "Yozyovon", "Yaypan", "Yangi Marg'ilon", "Yangiqo'rg'on"],
+    "Xorazm viloyati": ["Bog'ot", "Gurlan", "Qorovul", "Qo'shko'pir", "Pitnak", "Urganch", "Xazorasp", "Xonqa", "Xiva", "Cholish", "Shovot", "Yangiariq"]
+  };
+
+  const regions = Object.keys(regionsData);
+  
+  const regionInput = document.getElementById('region-input');
+  const regionDropdown = document.getElementById('region-dropdown');
+  const districtInput = document.getElementById('district-input');
+  const districtDropdown = document.getElementById('district-dropdown');
+
+  let districtAutocomplete = null;
+
+  // Generic autocomplete function
+  function createAutocomplete(input, dropdown, items, onSelect) {
+    let currentItems = [];
+    let selectedIndex = -1;
+    let handlers = [];
+
+    function filter(query) {
+      if (!query) return items;
+      const lowerQuery = query.toLowerCase();
+      return items.filter(item => item.toLowerCase().includes(lowerQuery));
+    }
+
+    function render(filteredItems) {
+      currentItems = filteredItems;
+      selectedIndex = -1;
+      
+      if (filteredItems.length === 0) {
+        dropdown.innerHTML = '<div class="autocomplete-empty">Hech narsa topilmadi</div>';
+        dropdown.classList.add('active');
+        return;
+      }
+
+      dropdown.innerHTML = filteredItems.map((item, index) => 
+        `<div class="autocomplete-item" data-index="${index}">${item}</div>`
+      ).join('');
+      dropdown.classList.add('active');
+
+      // Add click handlers
+      dropdown.querySelectorAll('.autocomplete-item').forEach((el, index) => {
+        el.addEventListener('click', () => {
+          input.value = filteredItems[index];
+          dropdown.classList.remove('active');
+          if (onSelect) onSelect(filteredItems[index]);
+        });
+      });
+    }
+
+    function close() {
+      dropdown.classList.remove('active');
+      selectedIndex = -1;
+    }
+
+    function selectItem(index) {
+      const items = dropdown.querySelectorAll('.autocomplete-item');
+      items.forEach(el => el.classList.remove('selected'));
+      if (items[index]) {
+        items[index].classList.add('selected');
+        items[index].scrollIntoView({ block: 'nearest' });
+      }
+    }
+
+    const inputHandler = () => {
+      const filtered = filter(input.value);
+      render(filtered);
+    };
+
+    const focusHandler = () => {
+      const filtered = filter(input.value);
+      render(filtered);
+    };
+
+    const keydownHandler = (e) => {
+      const items = dropdown.querySelectorAll('.autocomplete-item');
+      
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        selectedIndex = Math.min(selectedIndex + 1, items.length - 1);
+        selectItem(selectedIndex);
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        selectedIndex = Math.max(selectedIndex - 1, 0);
+        selectItem(selectedIndex);
+      } else if (e.key === 'Enter' && selectedIndex >= 0) {
+        e.preventDefault();
+        input.value = currentItems[selectedIndex];
+        close();
+        if (onSelect) onSelect(currentItems[selectedIndex]);
+      } else if (e.key === 'Escape') {
+        close();
+      }
+    };
+
+    const clickOutsideHandler = (e) => {
+      if (!input.contains(e.target) && !dropdown.contains(e.target)) {
+        close();
+      }
+    };
+
+    input.addEventListener('input', inputHandler);
+    input.addEventListener('focus', focusHandler);
+    input.addEventListener('keydown', keydownHandler);
+    document.addEventListener('click', clickOutsideHandler);
+
+    handlers.push({ input, focusHandler, inputHandler, keydownHandler, clickOutsideHandler });
+
+    // Return cleanup function
+    return {
+      destroy: () => {
+        input.removeEventListener('input', inputHandler);
+        input.removeEventListener('focus', focusHandler);
+        input.removeEventListener('keydown', keydownHandler);
+        document.removeEventListener('click', clickOutsideHandler);
+      },
+      updateItems: (newItems) => {
+        items = newItems;
+      }
+    };
+  }
+
+  // Region autocomplete
+  createAutocomplete(regionInput, regionDropdown, regions, (selectedRegion) => {
+    // Clear district input when region changes
+    districtInput.value = '';
+    districtInput.placeholder = 'Tanlang yoki yozing';
+    
+    // Get districts for selected region
+    const districts = regionsData[selectedRegion] || [];
+    
+    // Destroy old district autocomplete if exists
+    if (districtAutocomplete) {
+      districtAutocomplete.destroy();
+    }
+    
+    // Create new district autocomplete with new items
+    districtAutocomplete = createAutocomplete(districtInput, districtDropdown, districts, null);
+    
+    // Focus on district input and show dropdown immediately
+    setTimeout(() => {
+      districtInput.focus();
+      const filtered = districts;
+      districtDropdown.innerHTML = filtered.map((item, index) => 
+        `<div class="autocomplete-item" data-index="${index}">${item}</div>`
+      ).join('');
+      districtDropdown.classList.add('active');
+      
+      // Add click handlers
+      districtDropdown.querySelectorAll('.autocomplete-item').forEach((el, index) => {
+        el.addEventListener('click', () => {
+          districtInput.value = filtered[index];
+          districtDropdown.classList.remove('active');
+        });
+      });
+    }, 50);
+  });
+
+  // Initialize district autocomplete if region is already selected
+  if (regionInput.value && regionsData[regionInput.value]) {
+    const districts = regionsData[regionInput.value];
+    districtAutocomplete = createAutocomplete(districtInput, districtDropdown, districts, null);
+  }
+})();
+
+// Phone number input mask using IMask
+(function() {
+  const phoneInput = document.getElementById('customer_phone');
+  if (!phoneInput) return;
+
+  // Wait for IMask to load
+  if (typeof IMask === 'undefined') {
+    console.error('IMask library not loaded');
+    return;
+  }
+
+  // Create mask instance with custom placeholder
+  const phoneMask = IMask(phoneInput, {
+    mask: '+998 00 000 00 00',
+    lazy: false,
+    placeholderChar: '−'  // Minus belgisi - o'rtada
+  });
+
+  // If editing existing phone, format it
+  if (phoneInput.value && phoneInput.value.trim()) {
+    let digits = phoneInput.value.replace(/\D/g, '');
+    // Remove 998 prefix if exists
+    if (digits.startsWith('998')) {
+      digits = digits.substring(3);
+    }
+    phoneMask.unmaskedValue = digits;
+  }
+
+  // Custom validation on form submit
+  const form = document.getElementById('order-form');
+  
+  form.addEventListener('submit', function(e) {
+    const unmasked = phoneMask.unmaskedValue;
+    
+    // Validate: must have exactly 9 digits
+    if (unmasked.length !== 9) {
+      e.preventDefault();
+      phoneInput.setCustomValidity('Telefon raqami to\'liq kiritilishi kerak (9 ta raqam)');
+      phoneInput.reportValidity();
+      phoneInput.focus();
+      return false;
+    }
+    
+    phoneInput.setCustomValidity('');
+    
+    // Replace the input value with clean 9 digits for database storage
+    phoneInput.value = unmasked;
+    
+    return true;
+  });
+
+  // Clear validation error when user starts typing
+  phoneMask.on('accept', function() {
+    if (phoneInput.validity.customError) {
+      phoneInput.setCustomValidity('');
+    }
+  });
+})();
+</script>
+{% endblock %}
