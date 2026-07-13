@@ -342,6 +342,62 @@
         .nav-menu { flex-wrap: wrap; }
       }
 
+      /* Config card (for cart items) */
+      .config-card {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 12px;
+        background: var(--bg);
+        border-radius: 8px;
+        margin-bottom: 6px;
+        border: 1px solid transparent;
+        transition: border-color 0.15s;
+        cursor: default;
+      }
+      .config-card:hover { border-color: var(--accent); }
+      .config-card .config-label {
+        flex: 1;
+        min-width: 0;
+      }
+      .config-card .config-label .config-name {
+        font-weight: 600;
+        font-size: 14px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        color: var(--text);
+      }
+      .config-card .config-label .config-order {
+        font-size: 12px;
+        color: var(--muted);
+        margin-top: 2px;
+      }
+
+      .config-remove-btn {
+        background: none;
+        border: 1px solid var(--danger);
+        color: var(--danger);
+        border-radius: 6px;
+        padding: 4px 8px;
+        min-height: unset;
+        font-size: 14px;
+        cursor: pointer;
+        flex-shrink: 0;
+        transition: background 0.15s, color 0.15s;
+      }
+      .config-remove-btn:hover {
+        background: var(--danger);
+        color: #fff;
+      }
+
+      /* Qty input spinner yashirish */
+      input.qty-input::-webkit-outer-spin-button,
+      input.qty-input::-webkit-inner-spin-button { 
+        -webkit-appearance: none; 
+        margin: 0; 
+      }
+
       {% block extra_css %}{% endblock %}
     </style>
   </head>
@@ -427,14 +483,24 @@
     <script>
       // ── Theme toggle ──
       const themeToggleBtn = document.getElementById('theme-toggle');
+      console.log('Theme toggle button:', themeToggleBtn);
+      
       function applyTheme(theme) {
+        console.log('Applying theme:', theme);
         document.documentElement.dataset.theme = theme;
         localStorage.setItem('theme', theme);
       }
-      themeToggleBtn.addEventListener('click', function () {
-        const current = document.documentElement.dataset.theme;
-        applyTheme(current === 'dark' ? 'light' : 'dark');
-      });
+      
+      if (themeToggleBtn) {
+        console.log('Theme toggle button found, adding event listener');
+        themeToggleBtn.addEventListener('click', function () {
+          const current = document.documentElement.dataset.theme;
+          console.log('Theme toggle clicked, current theme:', current);
+          applyTheme(current === 'dark' ? 'light' : 'dark');
+        });
+      } else {
+        console.error('Theme toggle button NOT found!');
+      }
 
       // ── USD Rate shared logic ──
       const MARKUP_BASE = {{ markup_percent }};
@@ -442,6 +508,11 @@
       const MIN_DISCOUNT = 0;
       const usdRateInput = document.getElementById("usd-rate");
       const discountInput = document.getElementById("discount-percent");
+
+      // Number formatting helper
+      function formatNumber(num) {
+        return Math.round(Number(num) || 0).toLocaleString("uz-UZ");
+      }
 
       function parseUsdRateValue(raw) {
         const text = String(raw).trim().replace(",", ".");
@@ -452,22 +523,27 @@
       }
 
       function getSavedUsdRate() {
+        if (!usdRateInput) return 0;
         return parseUsdRateValue(usdRateInput.dataset.savedRate) ?? 0;
       }
 
       function setSavedUsdRate(rate) {
+        if (!usdRateInput) return 0;
         const normalized = Math.round(Number(rate)) || 0;
         usdRateInput.dataset.savedRate = String(normalized);
         return normalized;
       }
 
       function readUsdRate() {
+        if (!usdRateInput) return 0;
         const raw = usdRateInput.value.trim();
         if (raw === "") return getSavedUsdRate();
-        return parseUsdRateValue(raw) ?? getSavedUsdRate();
+        const parsed = parseUsdRateValue(raw);
+        return parsed ?? getSavedUsdRate();
       }
 
       function usdRateIsDirty() {
+        if (!usdRateInput) return false;
         const saved = getSavedUsdRate();
         const current = parseUsdRateValue(usdRateInput.value);
         if (current === null) return saved !== 0;
@@ -475,7 +551,10 @@
       }
 
       function updateUsdRateSaveVisibility() {
-        document.getElementById("save-usd-rate").classList.toggle("is-visible", usdRateIsDirty());
+        const saveBtn = document.getElementById("save-usd-rate");
+        if (saveBtn) {
+          saveBtn.classList.toggle("is-visible", usdRateIsDirty());
+        }
       }
 
       function parseDiscountValue(raw) {
@@ -487,10 +566,12 @@
       }
 
       function readDiscountPercent() {
+        if (!discountInput) return 0;
         return parseDiscountValue(discountInput.value) ?? 0;
       }
 
       function sanitizeDiscountInput() {
+        if (!discountInput) return;
         const raw = discountInput.value.replace(/\D/g, "");
         if (raw === "") { discountInput.value = ""; return; }
         const number = Number(raw);
@@ -499,6 +580,7 @@
       }
 
       function effectiveMarkupPercent() {
+        if (!discountInput) return MARKUP_BASE;
         const parsed = parseDiscountValue(discountInput.value);
         if (parsed === null || parsed === 0) return MARKUP_BASE;
         return MARKUP_BASE - parsed;
@@ -556,30 +638,210 @@
         }
       });
 
-      usdRateInput.addEventListener("input", function() {
-        updateUsdRateSaveVisibility();
-        if (typeof refreshSummary === "function") refreshSummary();
-        if (typeof refreshProductSummary === "function") refreshProductSummary();
-      });
-      usdRateInput.addEventListener("change", function() {
-        updateUsdRateSaveVisibility();
-        if (typeof refreshSummary === "function") refreshSummary();
-        if (typeof refreshProductSummary === "function") refreshProductSummary();
-      });
+      if (usdRateInput) {
+        usdRateInput.addEventListener("input", function() {
+          updateUsdRateSaveVisibility();
+          if (typeof refreshSummary === "function") refreshSummary();
+          if (typeof refreshProductSummary === "function") refreshProductSummary();
+        });
+        
+        usdRateInput.addEventListener("change", function() {
+          updateUsdRateSaveVisibility();
+          if (typeof refreshSummary === "function") refreshSummary();
+          if (typeof refreshProductSummary === "function") refreshProductSummary();
+        });
+      }
 
-      discountInput.addEventListener("input", function() {
-        sanitizeDiscountInput();
-        if (typeof refreshSummary === "function") refreshSummary();
-        if (typeof refreshProductSummary === "function") refreshProductSummary();
-      });
-      discountInput.addEventListener("change", function() {
-        sanitizeDiscountInput();
-        if (typeof refreshSummary === "function") refreshSummary();
-        if (typeof refreshProductSummary === "function") refreshProductSummary();
-      });
+      if (discountInput) {
+        discountInput.addEventListener("input", function() {
+          sanitizeDiscountInput();
+          if (typeof refreshSummary === "function") refreshSummary();
+          if (typeof refreshProductSummary === "function") refreshProductSummary();
+        });
+        discountInput.addEventListener("change", function() {
+          sanitizeDiscountInput();
+          if (typeof refreshSummary === "function") refreshSummary();
+          if (typeof refreshProductSummary === "function") refreshProductSummary();
+        });
+      }
 
       updateUsdRateSaveVisibility();
     </script>
+    
+    <!-- Cart Functions - Global -->
+    <script>
+    // Savat uchun umumiy funksiyalar (global scope'da)
+    (function() {
+      const CART_KEY = "order_cart";
+      
+      function getCart() {
+        try {
+          return JSON.parse(localStorage.getItem(CART_KEY) || "[]");
+        } catch {
+          return [];
+        }
+      }
+      
+      function saveCart(cart) {
+        localStorage.setItem(CART_KEY, JSON.stringify(cart));
+      }
+      
+      function removeFromCart(index) {
+        const cart = getCart();
+        cart.splice(index, 1);
+        saveCart(cart);
+        if (typeof renderCart === 'function') renderCart();
+      }
+      
+      function changeCartQty(index, delta) {
+        const cart = getCart();
+        const current = cart[index].qty || 1;
+        const newQty = Math.max(1, current + delta);
+        cart[index].qty = newQty;
+        saveCart(cart);
+        if (typeof renderCart === 'function') renderCart();
+      }
+      
+      function setCartQty(index, value) {
+        const qty = Math.max(1, parseInt(value) || 1);
+        const cart = getCart();
+        cart[index].qty = qty;
+        saveCart(cart);
+        if (typeof updateCartTotal === 'function') updateCartTotal();
+        const input = document.getElementById(`cart-qty-${index}`);
+        if (input && parseInt(input.value) < 1) input.value = qty;
+      }
+      
+      function updateCartTotal() {
+        const cart = getCart();
+        const total = cart.reduce((s, item) => s + (item.qty || 1) * (item.price_uzs || 0), 0);
+        const totalEl = document.getElementById('cart-total');
+        if (totalEl) {
+          totalEl.textContent = `${total.toLocaleString('uz-UZ')} so'm`;
+        }
+      }
+      
+      function renderCart() {
+        const cart = getCart();
+        const list = document.getElementById('cart-list');
+        const empty = document.getElementById('cart-empty');
+        const cartActions = document.getElementById('cart-actions');
+        
+        if (!list || !empty) return;
+        
+        if (!cart.length) {
+          list.innerHTML = '';
+          empty.style.display = 'block';
+          if (cartActions) cartActions.style.display = 'none';
+        } else {
+          empty.style.display = 'none';
+          if (cartActions) cartActions.style.display = 'flex';
+          list.innerHTML = cart.map((item, i) => {
+            // orderNumber yoki category ko'rsatish
+            let subtitle = '';
+            if (item.category && item.orderNumber) {
+              // AIO: category va orderNumber
+              subtitle = `<div class="config-order">${item.orderNumber}</div>`;
+            } else if (item.category) {
+              // Monitor/Printer: faqat category
+              subtitle = `<div class="config-order">${item.category}</div>`;
+            } else if (item.orderNumber) {
+              // Eski format: faqat orderNumber
+              subtitle = `<div class="config-order">${item.orderNumber}</div>`;
+            }
+            
+            return `
+            <div class="config-card">
+              <div class="config-label" style="cursor:default;">
+                <div class="config-name" title="${item.label.replace(/"/g,'&quot;')}">${item.label}</div>
+                ${subtitle}
+              </div>
+              <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+                <button type="button" onclick="changeCartQty(${i},-1)"
+                  style="background:var(--btn-secondary-bg);border:1px solid var(--btn-secondary-border);color:var(--btn-secondary-color);border-radius:4px;width:28px;height:28px;min-height:unset;padding:0;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;">−</button>
+                <input type="number" id="cart-qty-${i}" value="${item.qty || 1}" min="1" class="qty-input"
+                  onchange="setCartQty(${i}, this.value)"
+                  oninput="setCartQty(${i}, this.value)"
+                  style="width:52px;height:32px;min-height:unset;text-align:center;font-weight:700;font-size:14px;padding:0 4px;border:1px solid var(--input-border);border-radius:4px;background:var(--input-bg);color:var(--text);appearance:none;-moz-appearance:textfield;">
+                <button type="button" onclick="changeCartQty(${i},1)"
+                  style="background:var(--btn-secondary-bg);border:1px solid var(--btn-secondary-border);color:var(--btn-secondary-color);border-radius:4px;width:28px;height:28px;min-height:unset;padding:0;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;">+</button>
+              </div>
+              <div style="text-align:right;flex-shrink:0;min-width:80px;">
+                <div style="font-weight:700;font-size:15px;color:var(--accent-dark);">${((item.qty||1)*item.price_uzs).toLocaleString('uz-UZ')} so'm</div>
+              </div>
+              <button type="button" class="config-remove-btn" onclick="removeFromCart(${i})">×</button>
+            </div>`;
+          }).join('');
+        }
+        updateCartTotal();
+      }
+      
+      function addToCart(item) {
+        const cart = getCart();
+        cart.push(item);
+        saveCart(cart);
+        if (typeof renderCart === 'function') {
+          renderCart();
+        }
+      }
+      
+      // Export to global scope FIRST
+      window.addToCart = addToCart;
+      window.changeCartQty = changeCartQty;
+      window.setCartQty = setCartQty;
+      window.removeFromCart = removeFromCart;
+      window.renderCart = renderCart;
+      window.getCart = getCart;
+      window.saveCart = saveCart;
+      window.updateCartTotal = updateCartTotal;
+      
+      // Initialize cart UI on DOMContentLoaded or immediately if already loaded
+      function initCartUI() {
+        const clearBtn = document.getElementById('clear-cart-btn');
+        if (clearBtn) {
+          clearBtn.addEventListener('click', () => {
+            if (!confirm('Savatni tozalashni xohlaysizmi?')) return;
+            localStorage.removeItem(CART_KEY);
+            renderCart();
+          });
+        }
+        
+        const checkoutBtn = document.getElementById('checkout-btn');
+        if (checkoutBtn) {
+          checkoutBtn.addEventListener('click', () => {
+            const cart = getCart();
+            if (!cart.length) {
+              alert('Savat bo\'sh!');
+              return;
+            }
+            
+            const params = new URLSearchParams();
+            cart.forEach((item) => {
+              params.append('config_label', item.label);
+              params.append('quantity', item.qty || 1);
+              params.append('unit_price_uzs', item.price_uzs || 0);
+            });
+            
+            const total = cart.reduce((s, item) => s + (item.qty || 1) * (item.price_uzs || 0), 0);
+            params.append('total_price_uzs', total);
+            
+            window.location.href = `/orders/create/?${params.toString()}`;
+          });
+        }
+        
+        if (document.getElementById('cart-list')) {
+          renderCart();
+        }
+      }
+      
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initCartUI);
+      } else {
+        initCartUI();
+      }
+    })();
+    </script>
+    
     {% block extra_js %}{% endblock %}
   </body>
 </html>

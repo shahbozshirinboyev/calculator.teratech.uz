@@ -219,20 +219,28 @@
 }
 
 .actions {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto auto;
   gap: 10px;
   margin-top: 18px;
 }
 
-.actions #save-quote,
 .actions #reset-form {
-  flex: 1 1 auto;
+  grid-column: 1;
+  grid-row: 1;
 }
 
 .actions #copy-image {
-  flex: 0 0 42px;
-  width: 42px;
-  padding: 0;
+  grid-column: 2;
+  grid-row: 1;
+  padding: 10px 14px;
+  width: auto;
+}
+
+.actions #save-quote {
+  grid-column: 1 / -1;
+  grid-row: 2;
 }
 
 @media (max-width: 860px) {
@@ -386,20 +394,21 @@ input.qty-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0
     </div>
     <div class="status" id="status"></div>
     <div class="actions">
+      <button type="button" class="secondary" id="reset-form">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-eraser" viewBox="0 0 16 16" style="vertical-align:-2px;margin-right:6px">
+          <path d="M8.086 2.207a2 2 0 0 1 2.828 0l3.879 3.879a2 2 0 0 1 0 2.828l-5.5 5.5A2 2 0 0 1 7.879 15H5.12a2 1 0 0 1-1.414-.586l-2.5-2.5a2 2 0 0 1 0-2.828zm2.121.707a1 1 0 0 0-1.414 0L4.16 7.547l5.293 5.293 4.633-4.633a1 1 0 0 0 0-1.414zM8.746 13.547 3.453 8.254 1.914 9.793a1 1 0 0 0 0 1.414l2.5 2.5a1 1 0 0 0 .707.293H7.88a1 1 0 0 0 .707-.293z"/>
+        </svg>Tozalash
+      </button>
+      <button type="button" class="secondary" id="copy-image" title="Rasmni buferga olish" aria-label="Rasmni buferga olish">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-image" viewBox="0 0 16 16" style="vertical-align:-2px;margin-right:6px">
+          <path d="M6.002 5.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0"/>
+          <path d="M2.002 1a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2zm12 1a1 1 0 0 1 1 1v6.5l-3.777-1.947a.5.5 0 0 0-.577.093l-3.71 3.71-2.66-1.772a.5.5 0 0 0-.63.062L1.002 12V3a1 1 0 0 1 1-1z"/>
+        </svg>PrtScn
+      </button>
       <button type="button" id="save-quote">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" style="vertical-align:-2px;margin-right:6px">
           <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
         </svg>Savatga qo'shish
-      </button>
-      <button type="button" class="secondary" id="reset-form">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-eraser" viewBox="0 0 16 16" style="vertical-align:-2px;margin-right:6px">
-          <path d="M8.086 2.207a2 2 0 0 1 2.828 0l3.879 3.879a2 2 0 0 1 0 2.828l-5.5 5.5A2 2 0 0 1 7.879 15H5.12a2 2 0 0 1-1.414-.586l-2.5-2.5a2 2 0 0 1 0-2.828zm2.121.707a1 1 0 0 0-1.414 0L4.16 7.547l5.293 5.293 4.633-4.633a1 1 0 0 0 0-1.414zM8.746 13.547 3.453 8.254 1.914 9.793a1 1 0 0 0 0 1.414l2.5 2.5a1 1 0 0 0 .707.293H7.88a1 1 0 0 0 .707-.293z"/>
-        </svg>Tozalash
-      </button>
-      <button type="button" class="secondary" id="copy-image" title="Rasmni buferga olish" aria-label="Rasmni buferga olish">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-copy" viewBox="0 0 16 16">
-          <path fill-rule="evenodd" d="M4 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2zm2-1a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1zM2 5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1v-1h1v1a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h1v1z"/>
-        </svg>
       </button>
     </div>
   </aside>
@@ -780,34 +789,6 @@ input.qty-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0
   usdRateInput.addEventListener("change", () => { refreshSummary(); updateUsdRateSaveVisibility(); });
   updateUsdRateSaveVisibility();
 
-  document.getElementById("save-usd-rate").addEventListener("click", async () => {
-    const rateStatus = document.getElementById("rate-status");
-    const rate = parseUsdRateValue(usdRateInput.value);
-    if (rate === null) {
-      rateStatus.textContent = "Dollar kursini kiriting.";
-      rateStatus.classList.add("error");
-      return;
-    }
-    const body = new FormData();
-    body.append("usd_rate", String(rate));
-    body.append("csrfmiddlewaretoken", document.querySelector("[name=csrfmiddlewaretoken]").value);
-    const response = await fetch("{% url 'calculator:save_usd_rate' %}", {
-      method: "POST", body, headers: { "X-Requested-With": "XMLHttpRequest" },
-    });
-    const data = await response.json();
-    if (response.ok) {
-      const saved = setSavedUsdRate(data.usd_rate);
-      usdRateInput.value = String(saved);
-      rateStatus.textContent = "Dollar kursi saqlandi.";
-      rateStatus.classList.remove("error");
-      refreshSummary();
-      updateUsdRateSaveVisibility();
-    } else {
-      rateStatus.textContent = data.error || "Saqlashda xatolik yuz berdi.";
-      rateStatus.classList.add("error");
-    }
-  });
-
   function buildSummaryCanvas() {
     const orderNumber = orderNumberEl.textContent.trim() || "AIO#";
     const rows = [
@@ -958,6 +939,33 @@ input.qty-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0
     });
   })();
 
+  // Reset form button
+  document.getElementById("reset-form").addEventListener("click", () => {
+    if (!confirm("Hamma ma'lumotlarni tozalashni xohlaysizmi?")) return;
+    
+    // Clear all fields
+    fields.cpu.value = "";
+    fields.base.value = "";
+    fields.ram.value = "";
+    fields.keyboardMouse.value = "";
+    discountInput.value = "";
+    
+    // Clear storage slots
+    document.getElementById("nvme-storage-slot").innerHTML = "";
+    document.getElementById("sata-storage-slot").innerHTML = "";
+    document.getElementById("nvme-storage-group").classList.add("is-hidden");
+    document.getElementById("sata-storage-group").classList.add("is-hidden");
+    
+    // Clear status
+    const status = document.getElementById("status");
+    status.textContent = "";
+    status.classList.remove("error");
+    
+    // Refresh summary
+    clearSelections();
+    refreshSummary();
+  });
+
   document.getElementById("save-quote").addEventListener("click", async () => {
     const status = document.getElementById("status");
     const saveButton = document.getElementById("save-quote");
@@ -993,12 +1001,15 @@ input.qty-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0
         orderNumberEl.textContent = nextOrderNumber(savedOrderNumber);
 
         // Savatga qo'shish
-        addToCart({
-          label: buildConfigLabel(),
-          price_uzs: totalUzs,
-          qty: 1,
-          orderNumber: savedOrderNumber
-        });
+        if (typeof window.addToCart === 'function') {
+          window.addToCart({
+            label: buildConfigLabel(),
+            price_uzs: totalUzs,
+            qty: 1,
+            category: "AIO",
+            orderNumber: savedOrderNumber
+          });
+        }
         
         discountInput.value = "";
         fields.cpu.value = "";

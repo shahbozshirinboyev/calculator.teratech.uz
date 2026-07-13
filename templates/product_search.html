@@ -430,23 +430,33 @@
       const rate = readUsdRate();
       const totalUzs = rate > 0 ? Math.round(total * rate) : Math.round(total * 12850);
       
-      // Savatga qo'shish
-      addToCart({
-        label: selectedProduct.name,
-        price_uzs: totalUzs,
-        qty: 1
-      });
-      
-      // Xabar ko'rsatish
-      const psStatus = document.getElementById('ps-status');
-      psStatus.textContent = 'Savatga qo\'shildi! ✓';
-      psStatus.style.color = 'var(--accent-dark)';
-      setTimeout(() => { psStatus.textContent = ''; }, 2000);
-      
-      // Mahsulotni deselect qilish
-      selectedProduct = null;
-      document.querySelectorAll('.product-card').forEach(c => c.classList.remove('selected'));
-      refreshProductSummary();
+      // Savatga qo'shish (window.addToCart orqali)
+      if (typeof window.addToCart === 'function') {
+        window.addToCart({
+          label: selectedProduct.name,
+          price_uzs: totalUzs,
+          qty: 1,
+          category: "{{ category }}",
+          orderNumber: "{{ category }}"
+        });
+        
+        // Xabar ko'rsatish
+        const psStatus = document.getElementById('ps-status');
+        psStatus.textContent = 'Savatga qo\'shildi! ✓';
+        psStatus.style.color = 'var(--accent-dark)';
+        setTimeout(() => { psStatus.textContent = ''; }, 2000);
+        
+        // Mahsulotni deselect qilish
+        selectedProduct = null;
+        document.querySelectorAll('.product-card').forEach(c => c.classList.remove('selected'));
+        refreshProductSummary();
+      } else {
+        // Xatolik xabari
+        const psStatus = document.getElementById('ps-status');
+        psStatus.textContent = 'Xatolik: Savat funksiyasi topilmadi!';
+        psStatus.style.color = 'var(--danger)';
+        console.error('addToCart function not found on window object');
+      }
     });
   }
 })();

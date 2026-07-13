@@ -597,5 +597,94 @@ updateSummary();
     }
   });
 })();
+
+// Format unit price inputs
+(function() {
+  function formatNumber(num) {
+    return Math.round(Number(num) || 0).toLocaleString("uz-UZ");
+  }
+
+  function parseNumber(str) {
+    return parseInt(String(str).replace(/\s/g, '').replace(/,/g, '')) || 0;
+  }
+
+  function attachPriceFormatting(input) {
+    // Format on blur
+    input.addEventListener('blur', function() {
+      const value = parseNumber(this.value);
+      if (value > 0) {
+        this.value = formatNumber(value);
+      }
+    });
+
+    // Remove formatting on focus
+    input.addEventListener('focus', function() {
+      const value = parseNumber(this.value);
+      if (value > 0) {
+        this.value = value;
+      }
+    });
+
+    // Initial format if has value
+    const initialValue = parseNumber(input.value);
+    if (initialValue > 0 && !input.matches(':focus')) {
+      input.value = formatNumber(initialValue);
+    }
+  }
+
+  // Format existing inputs
+  document.querySelectorAll('input[name="unit_price_uzs"]').forEach(attachPriceFormatting);
+
+  // Format total price input
+  const totalInput = document.getElementById('total_price_uzs');
+  if (totalInput) {
+    attachPriceFormatting(totalInput);
+  }
+
+  // Re-attach formatting when new items are added
+  const originalAddItem = window.addItem;
+  window.addItem = function() {
+    originalAddItem();
+    const newInputs = document.querySelectorAll('#items-container .item-row:last-child input[name="unit_price_uzs"]');
+    newInputs.forEach(attachPriceFormatting);
+  };
+
+  // Update calcTotal to handle formatted values
+  const originalCalcTotal = window.calcTotal;
+  window.calcTotal = function() {
+    let sum = 0;
+    const itemsHtml = [];
+    const allRows = document.querySelectorAll('#items-container .item-row');
+    
+    allRows.forEach(row => {
+      const label = row.querySelector('[name="config_label"]')?.value || '';
+      const qty = parseInt(row.querySelector('[name="quantity"]')?.value || '1');
+      const priceInput = row.querySelector('[name="unit_price_uzs"]');
+      const priceUzs = parseNumber(priceInput?.value || '0');
+      const line = priceUzs * qty;
+      sum += line;
+      if (label) itemsHtml.push(`<div style="display:flex;justify-content:space-between;font-size:13px;padding:4px 0;border-bottom:1px solid var(--line);gap:8px;"><span style="flex:1;color:var(--muted);">${label} ×${qty}</span><strong>${formatNumber(line)} so'm</strong></div>`);
+    });
+    
+    document.getElementById('s-items-list').innerHTML = itemsHtml.join('');
+    document.getElementById('s-total').textContent = `${formatNumber(sum)} so'm`;
+    const uzsField = document.getElementById('total_price_uzs');
+    if (uzsField && sum > 0) {
+      // If focused, show plain number; otherwise show formatted
+      if (document.activeElement === uzsField) {
+        uzsField.value = Math.round(sum);
+      } else {
+        uzsField.value = formatNumber(Math.round(sum));
+      }
+    }
+  };
+
+  // Before form submit, convert all formatted prices back to numbers
+  document.getElementById('order-form').addEventListener('submit', function(e) {
+    document.querySelectorAll('input[name="unit_price_uzs"], #total_price_uzs').forEach(input => {
+      input.value = parseNumber(input.value);
+    });
+  });
+})();
 </script>
 {% endblock %}

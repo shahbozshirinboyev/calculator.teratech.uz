@@ -31,6 +31,7 @@ def printer_list(request):
             "max_discount_percent": settings.max_discount_percent,
             "active_nav": SECTION,
             "page_title": "Printers",
+            "category": "Printer",
             "search_placeholder": "Printer qidirish...",
         },
     )

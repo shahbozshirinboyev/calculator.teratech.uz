@@ -31,6 +31,7 @@ def monitor_list(request):
             "max_discount_percent": settings.max_discount_percent,
             "active_nav": SECTION,
             "page_title": "Monitors",
+            "category": "Monitor",
             "search_placeholder": "Monitor qidirish...",
         },
     )
