@@ -55,6 +55,10 @@
   display: none;
   box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
+
+[data-theme="dark"] .autocomplete-dropdown {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
 .autocomplete-dropdown.active { display: block; }
 .autocomplete-item {
   padding: 10px 12px;
@@ -87,6 +91,8 @@
   display: flex; align-items: center; justify-content: center; cursor: pointer;
 }
 .remove-item-btn:hover { background: #fee2e2; }
+
+[data-theme="dark"] .remove-item-btn:hover { background: #7f1d1d; }
 .add-item-btn {
   background: none; border: 1px dashed var(--accent); color: var(--accent);
   border-radius: 8px; width: 100%; padding: 10px; font-weight: 700;
@@ -177,15 +183,15 @@
           <input type="hidden" name="landmark" value="{{ v_landmark }}">
         </div>
 
-        <!-- III. AIO ma'lumotlari -->
+        <!-- III. Configurations (AIO, Monitors, Printers) -->
         <div class="panel form-section" style="margin-bottom:16px;">
-          <h3>III. AIO ma'lumotlari</h3>
+          <h3>III. Configurations</h3>
           <div id="items-container">
             {% if order %}
               {% for item in order.items.all %}
                 <div class="item-row">
-                  <div class="field"><label>Konfiguratsiya *</label>
-                    <input type="text" name="config_label" value="{{ item.config_label }}" placeholder="i5 / 16GB / 512GB SSD" required></div>
+                  <div class="field"><label>Mahsulot nomi *</label>
+                    <input type="text" name="config_label" value="{{ item.config_label }}" placeholder="i5 / 16GB / 512GB SSD yoki Monitor yoki Printer" required></div>
                   <div class="field"><label>Soni</label>
                     <input type="number" name="quantity" value="{{ item.quantity }}" min="1" required oninput="calcTotal()"></div>
                   <div class="field"><label>Dona narxi (so'm)</label>
@@ -196,8 +202,8 @@
             {% elif initial_items %}
               {% for item in initial_items %}
                 <div class="item-row">
-                  <div class="field"><label>Konfiguratsiya *</label>
-                    <input type="text" name="config_label" value="{{ item.config_label }}" placeholder="i5 / 16GB / 512GB SSD" required></div>
+                  <div class="field"><label>Mahsulot nomi *</label>
+                    <input type="text" name="config_label" value="{{ item.config_label }}" placeholder="i5 / 16GB / 512GB SSD yoki Monitor yoki Printer" required></div>
                   <div class="field"><label>Soni</label>
                     <input type="number" name="quantity" value="{{ item.quantity }}" min="1" required oninput="calcTotal()"></div>
                   <div class="field"><label>Dona narxi (so'm)</label>
@@ -205,19 +211,9 @@
                   <button type="button" class="remove-item-btn" onclick="removeItem(this)" title="O'chirish">×</button>
                 </div>
               {% endfor %}
-            {% else %}
-              <div class="item-row">
-                <div class="field"><label>Konfiguratsiya *</label>
-                  <input type="text" name="config_label" placeholder="i5 / 16GB / 512GB SSD" required></div>
-                <div class="field"><label>Soni</label>
-                  <input type="number" name="quantity" value="1" min="1" required oninput="calcTotal()"></div>
-                <div class="field"><label>Dona narxi (so'm)</label>
-                  <input type="number" name="unit_price_uzs" value="0" step="1000" min="0" oninput="calcTotal()"></div>
-                <button type="button" class="remove-item-btn" onclick="removeItem(this)" title="O'chirish">×</button>
-              </div>
             {% endif %}
           </div>
-          <button type="button" class="add-item-btn" onclick="addItem()">+ Yana konfiguratsiya qo'shish</button>
+          <button type="button" class="add-item-btn" onclick="addItem()">+ Mahsulot qo'shish</button>
         </div>
 
         <!-- IV. To'lov ma'lumotlari -->
@@ -308,8 +304,8 @@ function addItem() {
   const row = document.createElement('div');
   row.className = 'item-row';
   row.innerHTML = `
-    <div class="field"><label>Konfiguratsiya *</label>
-      <input type="text" name="config_label" placeholder="i5/16GB/512GB SSD" required></div>
+    <div class="field"><label>Mahsulot nomi *</label>
+      <input type="text" name="config_label" placeholder="i5 / 16GB / 512GB SSD yoki Monitor yoki Printer" required></div>
     <div class="field"><label>Soni</label>
       <input type="number" name="quantity" value="1" min="1" required oninput="calcTotal()"></div>
     <div class="field"><label>Dona narxi (so'm)</label>
@@ -320,7 +316,6 @@ function addItem() {
 }
 
 function removeItem(btn) {
-  if (document.querySelectorAll('.item-row').length <= 1) return;
   btn.closest('.item-row').remove();
   calcTotal();
 }
@@ -328,7 +323,9 @@ function removeItem(btn) {
 function calcTotal() {
   let sum = 0;
   const itemsHtml = [];
-  document.querySelectorAll('.item-row').forEach(row => {
+  const allRows = document.querySelectorAll('#items-container .item-row');
+  
+  allRows.forEach(row => {
     const label = row.querySelector('[name="config_label"]')?.value || '';
     const qty = parseInt(row.querySelector('[name="quantity"]')?.value || '1');
     const priceUzs = parseFloat(row.querySelector('[name="unit_price_uzs"]')?.value || '0');
@@ -336,6 +333,7 @@ function calcTotal() {
     sum += line;
     if (label) itemsHtml.push(`<div style="display:flex;justify-content:space-between;font-size:13px;padding:4px 0;border-bottom:1px solid var(--line);gap:8px;"><span style="flex:1;color:var(--muted);">${label} ×${qty}</span><strong>${line.toLocaleString('uz-UZ')} so'm</strong></div>`);
   });
+  
   document.getElementById('s-items-list').innerHTML = itemsHtml.join('');
   document.getElementById('s-total').textContent = `${sum.toLocaleString('uz-UZ')} so'm`;
   const uzsField = document.getElementById('total_price_uzs');

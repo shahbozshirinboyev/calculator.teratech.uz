@@ -1,0 +1,158 @@
+<script>
+// Savat uchun umumiy funksiyalar (global scope'da)
+(function() {
+  const CART_KEY = "order_cart";
+  
+  function getCart() {
+    try {
+      return JSON.parse(localStorage.getItem(CART_KEY) || "[]");
+    } catch {
+      return [];
+    }
+  }
+  
+  function saveCart(cart) {
+    localStorage.setItem(CART_KEY, JSON.stringify(cart));
+  }
+  
+  function removeFromCart(index) {
+    const cart = getCart();
+    cart.splice(index, 1);
+    saveCart(cart);
+    if (typeof renderCart === 'function') renderCart();
+  }
+  
+  function changeCartQty(index, delta) {
+    const cart = getCart();
+    const current = cart[index].qty || 1;
+    const newQty = Math.max(1, current + delta);
+    cart[index].qty = newQty;
+    saveCart(cart);
+    if (typeof renderCart === 'function') renderCart();
+  }
+  
+  function setCartQty(index, value) {
+    const qty = Math.max(1, parseInt(value) || 1);
+    const cart = getCart();
+    cart[index].qty = qty;
+    saveCart(cart);
+    if (typeof updateCartTotal === 'function') updateCartTotal();
+    const input = document.getElementById(`cart-qty-${index}`);
+    if (input && parseInt(input.value) < 1) input.value = qty;
+  }
+  
+  function updateCartTotal() {
+    const cart = getCart();
+    const total = cart.reduce((s, item) => s + (item.qty || 1) * (item.price_uzs || 0), 0);
+    const totalEl = document.getElementById('cart-total');
+    if (totalEl) {
+      totalEl.textContent = `${total.toLocaleString('uz-UZ')} so'm`;
+    }
+  }
+  
+  function renderCart() {
+    const cart = getCart();
+    const list = document.getElementById('cart-list');
+    const empty = document.getElementById('cart-empty');
+    
+    if (!list || !empty) return; // Elements not yet loaded
+    
+    if (!cart.length) {
+      list.innerHTML = '';
+      empty.style.display = 'block';
+    } else {
+      empty.style.display = 'none';
+      list.innerHTML = cart.map((item, i) => `
+        <div class="config-card">
+          <div class="config-label" style="cursor:default;">
+            <div class="config-name" title="${item.label.replace(/"/g,'&quot;')}">${item.label}</div>
+            ${item.orderNumber ? `<div class="config-order">${item.orderNumber}</div>` : ''}
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+            <button type="button" onclick="changeCartQty(${i},-1)"
+              style="background:var(--btn-secondary-bg);border:1px solid var(--btn-secondary-border);color:var(--btn-secondary-color);border-radius:4px;width:28px;height:28px;min-height:unset;padding:0;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;">−</button>
+            <input type="number" id="cart-qty-${i}" value="${item.qty || 1}" min="1" class="qty-input"
+              onchange="setCartQty(${i}, this.value)"
+              oninput="setCartQty(${i}, this.value)"
+              style="width:52px;height:32px;min-height:unset;text-align:center;font-weight:700;font-size:14px;padding:0 4px;border:1px solid var(--input-border);border-radius:4px;background:var(--input-bg);color:var(--text);appearance:none;-moz-appearance:textfield;">
+            <button type="button" onclick="changeCartQty(${i},1)"
+              style="background:var(--btn-secondary-bg);border:1px solid var(--btn-secondary-border);color:var(--btn-secondary-color);border-radius:4px;width:28px;height:28px;min-height:unset;padding:0;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;">+</button>
+          </div>
+          <div style="text-align:right;flex-shrink:0;min-width:80px;">
+            <div style="font-weight:700;font-size:15px;color:var(--accent-dark);">${((item.qty||1)*item.price_uzs).toLocaleString('uz-UZ')} so'm</div>
+          </div>
+          <button type="button" class="config-remove-btn" onclick="removeFromCart(${i})">×</button>
+        </div>`).join('');
+    }
+    updateCartTotal();
+  }
+  
+  function addToCart(item) {
+    const cart = getCart();
+    cart.push(item);
+    saveCart(cart);
+    if (typeof renderCart === 'function') {
+      renderCart();
+    }
+  }
+  
+  // Export to global scope FIRST, before any event listeners
+  window.addToCart = addToCart;
+  window.changeCartQty = changeCartQty;
+  window.setCartQty = setCartQty;
+  window.removeFromCart = removeFromCart;
+  window.renderCart = renderCart;
+  window.getCart = getCart;
+  window.saveCart = saveCart;
+  window.updateCartTotal = updateCartTotal;
+  
+  // Initialize cart UI (only if elements exist)
+  function initCartUI() {
+    // Clear cart button
+    const clearBtn = document.getElementById('clear-cart-btn');
+    if (clearBtn) {
+      clearBtn.addEventListener('click', () => {
+        if (!confirm('Savatni tozalashni xohlaysizmi?')) return;
+        localStorage.removeItem(CART_KEY);
+        renderCart();
+      });
+    }
+    
+    // Checkout button
+    const checkoutBtn = document.getElementById('checkout-btn');
+    if (checkoutBtn) {
+      checkoutBtn.addEventListener('click', () => {
+        const cart = getCart();
+        if (!cart.length) {
+          alert('Savat bo\'sh!');
+          return;
+        }
+        
+        const params = new URLSearchParams();
+        cart.forEach((item) => {
+          params.append('config_label', item.label);
+          params.append('quantity', item.qty || 1);
+          params.append('unit_price_uzs', item.price_uzs || 0);
+        });
+        
+        const total = cart.reduce((s, item) => s + (item.qty || 1) * (item.price_uzs || 0), 0);
+        params.append('total_price_uzs', total);
+        
+        window.location.href = `/orders/create/?${params.toString()}`;
+      });
+    }
+    
+    // Render cart if cart panel exists
+    if (document.getElementById('cart-list')) {
+      renderCart();
+    }
+  }
+  
+  // Run initialization
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initCartUI);
+  } else {
+    initCartUI();
+  }
+})();
+</script>

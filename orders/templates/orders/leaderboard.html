@@ -41,6 +41,10 @@
   box-shadow: 0 1px 3px rgba(0,0,0,0.12);
 }
 
+[data-theme="dark"] .period-tab.active {
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
 .podium {
   display: flex;
   justify-content: center;
@@ -97,6 +101,10 @@
 .podium-1st .podium-bar { background: linear-gradient(135deg, #f59e0b, #d97706); height: 120px; }
 .podium-2nd .podium-bar { background: linear-gradient(135deg, #94a3b8, #64748b); height: 90px; }
 .podium-3rd .podium-bar { background: linear-gradient(135deg, #b45309, #92400e); height: 70px; }
+
+[data-theme="dark"] .podium-1st .podium-bar { background: linear-gradient(135deg, #fbbf24, #f59e0b); }
+[data-theme="dark"] .podium-2nd .podium-bar { background: linear-gradient(135deg, #cbd5e1, #94a3b8); }
+[data-theme="dark"] .podium-3rd .podium-bar { background: linear-gradient(135deg, #d97706, #b45309); }
 
 .lb-table {
   width: 100%;

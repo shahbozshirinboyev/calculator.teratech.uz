@@ -169,22 +169,43 @@ def order_create(request):
     if request.GET:
         config_labels = request.GET.getlist("config_label")
         quantities = request.GET.getlist("quantity")
-        unit_prices = request.GET.getlist("unit_price_usd")
+        unit_prices_uzs = request.GET.getlist("unit_price_uzs")
         
         if config_labels:
             items_data = []
             for i, label in enumerate(config_labels):
                 qty = int(quantities[i]) if i < len(quantities) and quantities[i].isdigit() else 1
-                price = _parse_decimal(unit_prices[i] if i < len(unit_prices) else "0")
+                price_uzs = _parse_decimal(unit_prices_uzs[i] if i < len(unit_prices_uzs) else "0")
+                
+                # So'mdan USD ga konvertatsiya qilish
+                try:
+                    from calculator.models import CalculatorSettings
+                    settings = CalculatorSettings.objects.first()
+                    usd_rate = settings.usd_rate if settings and settings.usd_rate else Decimal("12850")
+                    price_usd = price_uzs / usd_rate if usd_rate > 0 else Decimal("0")
+                except:
+                    price_usd = Decimal("0")
+                
                 items_data.append({
                     "config_label": label,
                     "quantity": qty,
-                    "unit_price_usd": price
+                    "unit_price_usd": price_usd
                 })
             initial["items"] = items_data
         
-        initial["total_price_usd"] = request.GET.get("total_price_usd", "")
-        initial["total_price_uzs"] = request.GET.get("total_price_uzs", "")
+        total_uzs = request.GET.get("total_price_uzs", "")
+        initial["total_price_uzs"] = total_uzs
+        
+        # USD ga konvertatsiya
+        if total_uzs:
+            try:
+                from calculator.models import CalculatorSettings
+                settings = CalculatorSettings.objects.first()
+                usd_rate = settings.usd_rate if settings and settings.usd_rate else Decimal("12850")
+                total_usd = _parse_decimal(total_uzs) / usd_rate if usd_rate > 0 else Decimal("0")
+                initial["total_price_usd"] = str(total_usd)
+            except:
+                pass
 
     return render(request, "orders/order_form.html", _form_context(None, initial))
 
@@ -362,7 +383,7 @@ def _save_order(request, instance=None):
         items_data.append({"config_label": label, "quantity": qty, "unit_price_usd": price_usd})
 
     if not items_data:
-        errors.append("Kamida bitta konfiguratsiya qo'shing.")
+        errors.append("Kamida bitta mahsulot qo'shing.")
 
     if errors:
         raise ValueError(" | ".join(errors))

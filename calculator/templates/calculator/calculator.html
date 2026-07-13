@@ -389,7 +389,7 @@ input.qty-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0
       <button type="button" id="save-quote">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" style="vertical-align:-2px;margin-right:6px">
           <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
-        </svg>Qo'shish
+        </svg>Savatga qo'shish
       </button>
       <button type="button" class="secondary" id="reset-form">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-eraser" viewBox="0 0 16 16" style="vertical-align:-2px;margin-right:6px">
@@ -405,32 +405,7 @@ input.qty-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0
   </aside>
 </div>
 
-<!-- ── Qo'shilgan konfiguratsiyalar paneli ── -->
-<div id="configs-panel" style="display:none; margin-top:16px;">
-  <div class="panel" style="padding:18px;">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:12px;">
-      <h3 style="margin:0;font-size:16px;">Qo'shilgan konfiguratsiyalar</h3>
-      <div style="display:flex;gap:8px;align-items:center;">
-        <button type="button" id="clear-all-configs-btn" class="secondary" style="font-size:13px;border-color:var(--danger);color:var(--danger);">
-          Hammasini o'chirish
-        </button>
-        <button type="button" id="create-order-btn">
-        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" viewBox="0 0 16 16" style="vertical-align:-2px;margin-right:6px">
-          <path d="M0 1.5A.5.5 0 0 1 .5 1H2a.5.5 0 0 1 .485.379L2.89 3H14.5a.5.5 0 0 1 .491.592l-1.5 8A.5.5 0 0 1 13 12H4a.5.5 0 0 1-.491-.408L2.01 3.607 1.61 2H.5a.5.5 0 0 1-.5-.5M3.102 4l1.313 7h8.17l1.313-7zM5 12a2 2 0 1 0 0 4 2 2 0 0 0 0-4m7 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4m-7 1a1 1 0 1 1 0 2 1 1 0 0 1 0-2m7 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2"/>
-        </svg>Buyurtma yaratish
-      </button>
-      </div>
-    </div>
-    <div id="configs-list"></div>
-    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:14px;padding-top:12px;border-top:1px solid var(--line);">
-      <span style="font-size:14px;color:var(--muted);">Jami:</span>
-      <div style="text-align:right;">
-        <span id="configs-total-usd" style="font-weight:800;font-size:18px;color:var(--accent-dark);">$0.00</span>
-        <div id="configs-total-uzs" style="font-size:13px;color:var(--muted);"></div>
-      </div>
-    </div>
-  </div>
-</div>
+{% include "cart_panel.html" %}
 
 {% endblock %}
 
@@ -846,6 +821,25 @@ input.qty-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0
     if (!discountWrap.hidden && !discountWrap.classList.contains("is-hidden")) {
       rows.push(["Chegirma", document.getElementById("summary-discount").textContent]);
     }
+    
+    // Dark mode detection
+    const isDark = document.documentElement.dataset.theme === 'dark';
+    const colors = isDark ? {
+      bg: '#0f172a',
+      panel: '#1e293b',
+      line: '#334155',
+      text: '#f1f5f9',
+      muted: '#94a3b8',
+      accentDark: '#2dd4bf'
+    } : {
+      bg: '#f5f7f8',
+      panel: '#ffffff',
+      line: '#d9e0e5',
+      text: '#172026',
+      muted: '#60707c',
+      accentDark: '#0a5f59'
+    };
+    
     const scale = 2;
     const width = 720;
     const padding = 36;
@@ -873,36 +867,36 @@ input.qty-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0
     canvas.style.height = `${height}px`;
     const ctx = canvas.getContext("2d");
     ctx.scale(scale, scale);
-    ctx.fillStyle = "#f5f7f8";
+    ctx.fillStyle = colors.bg;
     ctx.fillRect(0, 0, width, height);
     roundedRect(ctx, 6, 6, width - 12, height - 12, 12);
-    ctx.fillStyle = "#ffffff";
+    ctx.fillStyle = colors.panel;
     ctx.fill();
-    ctx.strokeStyle = "#d9e0e5";
+    ctx.strokeStyle = colors.line;
     ctx.lineWidth = 2;
     ctx.stroke();
-    ctx.fillStyle = "#000000";
+    ctx.fillStyle = colors.text;
     ctx.font = "700 30px Arial, Helvetica, sans-serif";
     ctx.textAlign = "left";
     ctx.textBaseline = "top";
     ctx.fillText("AIO Configuration", padding, padding);
-    ctx.fillStyle = "#0a5f59";
+    ctx.fillStyle = colors.accentDark;
     ctx.font = "700 26px Arial, Helvetica, sans-serif";
     ctx.textAlign = "right";
     ctx.fillText(orderNumber, width - padding, padding + 2);
     let y = padding + 62;
     rows.forEach(([label, value], index) => {
       ctx.font = "400 24px Arial, Helvetica, sans-serif";
-      ctx.fillStyle = "#60707c";
+      ctx.fillStyle = colors.muted;
       ctx.textAlign = "left";
       ctx.fillText(label, labelX, y);
       ctx.font = "700 24px Arial, Helvetica, sans-serif";
-      ctx.fillStyle = "#000000";
+      ctx.fillStyle = colors.text;
       ctx.textAlign = "right";
       const usedHeight = drawWrappedRightText(ctx, value, valueRightX, y, valueMaxWidth, lineHeight);
       y += Math.max(lineHeight, usedHeight) + rowGap;
       if (index < rows.length - 1) {
-        ctx.strokeStyle = "#d9e0e5";
+        ctx.strokeStyle = colors.line;
         ctx.lineWidth = 1;
         ctx.beginPath();
         ctx.moveTo(padding, y - 3);
@@ -998,16 +992,14 @@ input.qty-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0
         status.classList.remove("error");
         orderNumberEl.textContent = nextOrderNumber(savedOrderNumber);
 
-        // Pastdagi panelga qo'sh, calculatorni tozala
-        addConfigToPool({
+        // Savatga qo'shish
+        addToCart({
           label: buildConfigLabel(),
-          price: Number(data.total_price),
-          uzs: Math.round(Number(data.total_price) * readUsdRate()),
-          orderNumber: savedOrderNumber,
-          // Qayta yuklash uchun ID lar
-          state: captureCalculatorState(),
+          price_uzs: totalUzs,
+          qty: 1,
+          orderNumber: savedOrderNumber
         });
-        renderConfigsPanel();
+        
         discountInput.value = "";
         fields.cpu.value = "";
         clearSelections();
@@ -1120,38 +1112,42 @@ input.qty-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0
     const pool = getConfigPool();
     const panel = document.getElementById("configs-panel");
     const list = document.getElementById("configs-list");
-    if (!pool.length) { panel.style.display = "none"; return; }
-    panel.style.display = "block";
-    list.innerHTML = pool.map((cfg, i) => `
-      <div class="config-card">
-        <div class="config-label" onclick="editConfig(${i})" title="Tahrirlash uchun bosing">
-          <div class="config-name" title="${cfg.label.replace(/"/g,'&quot;')}">${cfg.label}</div>
-          <div class="config-order">${cfg.orderNumber}</div>
-        </div>
-        <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
-          <button type="button" onclick="changeQty(${i},-1)"
-            style="background:var(--btn-secondary-bg);border:1px solid var(--btn-secondary-border);color:var(--btn-secondary-color);border-radius:4px;width:28px;height:28px;min-height:unset;padding:0;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;">−</button>
-          <input type="number" id="qty-${i}" value="${cfg.qty || 1}" min="1" class="qty-input"
-            onchange="setQty(${i}, this.value)"
-            oninput="setQty(${i}, this.value)"
-            style="width:52px;height:32px;min-height:unset;text-align:center;font-weight:700;font-size:14px;padding:0 4px;border:1px solid var(--input-border);border-radius:4px;background:var(--input-bg);color:var(--text);appearance:none;-moz-appearance:textfield;">
-          <button type="button" onclick="changeQty(${i},1)"
-            style="background:var(--btn-secondary-bg);border:1px solid var(--btn-secondary-border);color:var(--btn-secondary-color);border-radius:4px;width:28px;height:28px;min-height:unset;padding:0;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;">+</button>
-        </div>
-        <div style="text-align:right;flex-shrink:0;min-width:80px;">
-          <div style="font-weight:700;font-size:15px;color:var(--accent-dark);">${((cfg.qty||1)*cfg.uzs).toLocaleString('uz-UZ')} so'm</div>
-        </div>
-        <button type="button" class="config-remove-btn" onclick="removeConfigFromPool(${i})">×</button>
-      </div>`).join("");
+    const emptyState = document.getElementById("configs-empty");
+    
+    if (!pool.length) {
+      list.innerHTML = "";
+      emptyState.style.display = "block";
+    } else {
+      emptyState.style.display = "none";
+      list.innerHTML = pool.map((cfg, i) => `
+        <div class="config-card">
+          <div class="config-label" onclick="editConfig(${i})" title="Tahrirlash uchun bosing">
+            <div class="config-name" title="${cfg.label.replace(/"/g,'&quot;')}">${cfg.label}</div>
+            <div class="config-order">${cfg.orderNumber || ''}</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+            <button type="button" onclick="changeQty(${i},-1)"
+              style="background:var(--btn-secondary-bg);border:1px solid var(--btn-secondary-border);color:var(--btn-secondary-color);border-radius:4px;width:28px;height:28px;min-height:unset;padding:0;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;">−</button>
+            <input type="number" id="qty-${i}" value="${cfg.qty || 1}" min="1" class="qty-input"
+              onchange="setQty(${i}, this.value)"
+              oninput="setQty(${i}, this.value)"
+              style="width:52px;height:32px;min-height:unset;text-align:center;font-weight:700;font-size:14px;padding:0 4px;border:1px solid var(--input-border);border-radius:4px;background:var(--input-bg);color:var(--text);appearance:none;-moz-appearance:textfield;">
+            <button type="button" onclick="changeQty(${i},1)"
+              style="background:var(--btn-secondary-bg);border:1px solid var(--btn-secondary-border);color:var(--btn-secondary-color);border-radius:4px;width:28px;height:28px;min-height:unset;padding:0;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;">+</button>
+          </div>
+          <div style="text-align:right;flex-shrink:0;min-width:80px;">
+            <div style="font-weight:700;font-size:15px;color:var(--accent-dark);">${((cfg.qty||1)*cfg.uzs).toLocaleString('uz-UZ')} so'm</div>
+          </div>
+          <button type="button" class="config-remove-btn" onclick="removeConfigFromPool(${i})">×</button>
+        </div>`).join("");
+    }
     updateConfigsTotal();
   }
 
   function updateConfigsTotal() {
     const pool = getConfigPool();
-    const totalUsd = pool.reduce((s, c) => s + (c.qty||1) * c.price, 0);
     const totalUzs = pool.reduce((s, c) => s + (c.qty||1) * (c.uzs||0), 0);
-    document.getElementById("configs-total-usd").textContent = totalUzs ? `${totalUzs.toLocaleString('uz-UZ')} so'm` : "0 so'm";
-    document.getElementById("configs-total-uzs").textContent = "";
+    document.getElementById("configs-total-uzs").textContent = totalUzs ? `${totalUzs.toLocaleString('uz-UZ')} so'm` : "0 so'm";
   }
 
   function changeQty(index, delta) {
@@ -1183,31 +1179,23 @@ input.qty-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0
   });
 
   document.getElementById("create-order-btn").addEventListener("click", () => {
-    // Avval barcha inputlardan joriy sonlarni o'qib olish
-    const pool = getConfigPool();
-    pool.forEach((cfg, i) => {
-      const input = document.getElementById(`qty-${i}`);
-      if (input) cfg.qty = Math.max(1, parseInt(input.value) || 1);
-    });
-    saveConfigPool(pool);
-
-    if (!pool.length) return;
-
-    // URL parametrlarini yaratish
+    const cart = getCart();
+    if (!cart.length) {
+      alert('Savat bo\'sh!');
+      return;
+    }
+    
     const params = new URLSearchParams();
-    pool.forEach((cfg, i) => {
-      params.append(`config_label`, cfg.label);
-      params.append(`quantity`, cfg.qty || 1);
-      params.append(`unit_price_usd`, cfg.price.toFixed(2));
+    cart.forEach((item) => {
+      params.append('config_label', item.label);
+      params.append('quantity', item.qty || 1);
+      params.append('unit_price_uzs', item.price_uzs || 0);
     });
     
-    const totalUsd = pool.reduce((s, c) => s + (c.qty||1) * c.price, 0);
-    const totalUzs = pool.reduce((s, c) => s + (c.qty||1) * (c.uzs||0), 0);
-    params.append('total_price_usd', totalUsd.toFixed(2));
-    if (totalUzs) params.append('total_price_uzs', totalUzs);
-
-    // Buyurtma yaratish sahifasiga yo'naltirish
-    window.location.href = `{% url 'orders:create' %}?${params.toString()}`;
+    const total = cart.reduce((s, item) => s + (item.qty || 1) * (item.price_uzs || 0), 0);
+    params.append('total_price_uzs', total);
+    
+    window.location.href = `/orders/create/?${params.toString()}`;
   });
 </script>
 {% endblock %}

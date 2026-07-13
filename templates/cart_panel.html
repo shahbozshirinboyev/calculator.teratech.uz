@@ -1,0 +1,37 @@
+<!-- ── Savat paneli (Faqat calculator sahifasida) ── -->
+<div id="cart-panel" style="margin-top:16px;">
+  <div class="panel" style="padding:18px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:12px;">
+      <h3 style="margin:0;font-size:16px;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16" style="vertical-align:-3px;margin-right:6px;">
+          <path d="M0 1.5A.5.5 0 0 1 .5 1H2a.5.5 0 0 1 .485.379L2.89 3H14.5a.5.5 0 0 1 .491.592l-1.5 8A.5.5 0 0 1 13 12H4a.5.5 0 0 1-.491-.408L2.01 3.607 1.61 2H.5a.5.5 0 0 1-.5-.5M3.102 4l1.313 7h8.17l1.313-7zM5 12a2 2 0 1 0 0 4 2 2 0 0 0 0-4m7 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4m-7 1a1 1 0 1 1 0 2 1 1 0 0 1 0-2m7 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2"/>
+        </svg>
+        Savat
+      </h3>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button type="button" id="clear-cart-btn" class="secondary" style="font-size:13px;border-color:var(--danger);color:var(--danger);">
+          Tozalash
+        </button>
+        <button type="button" id="checkout-btn">
+        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" viewBox="0 0 16 16" style="vertical-align:-2px;margin-right:6px">
+          <path d="M0 1.5A.5.5 0 0 1 .5 1H2a.5.5 0 0 1 .485.379L2.89 3H14.5a.5.5 0 0 1 .491.592l-1.5 8A.5.5 0 0 1 13 12H4a.5.5 0 0 1-.491-.408L2.01 3.607 1.61 2H.5a.5.5 0 0 1-.5-.5M3.102 4l1.313 7h8.17l1.313-7zM5 12a2 2 0 1 0 0 4 2 2 0 0 0 0-4m7 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4m-7 1a1 1 0 1 1 0 2 1 1 0 0 1 0-2m7 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2"/>
+        </svg>Buyurtma yaratish
+      </button>
+      </div>
+    </div>
+    <div id="cart-list"></div>
+    <div id="cart-empty" style="text-align:center;padding:40px 20px;color:var(--muted);">
+      <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" viewBox="0 0 16 16" style="opacity:0.3;margin-bottom:12px;">
+        <path d="M0 1.5A.5.5 0 0 1 .5 1H2a.5.5 0 0 1 .485.379L2.89 3H14.5a.5.5 0 0 1 .491.592l-1.5 8A.5.5 0 0 1 13 12H4a.5.5 0 0 1-.491-.408L2.01 3.607 1.61 2H.5a.5.5 0 0 1-.5-.5M3.102 4l1.313 7h8.17l1.313-7zM5 12a2 2 0 1 0 0 4 2 2 0 0 0 0-4m7 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4m-7 1a1 1 0 1 1 0 2 1 1 0 0 1 0-2m7 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2"/>
+      </svg>
+      <p style="font-size:14px;">Savat bo'sh</p>
+      <p style="font-size:13px;margin-top:8px;">Mahsulot qo'shish uchun yuqoridan tanlang</p>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:14px;padding-top:12px;border-top:1px solid var(--line);">
+      <span style="font-size:14px;color:var(--muted);">Jami:</span>
+      <div style="text-align:right;">
+        <span id="cart-total" style="font-weight:800;font-size:18px;color:var(--accent-dark);">0 so'm</span>
+      </div>
+    </div>
+  </div>
+</div>

@@ -244,6 +244,13 @@
         <strong id="ps-total">0 so'm</strong>
       </div>
       <div class="status" id="ps-status"></div>
+      <div style="display:flex;gap:8px;margin-top:14px;">
+        <button type="button" id="add-to-cart-btn" style="flex:1;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" viewBox="0 0 16 16" style="vertical-align:-2px;margin-right:6px">
+            <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
+          </svg>Savatga qo'shish
+        </button>
+      </div>
     </aside>
   </div>
 </div>
@@ -406,6 +413,42 @@
 
   searchInput.addEventListener("input", filterProducts);
   renderProducts(products);
+
+  // Savatga qo'shish tugmasi
+  const addToCartBtn = document.getElementById('add-to-cart-btn');
+  if (addToCartBtn) {
+    addToCartBtn.addEventListener('click', () => {
+      if (!selectedProduct) {
+        const psStatus = document.getElementById('ps-status');
+        psStatus.textContent = 'Mahsulot tanlanmadi!';
+        psStatus.style.color = 'var(--danger)';
+        setTimeout(() => { psStatus.textContent = ''; }, 2000);
+        return;
+      }
+
+      const total = finalTotal(selectedProduct.price);
+      const rate = readUsdRate();
+      const totalUzs = rate > 0 ? Math.round(total * rate) : Math.round(total * 12850);
+      
+      // Savatga qo'shish
+      addToCart({
+        label: selectedProduct.name,
+        price_uzs: totalUzs,
+        qty: 1
+      });
+      
+      // Xabar ko'rsatish
+      const psStatus = document.getElementById('ps-status');
+      psStatus.textContent = 'Savatga qo\'shildi! ✓';
+      psStatus.style.color = 'var(--accent-dark)';
+      setTimeout(() => { psStatus.textContent = ''; }, 2000);
+      
+      // Mahsulotni deselect qilish
+      selectedProduct = null;
+      document.querySelectorAll('.product-card').forEach(c => c.classList.remove('selected'));
+      refreshProductSummary();
+    });
+  }
 })();
 </script>
 {% endblock %}
