@@ -91,20 +91,16 @@
       /* ── Topbar ── */
       .topbar {
         display: flex;
-        justify-content: space-between;
-        align-items: center;
+        flex-direction: column;
+        align-items: stretch;
         margin-bottom: 16px;
-        flex-wrap: wrap;
-        gap: 14px;
-        position: sticky;
-        top: 10px;
-        z-index: 100;
+        gap: 10px;
         background: color-mix(in srgb, var(--panel) 88%, transparent);
         backdrop-filter: blur(16px);
         -webkit-backdrop-filter: blur(16px);
-        padding: 12px 16px;
+        padding: 10px 14px;
         border: 1px solid color-mix(in srgb, var(--line) 78%, transparent);
-        border-radius: 18px;
+        border-radius: 16px;
         box-shadow:
           0 14px 30px rgba(15, 23, 42, 0.08),
           inset 0 1px 0 rgba(255, 255, 255, 0.28);
@@ -116,18 +112,50 @@
           inset 0 1px 0 rgba(255, 255, 255, 0.04);
       }
 
+      .topbar-main {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: nowrap;
+        gap: 12px;
+        width: 100%;
+      }
+
       .topbar-left {
         display: flex;
         align-items: center;
-        gap: 14px;
-        flex-wrap: wrap;
+        gap: 12px;
+        flex-wrap: nowrap;
+        flex: 1 1 auto;
+        min-width: 0;
+        position: relative;
       }
 
-      .topbar-left h1 {
-        margin: 0;
-        font-size: clamp(20px, 3vw, 28px);
-        line-height: 1.1;
-        white-space: nowrap;
+      .nav-toggle {
+        display: none;
+        align-items: center;
+        gap: 8px;
+        min-height: 40px;
+        padding: 8px 12px;
+        border-radius: 11px;
+        border: 1px solid var(--line);
+        background: color-mix(in srgb, var(--logout-bg) 92%, transparent);
+        color: var(--text);
+        font-size: 14px;
+        font-weight: 700;
+        box-shadow: 0 8px 18px rgba(15, 23, 42, 0.05);
+      }
+
+      .nav-toggle svg {
+        flex-shrink: 0;
+      }
+
+      .nav-toggle-label {
+        line-height: 1;
+      }
+
+      .nav-panel {
+        display: contents;
       }
 
       /* ── Navigation ── */
@@ -137,7 +165,7 @@
         list-style: none;
         margin: 0;
         padding: 4px;
-        border-radius: 14px;
+        border-radius: 13px;
         border: 1px solid color-mix(in srgb, var(--line) 82%, transparent);
         background: color-mix(in srgb, var(--bg) 70%, transparent);
         box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
@@ -147,12 +175,12 @@
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        height: 44px;
-        padding: 0 16px;
-        border-radius: 11px;
+        height: 40px;
+        padding: 0 14px;
+        border-radius: 10px;
         text-decoration: none;
         font-weight: 700;
-        font-size: 14px;
+        font-size: 13px;
         color: var(--nav-inactive);
         transition: background 0.18s, color 0.18s, transform 0.18s, box-shadow 0.18s;
       }
@@ -179,16 +207,17 @@
         display: flex;
         align-items: center;
         gap: 8px;
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
+        flex-shrink: 0;
       }
 
       .theme-toggle {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        width: 44px;
-        height: 44px;
-        border-radius: 12px;
+        width: 40px;
+        height: 40px;
+        border-radius: 11px;
         border: 1px solid var(--line);
         background: color-mix(in srgb, var(--logout-bg) 92%, transparent);
         color: var(--text);
@@ -207,6 +236,14 @@
       .theme-toggle .icon-sun,
       .theme-toggle .icon-moon { display: none; }
 
+      .theme-toggle svg,
+      .admin-link svg,
+      .logout-link svg {
+        width: 18px;
+        height: 18px;
+        flex-shrink: 0;
+      }
+
       [data-theme="light"] .theme-toggle .icon-moon { display: block; color: #7cb9e8; }
       [data-theme="dark"] .theme-toggle .icon-sun { display: block; color: #fbbf24; }
 
@@ -214,9 +251,9 @@
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        width: 44px;
-        height: 44px;
-        border-radius: 12px;
+        width: 40px;
+        height: 40px;
+        border-radius: 11px;
         border: 1px solid var(--line);
         background: color-mix(in srgb, var(--logout-bg) 92%, transparent);
         color: var(--accent);
@@ -235,18 +272,21 @@
         display: inline-flex;
         align-items: center;
         gap: 8px;
-        padding: 10px 14px;
-        min-height: 44px;
-        border-radius: 12px;
+        padding: 8px 12px;
+        min-height: 40px;
+        height: 40px;
+        min-width: 108px;
+        border-radius: 11px;
         border: 1px solid var(--line);
         background: color-mix(in srgb, var(--logout-bg) 92%, transparent);
         color: var(--text);
         text-decoration: none;
         font-weight: 700;
-        font-size: 14px;
+        font-size: 13px;
         cursor: pointer;
         transition: background 0.2s, border-color 0.2s, transform 0.2s, box-shadow 0.2s;
         box-shadow: 0 8px 18px rgba(15, 23, 42, 0.05);
+        white-space: nowrap;
       }
 
       .logout-link:hover {
@@ -257,21 +297,48 @@
 
       /* ── Rate bar ── */
       .rate-bar {
-        display: flex;
-        align-items: flex-end;
-        justify-content: flex-start;
-        gap: 10px;
+        display: grid;
+        grid-template-columns: max-content minmax(0, 1fr) max-content;
+        align-items: end;
+        justify-content: stretch;
+        gap: 12px;
         width: 100%;
+        padding: 12px;
+        border: 0;
+        border-top: 1px solid color-mix(in srgb, var(--line) 78%, transparent);
+        border-radius: 0;
+        background: transparent;
+        box-shadow: none;
+      }
+
+      [data-theme="dark"] .rate-bar {
+        background: transparent;
+        box-shadow: none;
+      }
+
+      .rate-bar > div {
+        min-width: 0;
+      }
+
+      .usd-rate-group {
+        min-width: 0;
       }
 
       .save_button {
         width: auto;
-        margin: 0 auto 0 0;
+        min-width: 120px;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        justify-self: start;
       }
 
       .rate-bar label {
         display: block;
-        margin-bottom: 4px;
+        margin-bottom: 3px;
+        font-size: 12px;
+        letter-spacing: 0.01em;
       }
 
       input[type="number"] {
@@ -300,6 +367,11 @@
       .chegirma_input {
         display: flex;
         flex-direction: column;
+        justify-self: end;
+        align-items: flex-end;
+        text-align: right;
+        width: 140px;
+        max-width: 100%;
       }
 
       .rate-status.error { color: var(--danger); }
@@ -374,64 +446,164 @@
       .status.error { color: var(--danger); }
 
       @media (max-width: 860px) {
-        .topbar { flex-direction: column; align-items: flex-start; }
-        .nav-menu { flex-wrap: wrap; }
-        .top-actions { width: 100%; justify-content: flex-end; }
-      }
-
-      @media (max-width: 640px) {
+        .topbar-main { align-items: center; }
         .topbar {
           top: 8px;
-          padding: 10px 10px 12px;
+          padding: 9px 10px;
           border-radius: 16px;
-          gap: 10px;
-        }
-        .topbar-left,
-        .topbar-left nav,
-        .nav-menu {
-          width: 100%;
+          gap: 8px;
         }
         .topbar-left {
-          gap: 10px;
+          align-items: center;
+          gap: 8px;
+          flex: 1 1 auto;
+          width: auto;
+          min-width: 0;
+        }
+        .nav-toggle {
+          display: inline-flex;
+          flex-shrink: 0;
+        }
+        .nav-panel {
+          position: absolute;
+          top: calc(100% + 8px);
+          left: 0;
+          width: min(280px, calc(100vw - 32px));
+          z-index: 130;
+          padding: 6px;
+          border-radius: 18px;
+          border: 1px solid color-mix(in srgb, var(--line) 86%, transparent);
+          background: color-mix(in srgb, var(--panel) 98%, black 2%);
+          backdrop-filter: blur(18px);
+          -webkit-backdrop-filter: blur(18px);
+          box-shadow:
+            0 18px 34px rgba(15, 23, 42, 0.22),
+            inset 0 1px 0 rgba(255, 255, 255, 0.08);
+        }
+        .nav-panel[data-open="false"] {
+          display: none;
+        }
+        .nav-panel[data-open="true"] {
+          display: block;
         }
         .nav-menu {
           display: grid;
-          grid-template-columns: repeat(2, minmax(0, 1fr));
+          grid-template-columns: 1fr;
           gap: 6px;
-          padding: 6px;
-          border-radius: 16px;
+          padding: 0;
+          border-radius: 12px;
+          margin-top: 0;
+          border: 0;
+          background: transparent;
+          box-shadow: none;
         }
         .nav-menu li {
           min-width: 0;
         }
         .nav-menu a {
           width: 100%;
-          min-height: 48px;
+          min-height: 44px;
           padding: 10px 12px;
-          font-size: 15px;
+          font-size: 14px;
           line-height: 1.2;
-          text-align: center;
+          justify-content: flex-start;
+          text-align: left;
           white-space: normal;
         }
+        [data-theme="dark"] .nav-panel {
+          background: color-mix(in srgb, var(--panel) 96%, black 4%);
+          box-shadow:
+            0 22px 40px rgba(2, 6, 23, 0.5),
+            inset 0 1px 0 rgba(255, 255, 255, 0.04);
+        }
         .top-actions {
-          width: 100%;
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(48px, 1fr));
+          width: auto;
+          display: flex;
+          flex-wrap: nowrap;
+          align-items: center;
           gap: 8px;
+          flex-shrink: 0;
+          justify-content: flex-end;
         }
         .top-actions form {
-          grid-column: 1 / -1;
+          margin: 0;
+          flex-shrink: 0;
         }
         .theme-toggle,
         .admin-link,
         .logout-link {
-          width: 100%;
-          min-height: 46px;
+          width: auto;
+          min-height: 44px;
+          height: 44px;
           justify-content: center;
+          flex-shrink: 0;
         }
         .logout-link {
           border-radius: 14px;
-          font-size: 15px;
+          font-size: 14px;
+          white-space: nowrap;
+          min-width: 112px;
+        }
+        .rate-bar {
+          grid-template-columns: max-content minmax(0, 1fr) max-content;
+          gap: 10px;
+          padding: 10px;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .topbar {
+          padding: 8px;
+          gap: 6px;
+        }
+        .topbar-main {
+          gap: 6px;
+        }
+        .topbar-left {
+          gap: 6px;
+        }
+        .nav-toggle {
+          min-height: 38px;
+          height: 38px;
+          padding: 8px 10px;
+          font-size: 13px;
+        }
+        .theme-toggle,
+        .admin-link {
+          width: 38px;
+          min-width: 38px;
+          height: 38px;
+          min-height: 38px;
+        }
+        .logout-link {
+          min-width: 96px;
+          height: 38px;
+          min-height: 38px;
+          padding: 8px 10px;
+          font-size: 13px;
+        }
+        .rate-bar {
+          grid-template-columns: 1fr 1fr;
+          grid-template-areas:
+            "usd discount"
+            "save save";
+          padding: 9px;
+        }
+        .usd-rate-group {
+          grid-area: usd;
+        }
+        .save_button {
+          grid-area: save;
+          grid-column: 1 / -1;
+          min-width: 0;
+          justify-self: start;
+        }
+        .chegirma_input {
+          grid-area: discount;
+          width: 100%;
+        }
+        #usd-rate {
+          width: 100%;
         }
       }
 
@@ -541,15 +713,24 @@
     <main class="shell">
       <!-- Topbar -->
       <div class="topbar">
+        <div class="topbar-main">
         <div class="topbar-left">
-          <nav>
-            <ul class="nav-menu">
-              <li><a href="{% url 'calculator:home' %}" class="{% if active_nav == 'aio' %}active{% endif %}">AIO Calculator</a></li>
-              <li><a href="{% url 'monitors:list' %}" class="{% if active_nav == 'monitors' %}active{% endif %}">Monitors</a></li>
-              <li><a href="{% url 'printers:list' %}" class="{% if active_nav == 'printers' %}active{% endif %}">Printers</a></li>
-              <li><a href="{% url 'orders:list' %}" class="{% if active_nav == 'orders' %}active{% endif %}">Buyurtmalar</a></li>
-            </ul>
-          </nav>
+          <button type="button" class="nav-toggle" id="nav-toggle" aria-expanded="false" aria-controls="nav-panel" aria-label="Menyuni ochish">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+              <path d="M4 7h16M4 12h16M4 17h16"/>
+            </svg>
+            <span class="nav-toggle-label">Menu</span>
+          </button>
+          <div class="nav-panel" id="nav-panel" data-open="false">
+            <nav>
+              <ul class="nav-menu">
+                <li><a href="{% url 'calculator:home' %}" class="{% if active_nav == 'aio' %}active{% endif %}">AIO Calculator</a></li>
+                <li><a href="{% url 'monitors:list' %}" class="{% if active_nav == 'monitors' %}active{% endif %}">Monitors</a></li>
+                <li><a href="{% url 'printers:list' %}" class="{% if active_nav == 'printers' %}active{% endif %}">Printers</a></li>
+                <li><a href="{% url 'orders:list' %}" class="{% if active_nav == 'orders' %}active{% endif %}">Buyurtmalar</a></li>
+              </ul>
+            </nav>
+          </div>
         </div>
         <div class="top-actions">
           <button type="button" class="theme-toggle" id="theme-toggle" title="Mavzuni o'zgartirish" aria-label="Mavzuni o'zgartirish">
@@ -578,38 +759,38 @@
             </button>
           </form>
         </div>
-      </div>
+        </div>
 
-      <!-- Rate bar — umumiy barcha sahifalar uchun -->
-      <div class="rate-bar">
-        <div>
-          <label for="usd-rate" style="margin-bottom: 2px;">Dollar kursi(so'm):</label>
-          <input
-            type="number"
-            id="usd-rate"
-            name="usd_rate"
-            min="1"
-            step="1"
-            data-saved-rate="{% if usd_rate %}{{ usd_rate|floatformat:0 }}{% else %}0{% endif %}"
-            {% if usd_rate %}value="{{ usd_rate|floatformat:0 }}"{% endif %}
-            placeholder="Masalan: 12850"
-          />
-        </div>
-        <div class="save_button">
-          <div class="rate-status" id="rate-status"></div>
-          <button type="button" id="save-usd-rate" class="rate-save-btn">Saqlash</button>
-        </div>
-        <div class="chegirma_input">
-          <label for="discount-percent" style="margin-bottom: 2px;">Chegirma(%):</label>
-          <input
-            type="number"
-            id="discount-percent"
-            min="0"
-            max="{{ max_discount_percent|default:0 }}"
-            step="1"
-            inputmode="numeric"
-            placeholder="0–{{ max_discount_percent|default:0 }}"
-          />
+        <div class="rate-bar">
+          <div class="usd-rate-group">
+            <label for="usd-rate" style="margin-bottom: 2px;">Dollar kursi(so'm):</label>
+            <input
+              type="number"
+              id="usd-rate"
+              name="usd_rate"
+              min="1"
+              step="1"
+              data-saved-rate="{% if usd_rate %}{{ usd_rate|floatformat:0 }}{% else %}0{% endif %}"
+              {% if usd_rate %}value="{{ usd_rate|floatformat:0 }}"{% endif %}
+              placeholder="Masalan: 12850"
+            />
+          </div>
+          <div class="save_button">
+            <div class="rate-status" id="rate-status"></div>
+            <button type="button" id="save-usd-rate" class="rate-save-btn">Saqlash</button>
+          </div>
+          <div class="chegirma_input">
+            <label for="discount-percent" style="margin-bottom: 2px;">Chegirma(%):</label>
+            <input
+              type="number"
+              id="discount-percent"
+              min="0"
+              max="{{ max_discount_percent|default:0 }}"
+              step="1"
+              inputmode="numeric"
+              placeholder="0–{{ max_discount_percent|default:0 }}"
+            />
+          </div>
         </div>
       </div>
 
@@ -619,23 +800,52 @@
     <script>
       // ── Theme toggle ──
       const themeToggleBtn = document.getElementById('theme-toggle');
-      console.log('Theme toggle button:', themeToggleBtn);
+      const navToggleBtn = document.getElementById('nav-toggle');
+      const navPanel = document.getElementById('nav-panel');
+
+      function syncMobileNavState(isOpen) {
+        if (!navToggleBtn || !navPanel) return;
+        navPanel.dataset.open = isOpen ? 'true' : 'false';
+        navToggleBtn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+      }
+
+      function isMobileNavbar() {
+        return window.matchMedia('(max-width: 860px)').matches;
+      }
 
       function applyTheme(theme) {
-        console.log('Applying theme:', theme);
         document.documentElement.dataset.theme = theme;
         localStorage.setItem('theme', theme);
       }
 
       if (themeToggleBtn) {
-        console.log('Theme toggle button found, adding event listener');
         themeToggleBtn.addEventListener('click', function () {
           const current = document.documentElement.dataset.theme;
-          console.log('Theme toggle clicked, current theme:', current);
           applyTheme(current === 'dark' ? 'light' : 'dark');
         });
-      } else {
-        console.error('Theme toggle button NOT found!');
+      }
+
+      if (navToggleBtn && navPanel) {
+        navToggleBtn.addEventListener('click', function () {
+          const shouldOpen = navPanel.dataset.open !== 'true';
+          syncMobileNavState(shouldOpen);
+        });
+
+        navPanel.querySelectorAll('a').forEach((link) => {
+          link.addEventListener('click', function () {
+            if (isMobileNavbar()) syncMobileNavState(false);
+          });
+        });
+
+        document.addEventListener('click', function (event) {
+          if (!isMobileNavbar()) return;
+          if (navPanel.contains(event.target) || navToggleBtn.contains(event.target)) return;
+          syncMobileNavState(false);
+        });
+
+        window.addEventListener('resize', function () {
+          syncMobileNavState(false);
+        });
       }
 
       // ── USD Rate shared logic ──

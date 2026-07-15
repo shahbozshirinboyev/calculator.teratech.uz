@@ -140,9 +140,11 @@
 }
 
 .product-summary {
-  position: sticky;
-  top: 16px;
+  position: static;
   padding: 18px;
+  background: color-mix(in srgb, var(--panel) 96%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 .product-summary h3 {
@@ -211,6 +213,12 @@
   }
   .product-summary {
     position: static;
+  }
+}
+
+@media (max-width: 640px) {
+  .rate-bar {
+    padding: 8px 10px;
   }
 }
 {% endblock %}
@@ -429,7 +437,7 @@
       const total = finalTotal(selectedProduct.price);
       const rate = readUsdRate();
       const totalUzs = rate > 0 ? Math.round(total * rate) : Math.round(total * 12850);
-      
+
       // Savatga qo'shish (window.addToCart orqali)
       if (typeof window.addToCart === 'function') {
         window.addToCart({
@@ -439,13 +447,13 @@
           category: "{{ category }}",
           orderNumber: "{{ category }}"
         });
-        
+
         // Xabar ko'rsatish
         const psStatus = document.getElementById('ps-status');
         psStatus.textContent = 'Savatga qo\'shildi! ✓';
         psStatus.style.color = 'var(--accent-dark)';
         setTimeout(() => { psStatus.textContent = ''; }, 2000);
-        
+
         // Mahsulotni deselect qilish
         selectedProduct = null;
         document.querySelectorAll('.product-card').forEach(c => c.classList.remove('selected'));
