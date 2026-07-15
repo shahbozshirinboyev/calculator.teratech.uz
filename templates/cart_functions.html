@@ -17,6 +17,7 @@
   
   function removeFromCart(index) {
     const cart = getCart();
+    if (!cart[index]) return;
     cart.splice(index, 1);
     saveCart(cart);
     if (typeof renderCart === 'function') renderCart();
@@ -24,6 +25,7 @@
   
   function changeCartQty(index, delta) {
     const cart = getCart();
+    if (!cart[index]) return;
     const current = cart[index].qty || 1;
     const newQty = Math.max(1, current + delta);
     cart[index].qty = newQty;
@@ -31,14 +33,45 @@
     if (typeof renderCart === 'function') renderCart();
   }
   
-  function setCartQty(index, value) {
-    const qty = Math.max(1, parseInt(value) || 1);
+  function parseCartQty(value) {
+    const normalized = String(value ?? '').replace(/[^\d]/g, '');
+    if (!normalized) return null;
+    const qty = parseInt(normalized, 10);
+    if (!Number.isFinite(qty)) return null;
+    return Math.max(1, qty);
+  }
+  
+  function updateCartItemDisplay(index) {
     const cart = getCart();
+    const item = cart[index];
+    if (!item) return;
+    const lineTotal = (item.qty || 1) * (item.price_uzs || 0);
+    const priceEl = document.getElementById(`cart-item-price-${index}`);
+    if (priceEl) {
+      priceEl.textContent = `${lineTotal.toLocaleString('uz-UZ')} so'm`;
+    }
+    if (typeof updateCartTotal === 'function') updateCartTotal();
+  }
+  
+  function previewCartQty(index, value) {
+    const qty = parseCartQty(value);
+    if (qty === null) return;
+    const cart = getCart();
+    if (!cart[index]) return;
     cart[index].qty = qty;
     saveCart(cart);
-    if (typeof updateCartTotal === 'function') updateCartTotal();
+    updateCartItemDisplay(index);
+  }
+  
+  function setCartQty(index, value) {
+    const cart = getCart();
+    if (!cart[index]) return;
+    const qty = parseCartQty(value) || 1;
+    cart[index].qty = qty;
+    saveCart(cart);
     const input = document.getElementById(`cart-qty-${index}`);
-    if (input && parseInt(input.value) < 1) input.value = qty;
+    if (input) input.value = qty;
+    updateCartItemDisplay(index);
   }
   
   function updateCartTotal() {
@@ -68,18 +101,19 @@
             <div class="config-name" title="${item.label.replace(/"/g,'&quot;')}">${item.label}</div>
             ${item.orderNumber ? `<div class="config-order">${item.orderNumber}</div>` : ''}
           </div>
-          <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+          <div class="cart-item-controls">
             <button type="button" onclick="changeCartQty(${i},-1)"
               style="background:var(--btn-secondary-bg);border:1px solid var(--btn-secondary-border);color:var(--btn-secondary-color);border-radius:4px;width:28px;height:28px;min-height:unset;padding:0;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;">−</button>
             <input type="number" id="cart-qty-${i}" value="${item.qty || 1}" min="1" class="qty-input"
               onchange="setCartQty(${i}, this.value)"
-              oninput="setCartQty(${i}, this.value)"
+              oninput="previewCartQty(${i}, this.value)"
+              onblur="setCartQty(${i}, this.value)"
               style="width:52px;height:32px;min-height:unset;text-align:center;font-weight:700;font-size:14px;padding:0 4px;border:1px solid var(--input-border);border-radius:4px;background:var(--input-bg);color:var(--text);appearance:none;-moz-appearance:textfield;">
             <button type="button" onclick="changeCartQty(${i},1)"
               style="background:var(--btn-secondary-bg);border:1px solid var(--btn-secondary-border);color:var(--btn-secondary-color);border-radius:4px;width:28px;height:28px;min-height:unset;padding:0;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;">+</button>
           </div>
-          <div style="text-align:right;flex-shrink:0;min-width:80px;">
-            <div style="font-weight:700;font-size:15px;color:var(--accent-dark);">${((item.qty||1)*item.price_uzs).toLocaleString('uz-UZ')} so'm</div>
+          <div class="cart-item-price">
+            <div id="cart-item-price-${i}" class="cart-item-price-value">${((item.qty||1)*item.price_uzs).toLocaleString('uz-UZ')} so'm</div>
           </div>
           <button type="button" class="config-remove-btn" onclick="removeFromCart(${i})">×</button>
         </div>`).join('');
@@ -99,6 +133,7 @@
   // Export to global scope FIRST, before any event listeners
   window.addToCart = addToCart;
   window.changeCartQty = changeCartQty;
+  window.previewCartQty = previewCartQty;
   window.setCartQty = setCartQty;
   window.removeFromCart = removeFromCart;
   window.renderCart = renderCart;

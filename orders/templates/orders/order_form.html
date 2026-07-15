@@ -80,11 +80,44 @@
 }
 
 .item-row {
-  display: grid; grid-template-columns: 1fr 80px 110px 38px;
+  display: grid; grid-template-columns: minmax(0, 1fr) 132px 170px 38px;
   gap: 8px; align-items: end; margin-bottom: 10px;
   background: var(--bg); border-radius: 8px; padding: 10px;
 }
 .item-row .field label { font-size: 12px; }
+.quantity-control {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.quantity-btn {
+  background: var(--btn-secondary-bg);
+  border: 1px solid var(--btn-secondary-border);
+  color: var(--btn-secondary-color);
+  border-radius: 6px;
+  width: 32px;
+  height: 40px;
+  min-height: 40px;
+  padding: 0;
+  font-size: 18px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.quantity-btn:hover {
+  filter: brightness(0.98);
+}
+.quantity-input,
+.money-input {
+  text-align: center;
+  font-weight: 700;
+}
+.money-input {
+  text-align: right;
+}
 .remove-item-btn {
   background: none; border: 1px solid var(--danger); color: var(--danger);
   border-radius: 6px; min-height: 40px; width: 38px; padding: 0; font-size: 18px;
@@ -118,10 +151,16 @@
   .order-form-layout { grid-template-columns: 1fr; }
   .summary-panel { position: static; }
   .form-row, .form-row.three { grid-template-columns: 1fr; }
-  .item-row { grid-template-columns: 1fr 70px 100px 38px; }
+  .item-row { grid-template-columns: minmax(0, 1fr) 132px 150px 38px; }
 }
 @media (max-width: 480px) {
   .item-row { grid-template-columns: 1fr; }
+  .quantity-control {
+    justify-content: stretch;
+  }
+  .quantity-input {
+    flex: 1;
+  }
   .remove-item-btn { width: 100%; }
 }
 {% endblock %}
@@ -193,9 +232,13 @@
                   <div class="field"><label>Mahsulot nomi *</label>
                     <input type="text" name="config_label" value="{{ item.config_label }}" placeholder="i5 / 16GB / 512GB SSD yoki Monitor yoki Printer" required></div>
                   <div class="field"><label>Soni</label>
-                    <input type="number" name="quantity" value="{{ item.quantity }}" min="1" required oninput="calcTotal()"></div>
+                    <div class="quantity-control">
+                      <button type="button" class="quantity-btn" onclick="changeItemQuantity(this, -1)">-</button>
+                      <input type="text" name="quantity" value="{{ item.quantity }}" inputmode="numeric" class="quantity-input" required>
+                      <button type="button" class="quantity-btn" onclick="changeItemQuantity(this, 1)">+</button>
+                    </div></div>
                   <div class="field"><label>Dona narxi (so'm)</label>
-                    <input type="number" name="unit_price_uzs" value="{% widthratio item.unit_price_usd 1 usd_rate %}" step="1000" min="0" oninput="calcTotal()"></div>
+                    <input type="text" name="unit_price_uzs" value="{% widthratio item.unit_price_usd 1 usd_rate %}" inputmode="numeric" class="money-input"></div>
                   <button type="button" class="remove-item-btn" onclick="removeItem(this)" title="O'chirish">×</button>
                 </div>
               {% endfor %}
@@ -205,9 +248,13 @@
                   <div class="field"><label>Mahsulot nomi *</label>
                     <input type="text" name="config_label" value="{{ item.config_label }}" placeholder="i5 / 16GB / 512GB SSD yoki Monitor yoki Printer" required></div>
                   <div class="field"><label>Soni</label>
-                    <input type="number" name="quantity" value="{{ item.quantity }}" min="1" required oninput="calcTotal()"></div>
+                    <div class="quantity-control">
+                      <button type="button" class="quantity-btn" onclick="changeItemQuantity(this, -1)">-</button>
+                      <input type="text" name="quantity" value="{{ item.quantity }}" inputmode="numeric" class="quantity-input" required>
+                      <button type="button" class="quantity-btn" onclick="changeItemQuantity(this, 1)">+</button>
+                    </div></div>
                   <div class="field"><label>Dona narxi (so'm)</label>
-                    <input type="number" name="unit_price_uzs" value="{% widthratio item.unit_price_usd 1 usd_rate %}" step="1000" min="0" oninput="calcTotal()"></div>
+                    <input type="text" name="unit_price_uzs" value="{% widthratio item.unit_price_usd 1 usd_rate %}" inputmode="numeric" class="money-input"></div>
                   <button type="button" class="remove-item-btn" onclick="removeItem(this)" title="O'chirish">×</button>
                 </div>
               {% endfor %}
@@ -222,7 +269,7 @@
           <div class="form-row">
             <div class="field">
               <label>Jami narx (so'm) *</label>
-              <input type="number" name="total_price_uzs" id="total_price_uzs" value="{{ v_total_uzs }}" step="1000" min="0" required>
+              <input type="text" name="total_price_uzs" id="total_price_uzs" value="{{ v_total_uzs }}" inputmode="numeric" class="money-input" required readonly>
             </div>
           </div>
           <div class="form-row">
@@ -299,45 +346,125 @@ const deliveryLabels = { {% for v,l in delivery_choices %}"{{ v }}":"{{ l }}"{% 
 const paymentTypeLabels = { {% for v,l in payment_type_choices %}"{{ v }}":"{{ l }}"{% if not forloop.last %},{% endif %}{% endfor %} };
 const paymentStatusLabels = { {% for v,l in payment_status_choices %}"{{ v }}":"{{ l }}"{% if not forloop.last %},{% endif %}{% endfor %} };
 
+function formatInteger(value) {
+  return Math.round(Number(value) || 0).toLocaleString('uz-UZ');
+}
+
+function parseInteger(value) {
+  const digits = String(value ?? '').replace(/[^\d]/g, '');
+  return digits ? parseInt(digits, 10) : 0;
+}
+
+function normalizeQuantity(value) {
+  return Math.max(1, parseInteger(value) || 1);
+}
+
+function normalizeMoney(value) {
+  return Math.max(0, parseInteger(value));
+}
+
+function buildItemRowMarkup(label = '', quantity = 1, unitPriceUzs = 0) {
+  return `
+    <div class="field"><label>Mahsulot nomi *</label>
+      <input type="text" name="config_label" value="${label.replace(/"/g, '&quot;')}" placeholder="i5 / 16GB / 512GB SSD yoki Monitor yoki Printer" required></div>
+    <div class="field"><label>Soni</label>
+      <div class="quantity-control">
+        <button type="button" class="quantity-btn" onclick="changeItemQuantity(this, -1)">-</button>
+        <input type="text" name="quantity" value="${normalizeQuantity(quantity)}" inputmode="numeric" class="quantity-input" required>
+        <button type="button" class="quantity-btn" onclick="changeItemQuantity(this, 1)">+</button>
+      </div></div>
+    <div class="field"><label>Dona narxi (so'm)</label>
+      <input type="text" name="unit_price_uzs" value="${unitPriceUzs ? formatInteger(unitPriceUzs) : ''}" inputmode="numeric" class="money-input"></div>
+    <button type="button" class="remove-item-btn" onclick="removeItem(this)" title="O'chirish">×</button>`;
+}
+
+function attachItemRowBehavior(row) {
+  const labelInput = row.querySelector('[name="config_label"]');
+  const quantityInput = row.querySelector('[name="quantity"]');
+  const priceInput = row.querySelector('[name="unit_price_uzs"]');
+
+  if (quantityInput) {
+    quantityInput.addEventListener('input', function() {
+      this.value = String(normalizeQuantity(this.value));
+      recalcOrderTotals();
+    });
+    quantityInput.addEventListener('blur', function() {
+      this.value = String(normalizeQuantity(this.value));
+      recalcOrderTotals();
+    });
+  }
+
+  if (priceInput) {
+    priceInput.addEventListener('input', function() {
+      const value = normalizeMoney(this.value);
+      this.value = value ? formatInteger(value) : '';
+      recalcOrderTotals();
+    });
+    priceInput.addEventListener('blur', function() {
+      const value = normalizeMoney(this.value);
+      this.value = value ? formatInteger(value) : '';
+      recalcOrderTotals();
+    });
+  }
+
+  if (labelInput) {
+    labelInput.addEventListener('input', recalcOrderTotals);
+  }
+}
+
 function addItem() {
   const container = document.getElementById('items-container');
   const row = document.createElement('div');
   row.className = 'item-row';
-  row.innerHTML = `
-    <div class="field"><label>Mahsulot nomi *</label>
-      <input type="text" name="config_label" placeholder="i5 / 16GB / 512GB SSD yoki Monitor yoki Printer" required></div>
-    <div class="field"><label>Soni</label>
-      <input type="number" name="quantity" value="1" min="1" required oninput="calcTotal()"></div>
-    <div class="field"><label>Dona narxi (so'm)</label>
-      <input type="number" name="unit_price_uzs" value="0" step="1000" min="0" oninput="calcTotal()"></div>
-    <button type="button" class="remove-item-btn" onclick="removeItem(this)">×</button>`;
+  row.innerHTML = buildItemRowMarkup('', 1, 0);
   container.appendChild(row);
+  attachItemRowBehavior(row);
   row.querySelector('input[name="config_label"]').focus();
+  recalcOrderTotals();
 }
 
 function removeItem(btn) {
   btn.closest('.item-row').remove();
-  calcTotal();
+  recalcOrderTotals();
 }
 
-function calcTotal() {
+function changeItemQuantity(button, delta) {
+  const row = button.closest('.item-row');
+  const input = row?.querySelector('[name="quantity"]');
+  if (!input) return;
+  input.value = String(Math.max(1, normalizeQuantity(input.value) + delta));
+  recalcOrderTotals();
+}
+
+function recalcOrderTotals() {
   let sum = 0;
   const itemsHtml = [];
   const allRows = document.querySelectorAll('#items-container .item-row');
-  
+
   allRows.forEach(row => {
-    const label = row.querySelector('[name="config_label"]')?.value || '';
-    const qty = parseInt(row.querySelector('[name="quantity"]')?.value || '1');
-    const priceUzs = parseFloat(row.querySelector('[name="unit_price_uzs"]')?.value || '0');
+    const label = row.querySelector('[name="config_label"]')?.value.trim() || '';
+    const qtyInput = row.querySelector('[name="quantity"]');
+    const priceInput = row.querySelector('[name="unit_price_uzs"]');
+    const qty = normalizeQuantity(qtyInput?.value || '1');
+    const priceUzs = normalizeMoney(priceInput?.value || '0');
     const line = priceUzs * qty;
+
+    if (qtyInput) qtyInput.value = String(qty);
+    if (priceInput) priceInput.value = priceUzs ? formatInteger(priceUzs) : '';
+
     sum += line;
-    if (label) itemsHtml.push(`<div style="display:flex;justify-content:space-between;font-size:13px;padding:4px 0;border-bottom:1px solid var(--line);gap:8px;"><span style="flex:1;color:var(--muted);">${label} ×${qty}</span><strong>${line.toLocaleString('uz-UZ')} so'm</strong></div>`);
+    if (label) {
+      itemsHtml.push(`<div style="display:flex;justify-content:space-between;font-size:13px;padding:4px 0;border-bottom:1px solid var(--line);gap:8px;"><span style="flex:1;color:var(--muted);">${label} ×${qty}</span><strong>${formatInteger(line)} so'm</strong></div>`);
+    }
   });
-  
+
   document.getElementById('s-items-list').innerHTML = itemsHtml.join('');
-  document.getElementById('s-total').textContent = `${sum.toLocaleString('uz-UZ')} so'm`;
-  const uzsField = document.getElementById('total_price_uzs');
-  if (uzsField && sum > 0) uzsField.value = Math.round(sum);
+  document.getElementById('s-total').textContent = `${formatInteger(sum)} so'm`;
+
+  const totalInput = document.getElementById('total_price_uzs');
+  if (totalInput) {
+    totalInput.value = sum ? formatInteger(sum) : '0';
+  }
 }
 
 function updateSummary() {
@@ -349,14 +476,21 @@ function updateSummary() {
   document.getElementById('s-delivery').textContent = deliveryLabels[dt] || '—';
   document.getElementById('s-payment').textContent = [paymentTypeLabels[pt], paymentStatusLabels[ps]].filter(Boolean).join(' / ') || '—';
   document.getElementById('s-status').textContent = paymentStatusLabels[ps] || '—';
-  calcTotal();
+  recalcOrderTotals();
 }
 
-document.getElementById('order-form').addEventListener('input', updateSummary);
-document.getElementById('total_price_uzs')?.addEventListener('input', () => {
-  const uzs = parseInt(document.getElementById('total_price_uzs').value || '0');
-  document.getElementById('s-total-uzs').textContent = uzs > 0 ? `${uzs.toLocaleString('uz-UZ')} so'm` : '';
+document.querySelectorAll('#items-container .item-row').forEach(attachItemRowBehavior);
+document.getElementById('order-form').addEventListener('input', function(event) {
+  if (!event.target.closest('#items-container')) {
+    updateSummary();
+  }
 });
+
+window.addItem = addItem;
+window.removeItem = removeItem;
+window.changeItemQuantity = changeItemQuantity;
+window.calcTotal = recalcOrderTotals;
+
 updateSummary();
 
 // Custom Autocomplete for Regions and Districts (OLX-style)
@@ -598,93 +732,13 @@ updateSummary();
   });
 })();
 
-// Format unit price inputs
-(function() {
-  function formatNumber(num) {
-    return Math.round(Number(num) || 0).toLocaleString("uz-UZ");
-  }
-
-  function parseNumber(str) {
-    return parseInt(String(str).replace(/\s/g, '').replace(/,/g, '')) || 0;
-  }
-
-  function attachPriceFormatting(input) {
-    // Format on blur
-    input.addEventListener('blur', function() {
-      const value = parseNumber(this.value);
-      if (value > 0) {
-        this.value = formatNumber(value);
-      }
-    });
-
-    // Remove formatting on focus
-    input.addEventListener('focus', function() {
-      const value = parseNumber(this.value);
-      if (value > 0) {
-        this.value = value;
-      }
-    });
-
-    // Initial format if has value
-    const initialValue = parseNumber(input.value);
-    if (initialValue > 0 && !input.matches(':focus')) {
-      input.value = formatNumber(initialValue);
-    }
-  }
-
-  // Format existing inputs
-  document.querySelectorAll('input[name="unit_price_uzs"]').forEach(attachPriceFormatting);
-
-  // Format total price input
-  const totalInput = document.getElementById('total_price_uzs');
-  if (totalInput) {
-    attachPriceFormatting(totalInput);
-  }
-
-  // Re-attach formatting when new items are added
-  const originalAddItem = window.addItem;
-  window.addItem = function() {
-    originalAddItem();
-    const newInputs = document.querySelectorAll('#items-container .item-row:last-child input[name="unit_price_uzs"]');
-    newInputs.forEach(attachPriceFormatting);
-  };
-
-  // Update calcTotal to handle formatted values
-  const originalCalcTotal = window.calcTotal;
-  window.calcTotal = function() {
-    let sum = 0;
-    const itemsHtml = [];
-    const allRows = document.querySelectorAll('#items-container .item-row');
-    
-    allRows.forEach(row => {
-      const label = row.querySelector('[name="config_label"]')?.value || '';
-      const qty = parseInt(row.querySelector('[name="quantity"]')?.value || '1');
-      const priceInput = row.querySelector('[name="unit_price_uzs"]');
-      const priceUzs = parseNumber(priceInput?.value || '0');
-      const line = priceUzs * qty;
-      sum += line;
-      if (label) itemsHtml.push(`<div style="display:flex;justify-content:space-between;font-size:13px;padding:4px 0;border-bottom:1px solid var(--line);gap:8px;"><span style="flex:1;color:var(--muted);">${label} ×${qty}</span><strong>${formatNumber(line)} so'm</strong></div>`);
-    });
-    
-    document.getElementById('s-items-list').innerHTML = itemsHtml.join('');
-    document.getElementById('s-total').textContent = `${formatNumber(sum)} so'm`;
-    const uzsField = document.getElementById('total_price_uzs');
-    if (uzsField && sum > 0) {
-      // If focused, show plain number; otherwise show formatted
-      if (document.activeElement === uzsField) {
-        uzsField.value = Math.round(sum);
-      } else {
-        uzsField.value = formatNumber(Math.round(sum));
-      }
-    }
-  };
-
-  // Before form submit, convert all formatted prices back to numbers
-  document.getElementById('order-form').addEventListener('submit', function(e) {
-    document.querySelectorAll('input[name="unit_price_uzs"], #total_price_uzs').forEach(input => {
-      input.value = parseNumber(input.value);
-    });
+document.getElementById('order-form').addEventListener('submit', function() {
+  document.querySelectorAll('input[name="quantity"]').forEach(input => {
+    input.value = normalizeQuantity(input.value);
   });
-})();
+  document.querySelectorAll('input[name="unit_price_uzs"], #total_price_uzs').forEach(input => {
+    input.value = normalizeMoney(input.value);
+  });
+});
 </script>
 {% endblock %}
