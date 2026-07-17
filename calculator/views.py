@@ -165,3 +165,15 @@ def save_quote(request):
             "total_price": f"{quote.total_price:.2f}",
         }
     )
+
+
+@login_required
+def profile(request):
+    return render(
+        request,
+        "calculator/profile.html",
+        {
+            "user": request.user,
+            "active_nav": None,
+        }
+    )
