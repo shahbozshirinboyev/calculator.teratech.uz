@@ -32,6 +32,8 @@ def _parse_decimal(value, default=Decimal("0")):
 @login_required
 def order_list(request):
     from calculator.models import CalculatorSettings
+    from django.utils import timezone
+    from collections import defaultdict
 
     # USD kursini olish
     try:
@@ -42,13 +44,24 @@ def order_list(request):
 
     tab = request.GET.get("tab", "queue")  # queue | done | all
 
-    queue_qs = Order.queue_queryset().prefetch_related("items").select_related("sold_by")
-    done_qs = Order.objects.filter(
-        production_status__in=[
-            Order.ProductionStatus.DELIVERED,
-            Order.ProductionStatus.CANCELLED,
-        ]
-    ).prefetch_related("items").select_related("sold_by").order_by("-updated_at")
+    # Base querysets: if superuser, show all; else only own orders
+    if request.user.is_superuser:
+        queue_qs = Order.queue_queryset().prefetch_related("items").select_related("sold_by")
+        done_qs = Order.objects.filter(
+            production_status__in=[
+                Order.ProductionStatus.DELIVERED,
+                Order.ProductionStatus.CANCELLED,
+            ]
+        ).prefetch_related("items").select_related("sold_by").order_by("-updated_at")
+    else:
+        queue_qs = Order.queue_queryset().filter(sold_by=request.user).prefetch_related("items").select_related("sold_by")
+        done_qs = Order.objects.filter(
+            production_status__in=[
+                Order.ProductionStatus.DELIVERED,
+                Order.ProductionStatus.CANCELLED,
+            ],
+            sold_by=request.user
+        ).prefetch_related("items").select_related("sold_by").order_by("-updated_at")
 
     # Filters (apply to both tabs)
     sold_by = request.GET.get("sold_by")
@@ -58,7 +71,7 @@ def order_list(request):
     date_to = request.GET.get("date_to")
 
     def apply_filters(qs):
-        if sold_by:
+        if sold_by and request.user.is_superuser:
             qs = qs.filter(sold_by_id=sold_by)
         if delivery_type:
             qs = qs.filter(delivery_type=delivery_type)
@@ -73,16 +86,38 @@ def order_list(request):
     queue_qs = apply_filters(queue_qs)
     done_qs = apply_filters(done_qs)
 
-    sellers = User.objects.filter(orders__isnull=False).distinct().order_by("username")
+    # Group orders by date
+    def group_by_date(orders):
+        groups = defaultdict(list)
+        today = timezone.now().date()
+        for order in orders:
+            order_date = order.created_at.date()
+            groups[order_date].append(order)
+        # Sort groups by date descending
+        sorted_groups = sorted(groups.items(), key=lambda x: x[0], reverse=True)
+        # Add "is_today" flag
+        return [(date, orders, date == today) for date, orders in sorted_groups]
+
+    queue_groups = group_by_date(queue_qs) if tab in ("queue", "all") else []
+    done_groups = group_by_date(done_qs) if tab in ("done", "all") else []
+
+    # For superusers, show all sellers in filter; for others, no seller filter
+    if request.user.is_superuser:
+        sellers = User.objects.filter(orders__isnull=False).distinct().order_by("username")
+    else:
+        sellers = []
 
     return render(request, "orders/order_list.html", {
         "active_nav": "orders",
         "tab": tab,
-        "queue_orders": queue_qs if tab in ("queue", "all") else [],
-        "done_orders": done_qs if tab in ("done", "all") else [],
-        "queue_count": Order.queue_queryset().count(),
+        "queue_groups": queue_groups,
+        "done_groups": done_groups,
+        "queue_count": Order.queue_queryset().count() if request.user.is_superuser else Order.queue_queryset().filter(sold_by=request.user).count(),
         "done_count": Order.objects.filter(
             production_status__in=[Order.ProductionStatus.DELIVERED, Order.ProductionStatus.CANCELLED]
+        ).count() if request.user.is_superuser else Order.objects.filter(
+            production_status__in=[Order.ProductionStatus.DELIVERED, Order.ProductionStatus.CANCELLED],
+            sold_by=request.user
         ).count(),
         "sellers": sellers,
         "usd_rate": usd_rate,
@@ -330,6 +365,61 @@ def leaderboard(request):
         "active_nav": "orders",
         "board": board,
         "period": period,
+    })
+
+
+@login_required
+def seller_profile(request):
+    from calculator.models import CalculatorSettings
+    from django.utils import timezone
+    from django.db.models import Sum, Count
+
+    # USD kursini olish
+    try:
+        settings = CalculatorSettings.objects.first()
+        usd_rate = int(settings.usd_rate) if settings and settings.usd_rate else 12850
+    except:
+        usd_rate = 12850
+
+    period = request.GET.get("period", "today")  # today, week, month
+    now = timezone.now()
+
+    if period == "today":
+        date_filter = Q(created_at__date=now.date())
+    elif period == "week":
+        week_start = now.date() - timezone.timedelta(days=now.weekday())
+        date_filter = Q(created_at__date__gte=week_start)
+    elif period == "month":
+        date_filter = Q(created_at__year=now.year, created_at__month=now.month)
+    else:
+        date_filter = Q()
+
+    # Only show user's own orders
+    active_filter = date_filter & ~Q(production_status=Order.ProductionStatus.CANCELLED) & Q(sold_by=request.user)
+
+    # Calculate stats
+    stats = Order.objects.filter(active_filter).aggregate(
+        total_usd=Sum("total_price_usd"),
+        total_uzs=Sum("total_price_uzs"),
+        order_count=Count("id"),
+    )
+
+    # Calculate total items sold
+    total_items = OrderItem.objects.filter(
+        order__sold_by=request.user,
+        order__in=Order.objects.filter(active_filter),
+    ).aggregate(total_units=Sum("quantity"))["total_units"] or 0
+
+    return render(request, "orders/seller_profile.html", {
+        "active_nav": "profile",
+        "period": period,
+        "stats": {
+            "total_usd": stats["total_usd"] or Decimal("0"),
+            "total_uzs": stats["total_uzs"] or Decimal("0"),
+            "order_count": stats["order_count"] or 0,
+            "total_items": total_items,
+        },
+        "usd_rate": usd_rate,
     })
 
 

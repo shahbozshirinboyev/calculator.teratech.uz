@@ -7,6 +7,16 @@
 }
 .orders-layout { margin-top: 20px; }
 
+.date-group {
+  margin-bottom: 24px;
+}
+.date-header {
+  font-size: 16px;
+  font-weight: 800;
+  margin: 0 0 12px 0;
+  color: var(--text);
+}
+
 .tabs {
   display: flex;
   gap: 4px;
@@ -68,9 +78,9 @@
   border-radius: 10px;
   padding: 16px 18px;
   margin-bottom: 10px;
-  transition: border-color 0.15s;
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
-.order-card:hover { border-color: var(--accent); }
+.order-card:hover { border-color: var(--accent); box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
 
 .order-card-header {
   display: flex;
@@ -139,7 +149,7 @@
   font-size: 13px;
   background: var(--bg);
   border-radius: 6px;
-  padding: 5px 10px;
+  padding: 8px 12px;
   gap: 8px;
 }
 .order-item-row .item-label { flex: 1; font-weight: 600; }
@@ -228,17 +238,19 @@
   <form method="get" id="filter-form">
     <input type="hidden" name="tab" value="{{ tab }}">
     <div class="filters-bar" style="margin-top:14px;">
-      <div>
-        <span class="filter-label">Sotuvchi</span>
-        <select name="sold_by" onchange="this.form.submit()">
-          <option value="">Barchasi</option>
-          {% for seller in sellers %}
-            <option value="{{ seller.pk }}" {% if filters.sold_by == seller.pk|stringformat:"s" %}selected{% endif %}>
-              {{ seller.get_full_name|default:seller.username }}
-            </option>
-          {% endfor %}
-        </select>
-      </div>
+      {% if user.is_superuser %}
+        <div>
+          <span class="filter-label">Sotuvchi</span>
+          <select name="sold_by" onchange="this.form.submit()">
+            <option value="">Barchasi</option>
+            {% for seller in sellers %}
+              <option value="{{ seller.pk }}" {% if filters.sold_by == seller.pk|stringformat:"s" %}selected{% endif %}>
+                {{ seller.get_full_name|default:seller.username }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+      {% endif %}
       <div>
         <span class="filter-label">Yetkazish</span>
         <select name="delivery_type" onchange="this.form.submit()">
@@ -275,20 +287,46 @@
 
   <!-- Queue tab -->
   <div id="tab-queue" {% if tab != 'queue' %}style="display:none"{% endif %}>
-    {% for order in queue_orders %}
-      {% include "orders/_order_card.html" with order=order show_status_btns=True %}
-    {% empty %}
+    {% if queue_groups %}
+      {% for date, orders, is_today in queue_groups %}
+        <div class="date-group" {% if not is_today %}style="border-left:3px solid var(--line);padding-left:12px;margin-left:6px;"{% endif %}>
+          <h3 class="date-header" {% if not is_today %}style="color:var(--muted);"{% endif %}>
+            {% if is_today %}
+              📅 Bugun, {{ date|date:"d.m.Y" }}
+            {% else %}
+              📅 {{ date|date:"d.m.Y" }}
+            {% endif %}
+          </h3>
+          {% for order in orders %}
+            {% include "orders/_order_card.html" with order=order show_status_btns=True %}
+          {% endfor %}
+        </div>
+      {% endfor %}
+    {% else %}
       <div class="empty-state">Navbatda buyurtma yo'q</div>
-    {% endfor %}
+    {% endif %}
   </div>
 
   <!-- Done tab -->
   <div id="tab-done" {% if tab != 'done' %}style="display:none"{% endif %}>
-    {% for order in done_orders %}
-      {% include "orders/_order_card.html" with order=order show_status_btns=False %}
-    {% empty %}
+    {% if done_groups %}
+      {% for date, orders, is_today in done_groups %}
+        <div class="date-group" {% if not is_today %}style="border-left:3px solid var(--line);padding-left:12px;margin-left:6px;"{% endif %}>
+          <h3 class="date-header" {% if not is_today %}style="color:var(--muted);"{% endif %}>
+            {% if is_today %}
+              📅 Bugun, {{ date|date:"d.m.Y" }}
+            {% else %}
+              📅 {{ date|date:"d.m.Y" }}
+            {% endif %}
+          </h3>
+          {% for order in orders %}
+            {% include "orders/_order_card.html" with order=order show_status_btns=False %}
+          {% endfor %}
+        </div>
+      {% endfor %}
+    {% else %}
       <div class="empty-state">Yakunlangan buyurtma yo'q</div>
-    {% endfor %}
+    {% endif %}
   </div>
 
 </div>
@@ -303,7 +341,7 @@ function switchTab(tab) {
 }
 
 function updateStatus(orderId, status) {
-  const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]') 
+  const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')
     ? document.querySelector('[name=csrfmiddlewaretoken]').value
     : '{{ csrf_token }}';
   fetch(`/orders/${orderId}/status/`, {

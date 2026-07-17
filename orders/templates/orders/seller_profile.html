@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+{% block title %}Profil{% endblock %}
+
+{% block extra_css %}
+.rate-bar {
+  display: none !important;
+}
+.profile-layout {
+  margin-top: 24px;
+}
+.profile-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.profile-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  font-weight: 800;
+  color: white;
+}
+.profile-info h1 {
+  font-size: 24px;
+  font-weight: 800;
+  margin: 0;
+}
+.profile-info p {
+  font-size: 14px;
+  color: var(--muted);
+  margin: 4px 0 0 0;
+}
+
+.period-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+.period-tab {
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: none;
+  background: var(--btn-secondary-bg);
+  color: var(--btn-secondary-color);
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.period-tab:hover {
+  background: var(--toggle-bg);
+}
+.period-tab.active {
+  background: var(--accent);
+  color: white;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+.stat-card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 20px;
+}
+.stat-card h3 {
+  font-size: 13px;
+  color: var(--muted);
+  margin: 0 0 8px 0;
+  font-weight: 700;
+}
+.stat-value {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--text);
+}
+.stat-value small {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--muted);
+  margin-left: 4px;
+}
+
+@media (max-width: 640px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  .profile-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+{% endblock %}
+
+{% block content %}
+<div class="profile-layout">
+  <div class="profile-header">
+    <div class="profile-avatar">
+      {{ user.get_full_name|default:user.username|slice:":1"|upper }}
+    </div>
+    <div class="profile-info">
+      <h1>{{ user.get_full_name|default:user.username }}</h1>
+      <p>@{{ user.username }}</p>
+    </div>
+  </div>
+
+  <div class="period-tabs">
+    <button class="period-tab {% if period == 'today' %}active{% endif %}" onclick="setPeriod('today')">Bugun</button>
+    <button class="period-tab {% if period == 'week' %}active{% endif %}" onclick="setPeriod('week')">Hafta</button>
+    <button class="period-tab {% if period == 'month' %}active{% endif %}" onclick="setPeriod('month')">Oy</button>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <h3>Jami sotuv (so'm)</h3>
+      <div class="stat-value">{{ stats.total_uzs|floatformat:0 }} <small>so'm</small></div>
+    </div>
+    <div class="stat-card">
+      <h3>Jami sotuv (USD)</h3>
+      <div class="stat-value">${{ stats.total_usd|floatformat:2 }}</div>
+    </div>
+    <div class="stat-card">
+      <h3>Buyurtmalar soni</h3>
+      <div class="stat-value">{{ stats.order_count }}</div>
+    </div>
+    <div class="stat-card">
+      <h3>Maxsulotlar soni</h3>
+      <div class="stat-value">{{ stats.total_items }}</div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function setPeriod(period) {
+  const url = new URL(window.location.href);
+  url.searchParams.set('period', period);
+  window.location.href = url.toString();
+}
+</script>
+{% endblock %}

@@ -10,4 +10,5 @@ urlpatterns = [
     path("<int:pk>/", views.order_detail, name="detail"),
     path("<int:pk>/status/", views.order_update_status, name="update_status"),
     path("leaderboard/", views.leaderboard, name="leaderboard"),
+    path("profile/", views.seller_profile, name="profile"),
 ]
