@@ -24,11 +24,11 @@ class Order(models.Model):
         PARTIAL = "PARTIAL", "Qisman"
 
     class ProductionStatus(models.TextChoices):
-        QUEUED = "QUEUED", "Navbatda"
-        IN_PROGRESS = "IN_PROGRESS", "Yig'ilmoqda"
-        READY = "READY", "Tayyor"
-        SHIPPING = "SHIPPING", "Yetkazilmoqda"
-        DELIVERED = "DELIVERED", "Yetkazib berildi"
+        QUEUED = "QUEUED", "Yig'ish boshlansin"
+        IN_PROGRESS = "IN_PROGRESS", "Yig'ish boshlandi"
+        READY_DELIVERY = "READY_DELIVERY", "Yetkazib berishga tayyor"
+        READY_PICKUP = "READY_PICKUP", "Olib ketishga tayyor"
+        DELIVERED = "DELIVERED", "Yetkazildi"
         CANCELLED = "CANCELLED", "Bekor qilindi"
 
     order_number = models.CharField(

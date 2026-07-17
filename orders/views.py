@@ -16,8 +16,8 @@ User = get_user_model()
 STATUS_FLOW = [
     Order.ProductionStatus.QUEUED,
     Order.ProductionStatus.IN_PROGRESS,
-    Order.ProductionStatus.READY,
-    Order.ProductionStatus.SHIPPING,
+    Order.ProductionStatus.READY_DELIVERY,
+    Order.ProductionStatus.READY_PICKUP,
     Order.ProductionStatus.DELIVERED,
 ]
 
@@ -32,14 +32,14 @@ def _parse_decimal(value, default=Decimal("0")):
 @login_required
 def order_list(request):
     from calculator.models import CalculatorSettings
-    
+
     # USD kursini olish
     try:
         settings = CalculatorSettings.objects.first()
         usd_rate = int(settings.usd_rate) if settings and settings.usd_rate else 12850
     except:
         usd_rate = 12850
-    
+
     tab = request.GET.get("tab", "queue")  # queue | done | all
 
     queue_qs = Order.queue_queryset().prefetch_related("items").select_related("sold_by")
@@ -103,14 +103,14 @@ def order_list(request):
 def _form_context(order, initial, extra=None):
     """order_form.html uchun umumiy context yasaydi."""
     from calculator.models import CalculatorSettings
-    
+
     # USD kursini olish
     try:
         settings = CalculatorSettings.objects.first()
         usd_rate = int(settings.usd_rate) if settings and settings.usd_rate else 12850
     except:
         usd_rate = 12850
-    
+
     src = initial or {}
     o = order  # None yoki Order instance
 
@@ -124,6 +124,7 @@ def _form_context(order, initial, extra=None):
         "v_delivery_type":  src.get("delivery_type",  getattr(o, "delivery_type",  "")),
         "v_payment_type":   src.get("payment_type",   getattr(o, "payment_type",   "")),
         "v_payment_status": src.get("payment_status", getattr(o, "payment_status", "")),
+        "v_production_status": src.get("production_status", getattr(o, "production_status", "")),
         "v_total_usd":      src.get("total_price_usd",str(getattr(o, "total_price_usd", "0"))),
         "v_total_uzs":      src.get("total_price_uzs",str(getattr(o, "total_price_uzs", "0"))),
         "v_notes":          src.get("notes",          getattr(o, "notes",          "")),
@@ -133,12 +134,13 @@ def _form_context(order, initial, extra=None):
         "delivery_choices": Order.DeliveryType.choices,
         "payment_type_choices": Order.PaymentType.choices,
         "payment_status_choices": Order.PaymentStatus.choices,
+        "production_status_choices": Order.ProductionStatus.choices,
     }
-    
+
     # URL parametrlaridan kelgan items ma'lumotlarini qo'shish
     if "items" in src:
         ctx["initial_items"] = src["items"]
-    
+
     if extra:
         ctx.update(extra)
     return ctx
@@ -170,13 +172,13 @@ def order_create(request):
         config_labels = request.GET.getlist("config_label")
         quantities = request.GET.getlist("quantity")
         unit_prices_uzs = request.GET.getlist("unit_price_uzs")
-        
+
         if config_labels:
             items_data = []
             for i, label in enumerate(config_labels):
                 qty = int(quantities[i]) if i < len(quantities) and quantities[i].isdigit() else 1
                 price_uzs = _parse_decimal(unit_prices_uzs[i] if i < len(unit_prices_uzs) else "0")
-                
+
                 # So'mdan USD ga konvertatsiya qilish
                 try:
                     from calculator.models import CalculatorSettings
@@ -185,17 +187,17 @@ def order_create(request):
                     price_usd = price_uzs / usd_rate if usd_rate > 0 else Decimal("0")
                 except:
                     price_usd = Decimal("0")
-                
+
                 items_data.append({
                     "config_label": label,
                     "quantity": qty,
                     "unit_price_usd": price_usd
                 })
             initial["items"] = items_data
-        
+
         total_uzs = request.GET.get("total_price_uzs", "")
         initial["total_price_uzs"] = total_uzs
-        
+
         # USD ga konvertatsiya
         if total_uzs:
             try:
@@ -213,14 +215,14 @@ def order_create(request):
 @login_required
 def order_detail(request, pk):
     from calculator.models import CalculatorSettings
-    
+
     # USD kursini olish
     try:
         settings = CalculatorSettings.objects.first()
         usd_rate = int(settings.usd_rate) if settings and settings.usd_rate else 12850
     except:
         usd_rate = 12850
-    
+
     order = get_object_or_404(Order.objects.prefetch_related("items").select_related("sold_by"), pk=pk)
     if request.method == "POST":
         try:
@@ -329,16 +331,7 @@ def _save_order(request, instance=None):
     payment_type = post.get("payment_type", "").strip()
     payment_status = post.get("payment_status", "").strip()
     production_status = post.get("production_status", Order.ProductionStatus.QUEUED).strip()
-    total_price_uzs = _parse_decimal(post.get("total_price_uzs", "0"))
-    
-    # USD dan so'mga konvertatsiya qilish (database uchun)
-    try:
-        from calculator.models import CalculatorSettings
-        settings = CalculatorSettings.objects.first()
-        usd_rate = settings.usd_rate if settings and settings.usd_rate else Decimal("12850")
-        total_price_usd = total_price_uzs / usd_rate if usd_rate > 0 else Decimal("0")
-    except:
-        total_price_usd = Decimal("0")
+
     notes = post.get("notes", "").strip()
 
     errors = []
@@ -364,23 +357,29 @@ def _save_order(request, instance=None):
     unit_prices_uzs = post.getlist("unit_price_uzs")
 
     items_data = []
+    total_price_uzs = Decimal("0")
+    # Get USD rate once for all calculations
+    try:
+        from calculator.models import CalculatorSettings
+        settings = CalculatorSettings.objects.first()
+        usd_rate = settings.usd_rate if settings and settings.usd_rate else Decimal("12850")
+    except:
+        usd_rate = Decimal("12850")
+
     for i, label in enumerate(config_labels):
         label = label.strip()
         if not label:
             continue
         qty = int(quantities[i]) if i < len(quantities) and quantities[i].isdigit() else 1
         price_uzs = _parse_decimal(unit_prices_uzs[i] if i < len(unit_prices_uzs) else "0")
-        
+
         # So'mdan USD ga konvertatsiya qilish (database uchun)
-        try:
-            from calculator.models import CalculatorSettings
-            settings = CalculatorSettings.objects.first()
-            usd_rate = settings.usd_rate if settings and settings.usd_rate else Decimal("12850")
-            price_usd = price_uzs / usd_rate if usd_rate > 0 else Decimal("0")
-        except:
-            price_usd = Decimal("0")
-        
+        price_usd = price_uzs / usd_rate if usd_rate > 0 else Decimal("0")
+
         items_data.append({"config_label": label, "quantity": qty, "unit_price_usd": price_usd})
+        total_price_uzs += price_uzs * qty
+
+    total_price_usd = total_price_uzs / usd_rate if usd_rate > 0 else Decimal("0")
 
     if not items_data:
         errors.append("Kamida bitta mahsulot qo'shing.")

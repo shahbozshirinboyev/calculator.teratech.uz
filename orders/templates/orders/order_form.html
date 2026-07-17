@@ -70,7 +70,8 @@
 .autocomplete-item:last-child { border-bottom: none; }
 .autocomplete-item:hover,
 .autocomplete-item.selected {
-  background: var(--toggle-bg);
+  background: var(--accent);
+  color: white;
 }
 .autocomplete-empty {
   padding: 12px;
@@ -268,12 +269,6 @@
           <h3>IV. To'lov ma'lumotlari</h3>
           <div class="form-row">
             <div class="field">
-              <label>Jami narx (so'm) *</label>
-              <input type="text" name="total_price_uzs" id="total_price_uzs" value="{{ v_total_uzs }}" inputmode="numeric" class="money-input" required readonly>
-            </div>
-          </div>
-          <div class="form-row">
-            <div class="field">
               <label>To'lov turi *</label>
               <select name="payment_type" required>
                 <option value="">Tanlang</option>
@@ -303,6 +298,15 @@
                 <option value="">Tanlang</option>
                 {% for val, label in delivery_choices %}
                   <option value="{{ val }}" {% if v_delivery_type == val %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="field">
+              <label>Status *</label>
+              <select name="production_status" required>
+                <option value="">Tanlang</option>
+                {% for val, label in production_status_choices %}
+                  <option value="{{ val }}" {% if v_production_status == val %}selected{% endif %}>{{ label }}</option>
                 {% endfor %}
               </select>
             </div>
@@ -461,10 +465,7 @@ function recalcOrderTotals() {
   document.getElementById('s-items-list').innerHTML = itemsHtml.join('');
   document.getElementById('s-total').textContent = `${formatInteger(sum)} so'm`;
 
-  const totalInput = document.getElementById('total_price_uzs');
-  if (totalInput) {
-    totalInput.value = sum ? formatInteger(sum) : '0';
-  }
+
 }
 
 function updateSummary() {
@@ -513,7 +514,7 @@ updateSummary();
   };
 
   const regions = Object.keys(regionsData);
-  
+
   const regionInput = document.getElementById('region-input');
   const regionDropdown = document.getElementById('region-dropdown');
   const districtInput = document.getElementById('district-input');
@@ -536,24 +537,28 @@ updateSummary();
     function render(filteredItems) {
       currentItems = filteredItems;
       selectedIndex = -1;
-      
+
       if (filteredItems.length === 0) {
         dropdown.innerHTML = '<div class="autocomplete-empty">Hech narsa topilmadi</div>';
         dropdown.classList.add('active');
         return;
       }
 
-      dropdown.innerHTML = filteredItems.map((item, index) => 
+      dropdown.innerHTML = filteredItems.map((item, index) =>
         `<div class="autocomplete-item" data-index="${index}">${item}</div>`
       ).join('');
       dropdown.classList.add('active');
 
-      // Add click handlers
+      // Add click and hover handlers
       dropdown.querySelectorAll('.autocomplete-item').forEach((el, index) => {
         el.addEventListener('click', () => {
           input.value = filteredItems[index];
           dropdown.classList.remove('active');
           if (onSelect) onSelect(filteredItems[index]);
+        });
+        el.addEventListener('mouseenter', () => {
+          selectedIndex = index;
+          selectItem(selectedIndex);
         });
       });
     }
@@ -584,7 +589,7 @@ updateSummary();
 
     const keydownHandler = (e) => {
       const items = dropdown.querySelectorAll('.autocomplete-item');
-      
+
       if (e.key === 'ArrowDown') {
         e.preventDefault();
         selectedIndex = Math.min(selectedIndex + 1, items.length - 1);
@@ -635,27 +640,27 @@ updateSummary();
     // Clear district input when region changes
     districtInput.value = '';
     districtInput.placeholder = 'Tanlang yoki yozing';
-    
+
     // Get districts for selected region
     const districts = regionsData[selectedRegion] || [];
-    
+
     // Destroy old district autocomplete if exists
     if (districtAutocomplete) {
       districtAutocomplete.destroy();
     }
-    
+
     // Create new district autocomplete with new items
     districtAutocomplete = createAutocomplete(districtInput, districtDropdown, districts, null);
-    
+
     // Focus on district input and show dropdown immediately
     setTimeout(() => {
       districtInput.focus();
       const filtered = districts;
-      districtDropdown.innerHTML = filtered.map((item, index) => 
+      districtDropdown.innerHTML = filtered.map((item, index) =>
         `<div class="autocomplete-item" data-index="${index}">${item}</div>`
       ).join('');
       districtDropdown.classList.add('active');
-      
+
       // Add click handlers
       districtDropdown.querySelectorAll('.autocomplete-item').forEach((el, index) => {
         el.addEventListener('click', () => {
@@ -703,10 +708,10 @@ updateSummary();
 
   // Custom validation on form submit
   const form = document.getElementById('order-form');
-  
+
   form.addEventListener('submit', function(e) {
     const unmasked = phoneMask.unmaskedValue;
-    
+
     // Validate: must have exactly 9 digits
     if (unmasked.length !== 9) {
       e.preventDefault();
@@ -715,12 +720,12 @@ updateSummary();
       phoneInput.focus();
       return false;
     }
-    
+
     phoneInput.setCustomValidity('');
-    
+
     // Replace the input value with clean 9 digits for database storage
     phoneInput.value = unmasked;
-    
+
     return true;
   });
 
@@ -736,7 +741,7 @@ document.getElementById('order-form').addEventListener('submit', function() {
   document.querySelectorAll('input[name="quantity"]').forEach(input => {
     input.value = normalizeQuantity(input.value);
   });
-  document.querySelectorAll('input[name="unit_price_uzs"], #total_price_uzs').forEach(input => {
+  document.querySelectorAll('input[name="unit_price_uzs"]').forEach(input => {
     input.value = normalizeMoney(input.value);
   });
 });
