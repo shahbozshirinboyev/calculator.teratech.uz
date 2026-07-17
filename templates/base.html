@@ -355,7 +355,7 @@
       }
 
       #usd-rate {
-        width: 95px;
+        width: 90px;
         max-width: 100%;
       }
 
@@ -822,10 +822,12 @@
           <div class="usd-rate-group">
             <label for="usd-rate" style="margin-bottom: 2px;">Dollar kursi(so'm):</label>
             <input
+              type="number"
               id="usd-rate"
               name="usd_rate"
               min="1"
               step="1"
+              inputmode="numeric"
               data-saved-rate="{% if usd_rate %}{{ usd_rate|floatformat:0 }}{% else %}0{% endif %}"
               {% if usd_rate %}value="{{ usd_rate|floatformat:0 }}"{% endif %}
               placeholder="Masalan: 12850"

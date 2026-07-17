@@ -45,7 +45,7 @@
   top: 100%;
   left: 0;
   right: 0;
-  background: var(--panel);
+  background: var(--select-bg);
   border: 1px solid var(--input-border);
   border-top: none;
   border-radius: 0 0 6px 6px;
@@ -270,20 +270,19 @@
           <div class="form-row">
             <div class="field">
               <label>To'lov turi *</label>
-              <select name="payment_type" required>
-                <option value="">Tanlang</option>
-                {% for val, label in payment_type_choices %}
-                  <option value="{{ val }}" {% if v_payment_type == val %}selected{% endif %}>{{ label }}</option>
-                {% endfor %}
-              </select>
+              <div class="autocomplete-wrapper">
+                <input type="text" id="payment-type-input" value="{{ paymentTypeLabels.v_payment_type|default_if_none:'' }}" placeholder="Tanlang" autocomplete="off">
+                <input type="hidden" name="payment_type" id="payment-type-hidden" value="{{ v_payment_type }}" required>
+                <div class="autocomplete-dropdown" id="payment-type-dropdown"></div>
+              </div>
             </div>
             <div class="field">
               <label>To'lov holati *</label>
-              <select name="payment_status" required>
-                {% for val, label in payment_status_choices %}
-                  <option value="{{ val }}" {% if v_payment_status == val %}selected{% endif %}>{{ label }}</option>
-                {% endfor %}
-              </select>
+              <div class="autocomplete-wrapper">
+                <input type="text" id="payment-status-input" value="{{ paymentStatusLabels.v_payment_status|default_if_none:'' }}" placeholder="Tanlang" autocomplete="off">
+                <input type="hidden" name="payment_status" id="payment-status-hidden" value="{{ v_payment_status }}" required>
+                <div class="autocomplete-dropdown" id="payment-status-dropdown"></div>
+              </div>
             </div>
           </div>
         </div>
@@ -294,21 +293,19 @@
           <div class="form-row">
             <div class="field">
               <label>Yetkazish turi *</label>
-              <select name="delivery_type" required>
-                <option value="">Tanlang</option>
-                {% for val, label in delivery_choices %}
-                  <option value="{{ val }}" {% if v_delivery_type == val %}selected{% endif %}>{{ label }}</option>
-                {% endfor %}
-              </select>
+              <div class="autocomplete-wrapper">
+                <input type="text" id="delivery-type-input" value="{{ deliveryLabels.v_delivery_type|default_if_none:'' }}" placeholder="Tanlang" autocomplete="off">
+                <input type="hidden" name="delivery_type" id="delivery-type-hidden" value="{{ v_delivery_type }}" required>
+                <div class="autocomplete-dropdown" id="delivery-type-dropdown"></div>
+              </div>
             </div>
             <div class="field">
               <label>Status *</label>
-              <select name="production_status" required>
-                <option value="">Tanlang</option>
-                {% for val, label in production_status_choices %}
-                  <option value="{{ val }}" {% if v_production_status == val %}selected{% endif %}>{{ label }}</option>
-                {% endfor %}
-              </select>
+              <div class="autocomplete-wrapper">
+                <input type="text" id="production-status-input" value="{{ productionStatusLabels.v_production_status|default_if_none:'' }}" placeholder="Tanlang" autocomplete="off">
+                <input type="hidden" name="production_status" id="production-status-hidden" value="{{ v_production_status }}" required>
+                <div class="autocomplete-dropdown" id="production-status-dropdown"></div>
+              </div>
             </div>
           </div>
           <div class="form-row full">
@@ -349,6 +346,19 @@
 const deliveryLabels = { {% for v,l in delivery_choices %}"{{ v }}":"{{ l }}"{% if not forloop.last %},{% endif %}{% endfor %} };
 const paymentTypeLabels = { {% for v,l in payment_type_choices %}"{{ v }}":"{{ l }}"{% if not forloop.last %},{% endif %}{% endfor %} };
 const paymentStatusLabels = { {% for v,l in payment_status_choices %}"{{ v }}":"{{ l }}"{% if not forloop.last %},{% endif %}{% endfor %} };
+const productionStatusLabels = { {% for v,l in production_status_choices %}"{{ v }}":"{{ l }}"{% if not forloop.last %},{% endif %}{% endfor %} };
+
+// Reverse maps: label to value
+const deliveryLabelToValue = Object.fromEntries(Object.entries(deliveryLabels).map(([k, v]) => [v, k]));
+const paymentTypeLabelToValue = Object.fromEntries(Object.entries(paymentTypeLabels).map(([k, v]) => [v, k]));
+const paymentStatusLabelToValue = Object.fromEntries(Object.entries(paymentStatusLabels).map(([k, v]) => [v, k]));
+const productionStatusLabelToValue = Object.fromEntries(Object.entries(productionStatusLabels).map(([k, v]) => [v, k]));
+
+// Option lists (labels only)
+const deliveryOptions = Object.values(deliveryLabels);
+const paymentTypeOptions = Object.values(paymentTypeLabels);
+const paymentStatusOptions = Object.values(paymentStatusLabels);
+const productionStatusOptions = Object.values(productionStatusLabels);
 
 function formatInteger(value) {
   return Math.round(Number(value) || 0).toLocaleString('uz-UZ');
@@ -631,6 +641,9 @@ updateSummary();
       },
       updateItems: (newItems) => {
         items = newItems;
+        // If input is empty, render all items, else filter based on current input value
+        const filtered = filter(input.value);
+        render(filtered);
       }
     };
   }
@@ -644,30 +657,16 @@ updateSummary();
     // Get districts for selected region
     const districts = regionsData[selectedRegion] || [];
 
-    // Destroy old district autocomplete if exists
+    // Create or update district autocomplete
     if (districtAutocomplete) {
-      districtAutocomplete.destroy();
+      districtAutocomplete.updateItems(districts);
+    } else {
+      districtAutocomplete = createAutocomplete(districtInput, districtDropdown, districts, null);
     }
-
-    // Create new district autocomplete with new items
-    districtAutocomplete = createAutocomplete(districtInput, districtDropdown, districts, null);
 
     // Focus on district input and show dropdown immediately
     setTimeout(() => {
       districtInput.focus();
-      const filtered = districts;
-      districtDropdown.innerHTML = filtered.map((item, index) =>
-        `<div class="autocomplete-item" data-index="${index}">${item}</div>`
-      ).join('');
-      districtDropdown.classList.add('active');
-
-      // Add click handlers
-      districtDropdown.querySelectorAll('.autocomplete-item').forEach((el, index) => {
-        el.addEventListener('click', () => {
-          districtInput.value = filtered[index];
-          districtDropdown.classList.remove('active');
-        });
-      });
     }, 50);
   });
 
@@ -676,6 +675,54 @@ updateSummary();
     const districts = regionsData[regionInput.value];
     districtAutocomplete = createAutocomplete(districtInput, districtDropdown, districts, null);
   }
+
+  // Initialize To'lov turi dropdown
+  const paymentTypeInput = document.getElementById('payment-type-input');
+  const paymentTypeDropdown = document.getElementById('payment-type-dropdown');
+  const paymentTypeHidden = document.getElementById('payment-type-hidden');
+  // Set initial input value
+  if (paymentTypeHidden.value) {
+    paymentTypeInput.value = paymentTypeLabels[paymentTypeHidden.value] || '';
+  }
+  createAutocomplete(paymentTypeInput, paymentTypeDropdown, paymentTypeOptions, (selectedLabel) => {
+    paymentTypeHidden.value = paymentTypeLabelToValue[selectedLabel];
+  });
+
+  // Initialize To'lov holati dropdown
+  const paymentStatusInput = document.getElementById('payment-status-input');
+  const paymentStatusDropdown = document.getElementById('payment-status-dropdown');
+  const paymentStatusHidden = document.getElementById('payment-status-hidden');
+  // Set initial input value
+  if (paymentStatusHidden.value) {
+    paymentStatusInput.value = paymentStatusLabels[paymentStatusHidden.value] || '';
+  }
+  createAutocomplete(paymentStatusInput, paymentStatusDropdown, paymentStatusOptions, (selectedLabel) => {
+    paymentStatusHidden.value = paymentStatusLabelToValue[selectedLabel];
+  });
+
+  // Initialize Yetkazish turi dropdown
+  const deliveryTypeInput = document.getElementById('delivery-type-input');
+  const deliveryTypeDropdown = document.getElementById('delivery-type-dropdown');
+  const deliveryTypeHidden = document.getElementById('delivery-type-hidden');
+  // Set initial input value
+  if (deliveryTypeHidden.value) {
+    deliveryTypeInput.value = deliveryLabels[deliveryTypeHidden.value] || '';
+  }
+  createAutocomplete(deliveryTypeInput, deliveryTypeDropdown, deliveryOptions, (selectedLabel) => {
+    deliveryTypeHidden.value = deliveryLabelToValue[selectedLabel];
+  });
+
+  // Initialize Status dropdown
+  const productionStatusInput = document.getElementById('production-status-input');
+  const productionStatusDropdown = document.getElementById('production-status-dropdown');
+  const productionStatusHidden = document.getElementById('production-status-hidden');
+  // Set initial input value
+  if (productionStatusHidden.value) {
+    productionStatusInput.value = productionStatusLabels[productionStatusHidden.value] || '';
+  }
+  createAutocomplete(productionStatusInput, productionStatusDropdown, productionStatusOptions, (selectedLabel) => {
+    productionStatusHidden.value = productionStatusLabelToValue[selectedLabel];
+  });
 })();
 
 // Phone number input mask using IMask
