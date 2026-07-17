@@ -4,43 +4,203 @@
 
 {% block content %}
 <div class="shell">
-    <div class="panel" style="padding: 20px; border-radius: 12px;">
-        <h1 style="margin-bottom: 20px; color: var(--text);">Mening profilim</h1>
-
-        <div style="margin-bottom: 15px;">
-            <label style="font-weight: 700; color: var(--text); display: block; margin-bottom: 5px;">Foydalanuvchi nomi:</label>
-            <span style="color: var(--text); font-size: 16px;">{{ user.username }}</span>
+    <div class="panel" style="
+        padding: 30px;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        background: var(--panel);
+    ">
+        <div style="
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--line);
+        ">
+            <div style="
+                width: 80px;
+                height: 80px;
+                border-radius: 50%;
+                background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: white;
+                font-size: 32px;
+                font-weight: 700;
+            ">
+                {{ user.username|first|upper }}
+            </div>
+            <div>
+                <h1 style="
+                    margin: 0;
+                    color: var(--text);
+                    font-size: 24px;
+                ">
+                    {% if user.first_name or user.last_name %}
+                        {{ user.first_name }} {{ user.last_name }}
+                    {% else %}
+                        {{ user.username }}
+                    {% endif %}
+                </h1>
+                <p style="
+                    margin: 5px 0 0 0;
+                    color: var(--muted);
+                    font-size: 14px;
+                ">
+                    @{{ user.username }}
+                </p>
+            </div>
         </div>
 
-        <div style="margin-bottom: 15px;">
-            <label style="font-weight: 700; color: var(--text); display: block; margin-bottom: 5px;">Ismi:</label>
-            <span style="color: var(--text); font-size: 16px;">{% if user.first_name %}{{ user.first_name }}{% else %}Belgilanmagan{% endif %}</span>
-        </div>
+        <div style="
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        ">
+            <div style="
+                padding: 20px;
+                border-radius: 12px;
+                background: var(--bg);
+                border: 1px solid var(--line);
+            ">
+                <label style="
+                    font-weight: 700;
+                    color: var(--muted);
+                    font-size: 12px;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                    display: block;
+                    margin-bottom: 8px;
+                ">
+                    Ism
+                </label>
+                <span style="
+                    color: var(--text);
+                    font-size: 16px;
+                    font-weight: 500;
+                ">
+                    {% if user.first_name %}{{ user.first_name }}{% else %}<span style="color: var(--muted); font-style: italic;">Belgilanmagan</span>{% endif %}
+                </span>
+            </div>
 
-        <div style="margin-bottom: 15px;">
-            <label style="font-weight: 700; color: var(--text); display: block; margin-bottom: 5px;">Familiyasi:</label>
-            <span style="color: var(--text); font-size: 16px;">{% if user.last_name %}{{ user.last_name }}{% else %}Belgilanmagan{% endif %}</span>
-        </div>
+            <div style="
+                padding: 20px;
+                border-radius: 12px;
+                background: var(--bg);
+                border: 1px solid var(--line);
+            ">
+                <label style="
+                    font-weight: 700;
+                    color: var(--muted);
+                    font-size: 12px;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                    display: block;
+                    margin-bottom: 8px;
+                ">
+                    Familiya
+                </label>
+                <span style="
+                    color: var(--text);
+                    font-size: 16px;
+                    font-weight: 500;
+                ">
+                    {% if user.last_name %}{{ user.last_name }}{% else %}<span style="color: var(--muted); font-style: italic;">Belgilanmagan</span>{% endif %}
+                </span>
+            </div>
 
-        <div style="margin-bottom: 15px;">
-            <label style="font-weight: 700; color: var(--text); display: block; margin-bottom: 5px;">Email:</label>
-            <span style="color: var(--text); font-size: 16px;">{% if user.email %}{{ user.email }}{% else %}Belgilanmagan{% endif %}</span>
-        </div>
+            <div style="
+                padding: 20px;
+                border-radius: 12px;
+                background: var(--bg);
+                border: 1px solid var(--line);
+            ">
+                <label style="
+                    font-weight: 700;
+                    color: var(--muted);
+                    font-size: 12px;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                    display: block;
+                    margin-bottom: 8px;
+                ">
+                    Email
+                </label>
+                <span style="
+                    color: var(--text);
+                    font-size: 16px;
+                    font-weight: 500;
+                ">
+                    {% if user.email %}{{ user.email }}{% else %}<span style="color: var(--muted); font-style: italic;">Belgilanmagan</span>{% endif %}
+                </span>
+            </div>
 
-        <div style="margin-bottom: 25px;">
-            <label style="font-weight: 700; color: var(--text); display: block; margin-bottom: 5px;">Lavozimi:</label>
-            <span style="color: var(--accent); font-size: 16px;">
-                {% if user.is_staff %}
-                    Administrator
-                {% else %}
-                    Foydalanuvchi
-                {% endif %}
-            </span>
+            <div style="
+                padding: 20px;
+                border-radius: 12px;
+                background: var(--bg);
+                border: 1px solid var(--line);
+            ">
+                <label style="
+                    font-weight: 700;
+                    color: var(--muted);
+                    font-size: 12px;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                    display: block;
+                    margin-bottom: 8px;
+                ">
+                    Lavozim
+                </label>
+                <span style="
+                    display: inline-block;
+                    padding: 6px 14px;
+                    border-radius: 20px;
+                    font-weight: 700;
+                    font-size: 14px;
+                    {% if user.is_staff %}
+                        background: rgba(16, 185, 129, 0.1);
+                        color: var(--accent);
+                    {% else %}
+                        background: rgba(100, 116, 139, 0.1);
+                        color: var(--muted);
+                    {% endif %}
+                ">
+                    {% if user.is_staff %}
+                        Administrator
+                    {% else %}
+                        Foydalanuvchi
+                    {% endif %}
+                </span>
+            </div>
         </div>
 
         {% if user.is_staff %}
-        <div style="margin-top: 20px;">
-            <a href="/admin/" style="display: inline-block; padding: 10px 15px; background: var(--accent); color: white; text-decoration: none; border-radius: 8px; font-weight: 700;">
+        <div style="
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        ">
+            <a href="/admin/" style="
+                display: inline-flex;
+                align-items: center;
+                gap: 10px;
+                padding: 12px 24px;
+                background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+                color: white;
+                text-decoration: none;
+                border-radius: 10px;
+                font-weight: 700;
+                transition: transform 0.2s, box-shadow 0.2s;
+            "
+            onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px rgba(0,0,0,0.15)';"
+            onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M1 2.5A1.5 1.5 0 0 1 2.5 1h11A1.5 1.5 0 0 1 15 2.5v2a.5.5 0 0 1-1 0v-2a.5.5 0 0 0-.5-.5h-11a.5.5 0 0 0-.5.5v11a.5.5 0 0 0 .5.5h5a.5.5 0 0 1 0 1h-5A1.5 1.5 0 0 1 1 13.5v-11zm11.354 4.354a.5.5 0 0 0-.708-.708L9.5 8.293 8.354 7.146a.5.5 0 0 0-.708.708l1.5 1.5a.5.5 0 0 0 .708 0l3.5-3.5z"/>
+                </svg>
                 Admin panelga o'tish
             </a>
         </div>
