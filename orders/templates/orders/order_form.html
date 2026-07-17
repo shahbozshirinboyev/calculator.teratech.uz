@@ -190,7 +190,7 @@
             </div>
             <div class="field">
               <label>Telefon raqami *</label>
-              <input type="tel" name="customer_phone" id="customer_phone" value="{{ v_customer_phone }}" placeholder="+998 −− −−− −− −−" pattern="\d{9}" required>
+              <input type="tel" name="customer_phone" id="customer_phone" value="{{ v_customer_phone }}" placeholder="+998 −− −−− −− −−" required>
             </div>
           </div>
         </div>
@@ -271,7 +271,7 @@
             <div class="field">
               <label>To'lov turi *</label>
               <div class="autocomplete-wrapper">
-                <input type="text" id="payment-type-input" value="{{ paymentTypeLabels.v_payment_type|default_if_none:'' }}" placeholder="Tanlang" autocomplete="off">
+                <input type="text" id="payment-type-input" value="{{ v_payment_type_label }}" placeholder="Tanlang" autocomplete="off">
                 <input type="hidden" name="payment_type" id="payment-type-hidden" value="{{ v_payment_type }}" required>
                 <div class="autocomplete-dropdown" id="payment-type-dropdown"></div>
               </div>
@@ -279,7 +279,7 @@
             <div class="field">
               <label>To'lov holati *</label>
               <div class="autocomplete-wrapper">
-                <input type="text" id="payment-status-input" value="{{ paymentStatusLabels.v_payment_status|default_if_none:'' }}" placeholder="Tanlang" autocomplete="off">
+                <input type="text" id="payment-status-input" value="{{ v_payment_status_label }}" placeholder="Tanlang" autocomplete="off">
                 <input type="hidden" name="payment_status" id="payment-status-hidden" value="{{ v_payment_status }}" required>
                 <div class="autocomplete-dropdown" id="payment-status-dropdown"></div>
               </div>
@@ -294,7 +294,7 @@
             <div class="field">
               <label>Yetkazish turi *</label>
               <div class="autocomplete-wrapper">
-                <input type="text" id="delivery-type-input" value="{{ deliveryLabels.v_delivery_type|default_if_none:'' }}" placeholder="Tanlang" autocomplete="off">
+                <input type="text" id="delivery-type-input" value="{{ v_delivery_type_label }}" placeholder="Tanlang" autocomplete="off">
                 <input type="hidden" name="delivery_type" id="delivery-type-hidden" value="{{ v_delivery_type }}" required>
                 <div class="autocomplete-dropdown" id="delivery-type-dropdown"></div>
               </div>
@@ -302,7 +302,7 @@
             <div class="field">
               <label>Status *</label>
               <div class="autocomplete-wrapper">
-                <input type="text" id="production-status-input" value="{{ productionStatusLabels.v_production_status|default_if_none:'' }}" placeholder="Tanlang" autocomplete="off">
+                <input type="text" id="production-status-input" value="{{ v_production_status_label }}" placeholder="Tanlang" autocomplete="off">
                 <input type="hidden" name="production_status" id="production-status-hidden" value="{{ v_production_status }}" required>
                 <div class="autocomplete-dropdown" id="production-status-dropdown"></div>
               </div>
@@ -343,10 +343,10 @@
 {% block extra_js %}
 <script src="https://unpkg.com/imask@7.1.3/dist/imask.min.js"></script>
 <script>
-const deliveryLabels = { {% for v,l in delivery_choices %}"{{ v }}":"{{ l }}"{% if not forloop.last %},{% endif %}{% endfor %} };
-const paymentTypeLabels = { {% for v,l in payment_type_choices %}"{{ v }}":"{{ l }}"{% if not forloop.last %},{% endif %}{% endfor %} };
-const paymentStatusLabels = { {% for v,l in payment_status_choices %}"{{ v }}":"{{ l }}"{% if not forloop.last %},{% endif %}{% endfor %} };
-const productionStatusLabels = { {% for v,l in production_status_choices %}"{{ v }}":"{{ l }}"{% if not forloop.last %},{% endif %}{% endfor %} };
+const deliveryLabels = { {% for v,l in delivery_choices %}"{{ v|escapejs }}":"{{ l|escapejs }}"{% if not forloop.last %},{% endif %}{% endfor %} };
+const paymentTypeLabels = { {% for v,l in payment_type_choices %}"{{ v|escapejs }}":"{{ l|escapejs }}"{% if not forloop.last %},{% endif %}{% endfor %} };
+const paymentStatusLabels = { {% for v,l in payment_status_choices %}"{{ v|escapejs }}":"{{ l|escapejs }}"{% if not forloop.last %},{% endif %}{% endfor %} };
+const productionStatusLabels = { {% for v,l in production_status_choices %}"{{ v|escapejs }}":"{{ l|escapejs }}"{% if not forloop.last %},{% endif %}{% endfor %} };
 
 // Reverse maps: label to value
 const deliveryLabelToValue = Object.fromEntries(Object.entries(deliveryLabels).map(([k, v]) => [v, k]));
@@ -480,13 +480,15 @@ function recalcOrderTotals() {
 
 function updateSummary() {
   const name = document.querySelector('[name="customer_name"]')?.value || '—';
-  const dt = document.querySelector('[name="delivery_type"]')?.value || '';
-  const pt = document.querySelector('[name="payment_type"]')?.value || '';
-  const ps = document.querySelector('[name="payment_status"]')?.value || '';
+  const dt = document.getElementById('delivery-type-hidden')?.value || '';
+  const pt = document.getElementById('payment-type-hidden')?.value || '';
+  const ps = document.getElementById('payment-status-hidden')?.value || '';
+  const psts = document.getElementById('production-status-hidden')?.value || '';
+
   document.getElementById('s-customer').textContent = name;
   document.getElementById('s-delivery').textContent = deliveryLabels[dt] || '—';
   document.getElementById('s-payment').textContent = [paymentTypeLabels[pt], paymentStatusLabels[ps]].filter(Boolean).join(' / ') || '—';
-  document.getElementById('s-status').textContent = paymentStatusLabels[ps] || '—';
+  document.getElementById('s-status').textContent = productionStatusLabels[psts] || '—';
   recalcOrderTotals();
 }
 
@@ -686,6 +688,7 @@ updateSummary();
   }
   createAutocomplete(paymentTypeInput, paymentTypeDropdown, paymentTypeOptions, (selectedLabel) => {
     paymentTypeHidden.value = paymentTypeLabelToValue[selectedLabel];
+    updateSummary();
   });
 
   // Initialize To'lov holati dropdown
@@ -698,6 +701,7 @@ updateSummary();
   }
   createAutocomplete(paymentStatusInput, paymentStatusDropdown, paymentStatusOptions, (selectedLabel) => {
     paymentStatusHidden.value = paymentStatusLabelToValue[selectedLabel];
+    updateSummary();
   });
 
   // Initialize Yetkazish turi dropdown
@@ -710,6 +714,7 @@ updateSummary();
   }
   createAutocomplete(deliveryTypeInput, deliveryTypeDropdown, deliveryOptions, (selectedLabel) => {
     deliveryTypeHidden.value = deliveryLabelToValue[selectedLabel];
+    updateSummary();
   });
 
   // Initialize Status dropdown
@@ -722,6 +727,7 @@ updateSummary();
   }
   createAutocomplete(productionStatusInput, productionStatusDropdown, productionStatusOptions, (selectedLabel) => {
     productionStatusHidden.value = productionStatusLabelToValue[selectedLabel];
+    updateSummary();
   });
 })();
 

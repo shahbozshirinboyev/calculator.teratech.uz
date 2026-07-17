@@ -114,6 +114,18 @@ def _form_context(order, initial, extra=None):
     src = initial or {}
     o = order  # None yoki Order instance
 
+    # Get values
+    v_delivery_type = src.get("delivery_type", getattr(o, "delivery_type", ""))
+    v_payment_type = src.get("payment_type", getattr(o, "payment_type", ""))
+    v_payment_status = src.get("payment_status", getattr(o, "payment_status", ""))
+    v_production_status = src.get("production_status", getattr(o, "production_status", ""))
+
+    # Create choice label maps
+    delivery_label_map = dict(Order.DeliveryType.choices)
+    payment_type_label_map = dict(Order.PaymentType.choices)
+    payment_status_label_map = dict(Order.PaymentStatus.choices)
+    production_status_label_map = dict(Order.ProductionStatus.choices)
+
     ctx = {
         "v_customer_name":  src.get("customer_name",  getattr(o, "customer_name",  "")),
         "v_customer_phone": src.get("customer_phone", getattr(o, "customer_phone", "")),
@@ -121,10 +133,14 @@ def _form_context(order, initial, extra=None):
         "v_district":       src.get("district",       getattr(o, "district",       "")),
         "v_city":           src.get("city",            getattr(o, "city",           "")),
         "v_landmark":       src.get("landmark",       getattr(o, "landmark",       "")),
-        "v_delivery_type":  src.get("delivery_type",  getattr(o, "delivery_type",  "")),
-        "v_payment_type":   src.get("payment_type",   getattr(o, "payment_type",   "")),
-        "v_payment_status": src.get("payment_status", getattr(o, "payment_status", "")),
-        "v_production_status": src.get("production_status", getattr(o, "production_status", "")),
+        "v_delivery_type":  v_delivery_type,
+        "v_delivery_type_label": delivery_label_map.get(v_delivery_type, ""),
+        "v_payment_type":   v_payment_type,
+        "v_payment_type_label": payment_type_label_map.get(v_payment_type, ""),
+        "v_payment_status": v_payment_status,
+        "v_payment_status_label": payment_status_label_map.get(v_payment_status, ""),
+        "v_production_status": v_production_status,
+        "v_production_status_label": production_status_label_map.get(v_production_status, ""),
         "v_total_usd":      src.get("total_price_usd",str(getattr(o, "total_price_usd", "0"))),
         "v_total_uzs":      src.get("total_price_uzs",str(getattr(o, "total_price_uzs", "0"))),
         "v_notes":          src.get("notes",          getattr(o, "notes",          "")),
@@ -343,8 +359,6 @@ def _save_order(request, instance=None):
         errors.append("Viloyat kiritilmadi.")
     if not district:
         errors.append("Tuman kiritilmadi.")
-    if not city:
-        errors.append("Shahar kiritilmadi.")
     if delivery_type not in [d for d, _ in Order.DeliveryType.choices]:
         errors.append("Yetkazish turi tanlanmadi.")
     if payment_type not in [p for p, _ in Order.PaymentType.choices]:

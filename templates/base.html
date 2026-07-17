@@ -1011,37 +1011,41 @@
       }
 
       // USD rate save
-      document.getElementById("save-usd-rate").addEventListener("click", async () => {
-        const rateStatus = document.getElementById("rate-status");
-        const rate = parseUsdRateValue(usdRateInput.value);
-        if (rate === null) {
-          rateStatus.textContent = "Dollar kursini kiriting.";
-          rateStatus.classList.add("error");
-          return;
-        }
-        const body = new FormData();
-        body.append("usd_rate", String(rate));
-        const csrfEl = document.querySelector("[name=csrfmiddlewaretoken]");
-        if (csrfEl) body.append("csrfmiddlewaretoken", csrfEl.value);
-        const response = await fetch("{% url 'calculator:save_usd_rate' %}", {
-          method: "POST",
-          body,
-          headers: { "X-Requested-With": "XMLHttpRequest" },
+      const saveUsdRateBtn = document.getElementById("save-usd-rate");
+      if (saveUsdRateBtn) {
+        saveUsdRateBtn.addEventListener("click", async () => {
+          const rateStatus = document.getElementById("rate-status");
+          if (!rateStatus) return;
+          const rate = parseUsdRateValue(usdRateInput.value);
+          if (rate === null) {
+            rateStatus.textContent = "Dollar kursini kiriting.";
+            rateStatus.classList.add("error");
+            return;
+          }
+          const body = new FormData();
+          body.append("usd_rate", String(rate));
+          const csrfEl = document.querySelector("[name=csrfmiddlewaretoken]");
+          if (csrfEl) body.append("csrfmiddlewaretoken", csrfEl.value);
+          const response = await fetch("{% url 'calculator:save_usd_rate' %}", {
+            method: "POST",
+            body,
+            headers: { "X-Requested-With": "XMLHttpRequest" },
+          });
+          const data = await response.json();
+          if (response.ok) {
+            const saved = setSavedUsdRate(data.usd_rate);
+            usdRateInput.value = String(saved);
+            rateStatus.textContent = "Dollar kursi saqlandi.";
+            rateStatus.classList.remove("error");
+            updateUsdRateSaveVisibility();
+            if (typeof refreshSummary === "function") refreshSummary();
+            if (typeof refreshProductSummary === "function") refreshProductSummary();
+          } else {
+            rateStatus.textContent = data.error || "Saqlashda xatolik yuz berdi.";
+            rateStatus.classList.add("error");
+          }
         });
-        const data = await response.json();
-        if (response.ok) {
-          const saved = setSavedUsdRate(data.usd_rate);
-          usdRateInput.value = String(saved);
-          rateStatus.textContent = "Dollar kursi saqlandi.";
-          rateStatus.classList.remove("error");
-          updateUsdRateSaveVisibility();
-          if (typeof refreshSummary === "function") refreshSummary();
-          if (typeof refreshProductSummary === "function") refreshProductSummary();
-        } else {
-          rateStatus.textContent = data.error || "Saqlashda xatolik yuz berdi.";
-          rateStatus.classList.add("error");
-        }
-      });
+      }
 
       if (usdRateInput) {
         usdRateInput.addEventListener("input", function() {
