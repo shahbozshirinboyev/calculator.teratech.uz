@@ -29,6 +29,13 @@ def _parse_decimal(value, default=Decimal("0")):
         return default
 
 
+def _orders_for_user(user):
+    qs = Order.objects.all()
+    if user.is_superuser:
+        return qs
+    return qs.filter(sold_by=user)
+
+
 @login_required
 def order_list(request):
     from calculator.models import CalculatorSettings
@@ -274,7 +281,13 @@ def order_detail(request, pk):
     except:
         usd_rate = 12850
 
-    order = get_object_or_404(Order.objects.prefetch_related("items").select_related("sold_by"), pk=pk)
+    order = get_object_or_404(
+        _orders_for_user(request.user).prefetch_related("items").select_related("sold_by"),
+        pk=pk,
+    )
+    if request.method == "GET" and request.GET.get("edit") == "1":
+        return render(request, "orders/order_form.html", _form_context(order, {}))
+
     if request.method == "POST":
         try:
             _save_order(request, instance=order)
@@ -299,7 +312,7 @@ def order_detail(request, pk):
 @login_required
 @require_POST
 def order_update_status(request, pk):
-    order = get_object_or_404(Order, pk=pk)
+    order = get_object_or_404(_orders_for_user(request.user), pk=pk)
     new_status = request.POST.get("status")
     valid = [s for s, _ in Order.ProductionStatus.choices]
     if new_status not in valid:
@@ -308,10 +321,13 @@ def order_update_status(request, pk):
     if new_status == Order.ProductionStatus.DELIVERED:
         order.delivered_at = timezone.now()
     order.save(update_fields=["production_status", "delivered_at", "updated_at"])
-    return JsonResponse({
+    response_data = {
         "status": order.production_status,
         "status_label": order.get_production_status_display(),
-    })
+    }
+    if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        return JsonResponse(response_data)
+    return redirect("orders:detail", pk=order.pk)
 
 
 @login_required
