@@ -1,210 +1,647 @@
 {% extends "base.html" %}
 
-{% block title %}Mening profilim{% endblock %}
+{% block title %}Profil{% endblock %}
+
+{% block extra_css %}
+.rate-bar {
+  display: none !important;
+}
+
+.profile-page {
+  display: grid;
+  gap: 24px;
+  margin-top: 24px;
+}
+
+.profile-hero {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 24px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 14%, var(--panel)), var(--panel));
+  border: 1px solid var(--line);
+}
+
+.profile-main {
+  display: flex;
+  gap: 18px;
+  align-items: center;
+}
+
+.profile-avatar {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+  color: #fff;
+  font-size: 32px;
+  font-weight: 800;
+  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.14);
+}
+
+.profile-copy h1 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 800;
+}
+
+.profile-copy p {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.profile-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.profile-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.hero-actions {
+  display: flex;
+  align-items: flex-start;
+}
+
+.admin-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 18px;
+  border-radius: 12px;
+  background: var(--accent);
+  color: #fff;
+  text-decoration: none;
+  font-weight: 700;
+  box-shadow: 0 10px 24px color-mix(in srgb, var(--accent) 28%, transparent);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.admin-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 28px color-mix(in srgb, var(--accent) 36%, transparent);
+}
+
+.profile-card,
+.sales-board {
+  padding: 22px;
+  border-radius: 18px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
+}
+
+.section-title {
+  margin: 0 0 4px;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.profile-details {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.detail-item {
+  padding: 16px;
+  border-radius: 14px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+}
+
+.detail-item span {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.detail-item strong {
+  font-size: 16px;
+  font-weight: 700;
+  word-break: break-word;
+}
+
+.muted-value {
+  color: var(--muted);
+  font-style: italic;
+}
+
+.profile-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.summary-box {
+  padding: 16px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--accent) 8%, var(--panel));
+  border: 1px solid color-mix(in srgb, var(--accent) 18%, var(--line));
+}
+
+.summary-box span {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.summary-box strong {
+  display: block;
+  font-size: 24px;
+  font-weight: 800;
+}
+
+.board-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.board-copy p {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.board-copy {
+  flex: 1;
+  min-width: 260px;
+}
+
+.period-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 220px;
+}
+
+.period-filter label {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.period-select {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 700;
+  outline: none;
+  appearance: none;
+  cursor: pointer;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.period-select:hover,
+.period-select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 16%, transparent);
+}
+
+.podium {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  margin-bottom: 24px;
+  margin-top: 55px;
+}
+
+.podium-card {
+  position: relative;
+  padding: 24px 18px 18px;
+  border-radius: 18px;
+  border: 1px solid var(--line);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--panel) 92%, white), var(--panel));
+  text-align: center;
+}
+
+.podium-card.is-top {
+  border-color: color-mix(in srgb, #f4b740 55%, var(--line));
+  box-shadow: 0 18px 34px rgba(244, 183, 64, 0.18);
+}
+
+.podium-card.position-1 {
+  transform: translateY(-14px);
+}
+
+.podium-crown {
+  position: absolute;
+  top: -16px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ffcd4d, #f59e0b);
+  color: #fff;
+  box-shadow: 0 10px 18px rgba(245, 158, 11, 0.28);
+}
+
+.podium-avatar {
+  width: 74px;
+  height: 74px;
+  margin: 6px auto 14px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at top, color-mix(in srgb, var(--accent) 22%, white), color-mix(in srgb, var(--accent) 88%, #102a43));
+  color: #fff;
+  font-size: 24px;
+  font-weight: 700;
+  border: 4px solid color-mix(in srgb, var(--panel) 72%, white);
+}
+
+.podium-name {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.podium-subtitle {
+  margin: 6px 0 14px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.podium-metrics {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+.podium-metric {
+  min-width: 88px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--accent) 8%, var(--panel));
+  color: var(--text);
+  font-size: 13px;
+}
+
+.podium-metric strong {
+  font-size: 16px;
+}
+
+.table-panel {
+  padding: 16px;
+  border-radius: 18px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+}
+
+.board-table-wrap {
+  overflow-x: auto;
+}
+
+.board-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 10px;
+  min-width: 720px;
+}
+
+.board-table thead th {
+  padding: 0 14px 8px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.board-table tbody tr td {
+  padding: 16px 14px;
+  background: var(--panel);
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  font-size: 14px;
+}
+
+.board-table tbody tr td:first-child {
+  border-left: 1px solid var(--line);
+  border-radius: 12px 0 0 12px;
+}
+
+.board-table tbody tr td:last-child {
+  border-right: 1px solid var(--line);
+  border-radius: 0 12px 12px 0;
+}
+
+.board-table tbody tr.is-current td {
+  background: color-mix(in srgb, var(--accent) 86%, white);
+  color: #fff;
+  border-color: color-mix(in srgb, var(--accent) 90%, white);
+}
+
+[data-theme="dark"] .board-table tbody tr.is-current td {
+  background: color-mix(in srgb, var(--accent) 72%, #0f172a);
+  border-color: color-mix(in srgb, var(--accent) 72%, #0f172a);
+}
+
+.rank-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 42px;
+  height: 36px;
+  padding: 0 10px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--accent) 10%, var(--panel));
+  font-weight: 800;
+}
+
+.seller-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.seller-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+  color: #fff;
+  font-size: 15px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.seller-meta strong {
+  display: block;
+  font-size: 15px;
+}
+
+.seller-meta span {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.board-table tbody tr.is-current .seller-meta span,
+.board-table tbody tr.is-current .table-muted {
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.table-value {
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.table-muted {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.empty-state {
+  padding: 24px;
+  border-radius: 16px;
+  background: var(--bg);
+  color: var(--muted);
+  text-align: center;
+}
+
+@media (max-width: 720px) {
+  .profile-hero {
+    flex-direction: column;
+  }
+
+  .profile-main {
+    align-items: flex-start;
+  }
+
+  .profile-details,
+  .profile-summary,
+  .podium {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 520px) {
+  .profile-main {
+    flex-direction: column;
+  }
+
+  .profile-avatar {
+    width: 72px;
+    height: 72px;
+    font-size: 28px;
+  }
+
+  .profile-copy h1 {
+    font-size: 24px;
+  }
+
+  .podium-metrics {
+    flex-direction: column;
+  }
+}
+{% endblock %}
 
 {% block content %}
-<div class="shell">
-    <div class="panel" style="
-        padding: 30px;
-        border-radius: 16px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-        background: var(--panel);
-    ">
-        <div style="
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid var(--line);
-        ">
-            <div style="
-                width: 80px;
-                height: 80px;
-                border-radius: 50%;
-                background: linear-gradient(135deg, var(--accent), var(--accent-dark));
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                color: white;
-                font-size: 32px;
-                font-weight: 700;
-            ">
-                {{ user.username|first|upper }}
-            </div>
-            <div>
-                <h1 style="
-                    margin: 0;
-                    color: var(--text);
-                    font-size: 24px;
-                ">
-                    {% if user.first_name or user.last_name %}
-                        {{ user.first_name }} {{ user.last_name }}
-                    {% else %}
-                        {{ user.username }}
-                    {% endif %}
-                </h1>
-                <p style="
-                    margin: 5px 0 0 0;
-                    color: var(--muted);
-                    font-size: 14px;
-                ">
-                    @{{ user.username }}
-                </p>
-            </div>
+<div class="profile-page">
+  <section class="profile-hero">
+    <div class="profile-main">
+      <div class="profile-avatar">{{ user.username|first|upper }}</div>
+      <div class="profile-copy">
+        <h1>{% if user.get_full_name %}{{ user.get_full_name }}{% else %}{{ user.username }}{% endif %}</h1>
+        <p>@{{ user.username }}</p>
+        <div class="profile-badges">
+          <div class="profile-badge">
+            {% if has_admin_access %}Administrator{% else %}Sotuvchi{% endif %}
+          </div>
+          <div class="profile-badge">
+            {% if user.email %}{{ user.email }}{% else %}Email kiritilmagan{% endif %}
+          </div>
+          <div class="profile-badge">
+            Reyting: {{ current_user_rank|default:"-" }}-o'rin
+          </div>
         </div>
-
-        <div style="
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        ">
-            <div style="
-                padding: 20px;
-                border-radius: 12px;
-                background: var(--bg);
-                border: 1px solid var(--line);
-            ">
-                <label style="
-                    font-weight: 700;
-                    color: var(--muted);
-                    font-size: 12px;
-                    text-transform: uppercase;
-                    letter-spacing: 0.5px;
-                    display: block;
-                    margin-bottom: 8px;
-                ">
-                    Ism
-                </label>
-                <span style="
-                    color: var(--text);
-                    font-size: 16px;
-                    font-weight: 500;
-                ">
-                    {% if user.first_name %}{{ user.first_name }}{% else %}<span style="color: var(--muted); font-style: italic;">Belgilanmagan</span>{% endif %}
-                </span>
-            </div>
-
-            <div style="
-                padding: 20px;
-                border-radius: 12px;
-                background: var(--bg);
-                border: 1px solid var(--line);
-            ">
-                <label style="
-                    font-weight: 700;
-                    color: var(--muted);
-                    font-size: 12px;
-                    text-transform: uppercase;
-                    letter-spacing: 0.5px;
-                    display: block;
-                    margin-bottom: 8px;
-                ">
-                    Familiya
-                </label>
-                <span style="
-                    color: var(--text);
-                    font-size: 16px;
-                    font-weight: 500;
-                ">
-                    {% if user.last_name %}{{ user.last_name }}{% else %}<span style="color: var(--muted); font-style: italic;">Belgilanmagan</span>{% endif %}
-                </span>
-            </div>
-
-            <div style="
-                padding: 20px;
-                border-radius: 12px;
-                background: var(--bg);
-                border: 1px solid var(--line);
-            ">
-                <label style="
-                    font-weight: 700;
-                    color: var(--muted);
-                    font-size: 12px;
-                    text-transform: uppercase;
-                    letter-spacing: 0.5px;
-                    display: block;
-                    margin-bottom: 8px;
-                ">
-                    Email
-                </label>
-                <span style="
-                    color: var(--text);
-                    font-size: 16px;
-                    font-weight: 500;
-                ">
-                    {% if user.email %}{{ user.email }}{% else %}<span style="color: var(--muted); font-style: italic;">Belgilanmagan</span>{% endif %}
-                </span>
-            </div>
-
-            <div style="
-                padding: 20px;
-                border-radius: 12px;
-                background: var(--bg);
-                border: 1px solid var(--line);
-            ">
-                <label style="
-                    font-weight: 700;
-                    color: var(--muted);
-                    font-size: 12px;
-                    text-transform: uppercase;
-                    letter-spacing: 0.5px;
-                    display: block;
-                    margin-bottom: 8px;
-                ">
-                    Lavozim
-                </label>
-                <span style="
-                    display: inline-block;
-                    padding: 6px 14px;
-                    border-radius: 20px;
-                    font-weight: 700;
-                    font-size: 14px;
-                    {% if user.is_staff %}
-                        background: rgba(16, 185, 129, 0.1);
-                        color: var(--accent);
-                    {% else %}
-                        background: rgba(100, 116, 139, 0.1);
-                        color: var(--muted);
-                    {% endif %}
-                ">
-                    {% if user.is_staff %}
-                        Administrator
-                    {% else %}
-                        Foydalanuvchi
-                    {% endif %}
-                </span>
-            </div>
-        </div>
-
-        {% if user.is_staff %}
-        <div style="
-            display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
-        ">
-            <a href="/admin/" style="
-                display: inline-flex;
-                align-items: center;
-                gap: 10px;
-                padding: 12px 24px;
-                background: linear-gradient(135deg, var(--accent), var(--accent-dark));
-                color: white;
-                text-decoration: none;
-                border-radius: 10px;
-                font-weight: 700;
-                transition: transform 0.2s, box-shadow 0.2s;
-            "
-            onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px rgba(0,0,0,0.15)';"
-            onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
-                    <path d="M1 2.5A1.5 1.5 0 0 1 2.5 1h11A1.5 1.5 0 0 1 15 2.5v2a.5.5 0 0 1-1 0v-2a.5.5 0 0 0-.5-.5h-11a.5.5 0 0 0-.5.5v11a.5.5 0 0 0 .5.5h5a.5.5 0 0 1 0 1h-5A1.5 1.5 0 0 1 1 13.5v-11zm11.354 4.354a.5.5 0 0 0-.708-.708L9.5 8.293 8.354 7.146a.5.5 0 0 0-.708.708l1.5 1.5a.5.5 0 0 0 .708 0l3.5-3.5z"/>
-                </svg>
-                Admin panelga o'tish
-            </a>
-        </div>
-        {% endif %}
+      </div>
     </div>
+    {% if has_admin_access %}
+    <div class="hero-actions">
+      <a class="admin-button" href="/admin/">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+          <path d="M1 2.5A1.5 1.5 0 0 1 2.5 1h11A1.5 1.5 0 0 1 15 2.5v2a.5.5 0 0 1-1 0v-2a.5.5 0 0 0-.5-.5h-11a.5.5 0 0 0-.5.5v11a.5.5 0 0 0 .5.5h5a.5.5 0 0 1 0 1h-5A1.5 1.5 0 0 1 1 13.5v-11zm11.354 4.354a.5.5 0 0 0-.708-.708L9.5 8.293 8.354 7.146a.5.5 0 0 0-.708.708l1.5 1.5a.5.5 0 0 0 .708 0l3.5-3.5z"/>
+        </svg>
+        Admin panelga o'tish
+      </a>
+    </div>
+    {% endif %}
+  </section>
+
+  <section class="profile-card">
+    <h2 class="section-title">Profil ma'lumotlari</h2>
+    <div class="profile-details">
+      <div class="detail-item">
+        <span>Ism</span>
+        <strong>{% if user.first_name %}{{ user.first_name }}{% else %}<span class="muted-value">Belgilanmagan</span>{% endif %}</strong>
+      </div>
+      <div class="detail-item">
+        <span>Familiya</span>
+        <strong>{% if user.last_name %}{{ user.last_name }}{% else %}<span class="muted-value">Belgilanmagan</span>{% endif %}</strong>
+      </div>
+      <div class="detail-item">
+        <span>Username</span>
+        <strong>@{{ user.username }}</strong>
+      </div>
+      <div class="detail-item">
+        <span>Email</span>
+        <strong>{% if user.email %}{{ user.email }}{% else %}<span class="muted-value">Belgilanmagan</span>{% endif %}</strong>
+      </div>
+    </div>
+    <div class="profile-summary">
+      <div class="summary-box">
+        <span>Butun davr savdosi</span>
+        <strong>{{ all_time_stats.total_uzs_display }} so'm</strong>
+      </div>
+      <div class="summary-box">
+        <span>Butun davr buyurtma</span>
+        <strong>{{ all_time_stats.completed_orders }} ta</strong>
+      </div>
+      <div class="summary-box">
+        <span>Butun davr reytingi</span>
+        <strong>{{ all_time_current_user_rank|default:"-" }}-o'rin</strong>
+      </div>
+    </div>
+  </section>
+
+  <section class="sales-board">
+    <div class="board-header">
+      <div class="board-copy">
+        <h2 class="section-title">Sotuv statistikasi</h2>
+        <p>{{ period_label }} davr bo'yicha barcha foydalanuvchilar reytingi va tugallangan savdolari.</p>
+      </div>
+      <div class="period-filter">
+        <select id="period-select" class="period-select" onchange="window.location.href='?period=' + this.value">
+          <option value="today" {% if period == 'today' %}selected{% endif %}>Bugungi</option>
+          <option value="week" {% if period == 'week' %}selected{% endif %}>Haftalik</option>
+          <option value="month" {% if period == 'month' %}selected{% endif %}>Oylik</option>
+          <option value="year" {% if period == 'year' %}selected{% endif %}>Yillik</option>
+          <option value="all" {% if period == 'all' %}selected{% endif %}>Butun davr</option>
+        </select>
+      </div>
+    </div>
+
+    {% if board %}
+      <div class="podium">
+        {% for entry in podium_entries %}
+        <article class="podium-card position-{{ entry.rank }} {% if entry.rank == 1 %}is-top{% endif %}">
+          {% if entry.rank == 1 %}
+          <div class="podium-crown">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M4 .5a.5.5 0 0 1 .492.41L5 4l2.5-1.5a.5.5 0 0 1 .625.078L10 4l.875-2.188a.5.5 0 0 1 .924 0L13 4l2.508-3.09A.5.5 0 0 1 16 1.25V4.5a.5.5 0 0 1-.03.17l-1.5 4A.5.5 0 0 1 14 9H2a.5.5 0 0 1-.47-.33l-1.5-4A.5.5 0 0 1 0 4.5V1.25A.5.5 0 0 1 .82.91L3 4 3.508.91A.5.5 0 0 1 4 .5M2.694 10l.8 3h9.012l.8-3z"/>
+            </svg>
+          </div>
+          {% endif %}
+          <div class="podium-avatar">{{ entry.initial }}</div>
+          <h3 class="podium-name">{{ entry.seller_name }}</h3>
+          <p class="podium-subtitle">
+            {% if entry.is_current_user %}Sizning profilingiz{% else %}Sotuvchi reytingi{% endif %}
+          </p>
+          <div class="podium-metrics">
+            <div class="podium-metric">
+              <strong>{{ entry.rank }}</strong>
+              <div>O'rin</div>
+            </div>
+            <div class="podium-metric">
+              <strong>{{ entry.total_uzs_display }}</strong>
+              <div>So'm</div>
+            </div>
+          </div>
+        </article>
+        {% endfor %}
+      </div>
+
+      <div class="table-panel">
+        <div class="board-table-wrap">
+          <table class="board-table">
+            <thead>
+              <tr>
+                <th>N</th>
+                <th>Sotuvchilar</th>
+                <th>Savdo summasi</th>
+                <th>Tugallangan buyurtma</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for entry in board %}
+              <tr class="{% if entry.is_current_user %}is-current{% endif %}">
+                <td>
+                  <div class="rank-badge">{{ entry.rank }}</div>
+                </td>
+                <td>
+                  <div class="seller-cell">
+                    <div class="seller-avatar">{{ entry.initial }}</div>
+                    <div class="seller-meta">
+                      <strong>{{ entry.seller_name }}</strong>
+                      <span>{% if entry.is_current_user %}Sizning natijangiz{% else %}@{{ entry.seller.username }}{% endif %}</span>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div class="table-value">{{ entry.total_uzs_display }} so'm</div>
+                  <div class="table-muted">{{ period_label }} davr</div>
+                </td>
+                <td>
+                  <div class="table-value">{{ entry.completed_orders }} ta</div>
+                  <div class="table-muted">yetkazilgan buyurtma</div>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    {% else %}
+      <div class="empty-state">
+        Bu davr uchun sotuv ma'lumotlari topilmadi.
+      </div>
+    {% endif %}
+  </section>
 </div>
 {% endblock %}

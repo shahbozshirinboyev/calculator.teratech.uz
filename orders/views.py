@@ -370,57 +370,11 @@ def leaderboard(request):
 
 @login_required
 def seller_profile(request):
-    from calculator.models import CalculatorSettings
-    from django.utils import timezone
-    from django.db.models import Sum, Count
-
-    # USD kursini olish
-    try:
-        settings = CalculatorSettings.objects.first()
-        usd_rate = int(settings.usd_rate) if settings and settings.usd_rate else 12850
-    except:
-        usd_rate = 12850
-
-    period = request.GET.get("period", "today")  # today, week, month
-    now = timezone.now()
-
-    if period == "today":
-        date_filter = Q(created_at__date=now.date())
-    elif period == "week":
-        week_start = now.date() - timezone.timedelta(days=now.weekday())
-        date_filter = Q(created_at__date__gte=week_start)
-    elif period == "month":
-        date_filter = Q(created_at__year=now.year, created_at__month=now.month)
-    else:
-        date_filter = Q()
-
-    # Only show user's own orders
-    active_filter = date_filter & ~Q(production_status=Order.ProductionStatus.CANCELLED) & Q(sold_by=request.user)
-
-    # Calculate stats
-    stats = Order.objects.filter(active_filter).aggregate(
-        total_usd=Sum("total_price_usd"),
-        total_uzs=Sum("total_price_uzs"),
-        order_count=Count("id"),
-    )
-
-    # Calculate total items sold
-    total_items = OrderItem.objects.filter(
-        order__sold_by=request.user,
-        order__in=Order.objects.filter(active_filter),
-    ).aggregate(total_units=Sum("quantity"))["total_units"] or 0
-
-    return render(request, "orders/seller_profile.html", {
-        "active_nav": "profile",
-        "period": period,
-        "stats": {
-            "total_usd": stats["total_usd"] or Decimal("0"),
-            "total_uzs": stats["total_uzs"] or Decimal("0"),
-            "order_count": stats["order_count"] or 0,
-            "total_items": total_items,
-        },
-        "usd_rate": usd_rate,
-    })
+    profile_url = redirect("calculator:profile")
+    query_string = request.GET.urlencode()
+    if query_string:
+        profile_url["Location"] = f"{profile_url['Location']}?{query_string}"
+    return profile_url
 
 
 def _save_order(request, instance=None):
