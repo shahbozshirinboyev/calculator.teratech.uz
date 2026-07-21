@@ -385,7 +385,16 @@ const paymentStatusOptions = Object.values(paymentStatusLabels);
 const productionStatusOptions = Object.values(productionStatusLabels);
 
 function formatInteger(value) {
-  return Math.round(Number(value) || 0).toLocaleString('uz-UZ');
+  const num = Math.round(Number(value) || 0);
+  const s = String(num);
+  let result = '';
+  for (let i = s.length - 1, j = 0; i >= 0; i--, j++) {
+    if (j > 0 && j % 3 === 0) {
+      result = ' ' + result;
+    }
+    result = s[i] + result;
+  }
+  return result;
 }
 
 function parseInteger(value) {
@@ -929,6 +938,21 @@ updateSummary();
     return;
   }
 
+  // If editing existing phone, get the digits first before creating mask
+  let initialDigits = '';
+  const rawValue = phoneInput.getAttribute('value') || phoneInput.value;
+  if (rawValue && rawValue.trim()) {
+    let digits = rawValue.replace(/\D/g, '');
+    if (digits.length === 9) {
+      initialDigits = digits;
+    } else if (digits.length === 12 && digits.startsWith('998')) {
+      initialDigits = digits.substring(3);
+    }
+    // Clear the input value and attribute before creating the mask to avoid conflicts
+    phoneInput.value = '';
+    phoneInput.removeAttribute('value');
+  }
+
   // Create mask instance with custom placeholder
   const phoneMask = IMask(phoneInput, {
     mask: '+998 00 000 00 00',
@@ -936,14 +960,9 @@ updateSummary();
     placeholderChar: '−'  // Minus belgisi - o'rtada
   });
 
-  // If editing existing phone, format it
-  if (phoneInput.value && phoneInput.value.trim()) {
-    let digits = phoneInput.value.replace(/\D/g, '');
-    // Remove 998 prefix if exists
-    if (digits.startsWith('998')) {
-      digits = digits.substring(3);
-    }
-    phoneMask.unmaskedValue = digits;
+  // Now set the initial digits if we have them
+  if (initialDigits) {
+    phoneMask.unmaskedValue = initialDigits; // Set unmasked value, IMask will format it
   }
 
   // Custom validation on form submit
@@ -988,6 +1007,10 @@ if (orderFormEl2) {
     document.querySelectorAll('input[name="unit_price_uzs"]').forEach(input => {
       input.value = normalizeMoney(input.value);
     });
+    const partialAmountInput = document.getElementById('partial-amount-input');
+    if (partialAmountInput) {
+      partialAmountInput.value = normalizeMoney(partialAmountInput.value);
+    }
   });
 }
 </script>

@@ -182,7 +182,23 @@
           <div class="detail-row"><span>Mo'ljal</span><strong>{{ order.landmark }}</strong></div>
         {% endif %}
         <div class="detail-row"><span>Yetkazish</span><strong>{{ order.get_delivery_type_display }}</strong></div>
+        {% if order.delivery_date %}
+          <div class="detail-row"><span>Yetkazish sanasi</span><strong>{{ order.delivery_date|date:"d.m.Y" }}</strong></div>
+        {% endif %}
+        {% if order.delivery_time %}
+          <div class="detail-row"><span>Yetkazish vaqti</span><strong>{{ order.delivery_time }}</strong></div>
+        {% endif %}
         <div class="detail-row"><span>To'lov turi</span><strong>{{ order.get_payment_type_display }}</strong></div>
+      </div>
+
+      <!-- To'lov ma'lumotlari -->
+      <div class="panel detail-section">
+        <h3>💳 To'lov ma'lumotlari</h3>
+        <div class="detail-row"><span>To'lov holati</span><strong>{{ order.get_payment_status_display }}</strong></div>
+        {% if order.payment_status == 'PARTIAL' %}
+          <div class="detail-row"><span>Qisman to'langan summa</span><strong>{{ order.partial_amount|format_uzs }} so'm</strong></div>
+          <div class="detail-row"><span>Qoldiq</span><strong style="color:var(--danger);">{{ order.total_price_uzs|remaining:order.partial_amount|format_uzs }} so'm</strong></div>
+        {% endif %}
       </div>
 
       <!-- Konfiguratsiyalar -->
@@ -192,13 +208,21 @@
           <div class="config-item">
             <span class="label">{{ item.config_label }}</span>
             <span class="qty">× {{ item.quantity }}</span>
-            <span class="price">{% if item.unit_price_uzs %}{{ item.unit_price_uzs|floatformat:0 }}{% else %}{% widthratio item.unit_price_usd 1 usd_rate %}{% endif %} so'm</span>
+            <span class="price">
+              {% if item.unit_price_uzs %}
+                {{ item.unit_price_uzs|format_uzs }}
+              {% else %}
+                {% widthratio item.unit_price_usd 1 usd_rate as price_uzs %}
+                {{ price_uzs|format_uzs }}
+              {% endif %}
+              so'm
+            </span>
           </div>
         {% endfor %}
         <div style="display:flex;justify-content:space-between;margin-top:12px;padding-top:10px;border-top:1px solid var(--line);">
           <strong style="font-size:15px;">Jami:</strong>
           <div style="text-align:right;">
-            <div style="font-weight:800;font-size:17px;color:var(--accent-dark)">{{ order.total_price_uzs|floatformat:0 }} so'm</div>
+            <div style="font-weight:800;font-size:17px;color:var(--accent-dark)">{{ order.total_price_uzs|format_uzs }} so'm</div>
           </div>
         </div>
       </div>

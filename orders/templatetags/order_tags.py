@@ -55,15 +55,47 @@ def status_label(value):
 @register.filter
 def format_phone(value):
     if not value:
-        return ""
+        return ''
     # Keep only digits
-    digits = "".join(c for c in str(value) if c.isdigit())
-    
+    digits = ''.join(c for c in str(value) if c.isdigit())
+
     # If it's a 9-digit number, e.g. 901234567
     if len(digits) == 9:
-        return f"+998 ({digits[0:2]}) {digits[2:5]}-{digits[5:7]}-{digits[7:9]}"
+        return f'+998 ({digits[0:2]}) {digits[2:5]}-{digits[5:7]}-{digits[7:9]}'
     # If it already includes 998 and is 12 digits, e.g. 998901234567
-    elif len(digits) == 12 and digits.startswith("998"):
-        return f"+998 ({digits[3:5]}) {digits[5:8]}-{digits[8:10]}-{digits[10:12]}"
+    elif len(digits) == 12 and digits.startswith('998'):
+        return f'+998 ({digits[3:5]}) {digits[5:8]}-{digits[8:10]}-{digits[10:12]}'
     # Otherwise return original formatted nicely or clean digits
     return value
+
+
+@register.filter
+def format_uzs(value):
+    if not value:
+        return '0'
+    try:
+        num = int(float(value))
+        # Format with thousands separators using spaces
+        s = str(num)
+        result = []
+        for i, c in enumerate(reversed(s)):
+            if i and i % 3 == 0:
+                result.append(' ')
+            result.append(c)
+        return ''.join(reversed(result))
+    except (ValueError, TypeError):
+        return value
+
+
+@register.filter
+def remaining(total, paid):
+    if not total:
+        total = 0
+    if not paid:
+        paid = 0
+    try:
+        total = float(total)
+        paid = float(paid)
+        return total - paid
+    except (ValueError, TypeError):
+        return 0
