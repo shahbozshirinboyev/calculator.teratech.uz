@@ -6,6 +6,26 @@
     <title>404 — Sahifa topilmadi</title>
     <script>
       (function() {
+        // Prevent TypeError: Cannot set property fetch of #<Window> which has only a getter
+        try {
+          var originalFetch = window.fetch;
+          if (originalFetch) {
+            var currentFetch = originalFetch;
+            Object.defineProperty(window, 'fetch', {
+              get: function() {
+                return currentFetch;
+              },
+              set: function(val) {
+                currentFetch = val;
+              },
+              configurable: true,
+              enumerable: true
+            });
+          }
+        } catch (e) {
+          console.warn("Failed to make fetch writable:", e);
+        }
+
         var t = localStorage.getItem('theme');
         if (t === 'dark' || t === 'light') {
           document.documentElement.dataset.theme = t;

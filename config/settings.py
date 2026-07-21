@@ -27,14 +27,73 @@ ALLOWED_HOSTS = env_list("DJANGO_ALLOWED_HOSTS", default="*")
 
 CSRF_TRUSTED_ORIGINS = env_list("DJANGO_CSRF_TRUSTED_ORIGINS")
 
-if not DEBUG:
+# AI Studio preview platform integration
+app_url = os.environ.get("APP_URL")
+if app_url:
+    from urllib.parse import urlparse
+    parsed = urlparse(app_url)
+    domain = parsed.netloc
+    if domain:
+        # Add the original domain
+        if domain not in ALLOWED_HOSTS:
+            ALLOWED_HOSTS.append(domain)
+        origin = f"{parsed.scheme}://{domain}"
+        if origin not in CSRF_TRUSTED_ORIGINS:
+            CSRF_TRUSTED_ORIGINS.append(origin)
+        
+        # Also support the "ais-pre" counterpart if it's "ais-dev"
+        if "ais-dev-" in domain:
+            pre_domain = domain.replace("ais-dev-", "ais-pre-")
+            if pre_domain not in ALLOWED_HOSTS:
+                ALLOWED_HOSTS.append(pre_domain)
+            pre_origin = f"{parsed.scheme}://{pre_domain}"
+            if pre_origin not in CSRF_TRUSTED_ORIGINS:
+                CSRF_TRUSTED_ORIGINS.append(pre_origin)
+        # Also support the "ais-dev" counterpart if it's "ais-pre"
+        elif "ais-pre-" in domain:
+            dev_domain = domain.replace("ais-pre-", "ais-dev-")
+            if dev_domain not in ALLOWED_HOSTS:
+                ALLOWED_HOSTS.append(dev_domain)
+            dev_origin = f"{parsed.scheme}://{dev_domain}"
+            if dev_origin not in CSRF_TRUSTED_ORIGINS:
+                CSRF_TRUSTED_ORIGINS.append(dev_origin)
+
+ng_allowed_hosts = os.environ.get("NG_ALLOWED_HOSTS")
+if ng_allowed_hosts:
+    for host in ng_allowed_hosts.split(","):
+        host = host.strip()
+        if host and host not in ALLOWED_HOSTS:
+            ALLOWED_HOSTS.append(host)
+        # Check dev/pre equivalents for ng_allowed_hosts too
+        if "ais-dev-" in host:
+            pre_host = host.replace("ais-dev-", "ais-pre-")
+            if pre_host not in ALLOWED_HOSTS:
+                ALLOWED_HOSTS.append(pre_host)
+        elif "ais-pre-" in host:
+            dev_host = host.replace("ais-pre-", "ais-dev-")
+            if dev_host not in ALLOWED_HOSTS:
+                ALLOWED_HOSTS.append(dev_host)
+
+# Always allow * in ALLOWED_HOSTS during preview to prevent any 400 Bad Request
+if app_url or ng_allowed_hosts:
+    if "*" not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append("*")
+
+# AI Studio preview platform (iframe) and production cookie integration
+if app_url or ng_allowed_hosts:
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
+    SESSION_COOKIE_SAMESITE = "None"
+    CSRF_COOKIE_SAMESITE = "None"
+else:
+    if not DEBUG:
+        SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+        SESSION_COOKIE_SECURE = True
+        CSRF_COOKIE_SECURE = True
+    SESSION_COOKIE_SAMESITE = "Lax"
+    CSRF_COOKIE_SAMESITE = "Lax"
 
-# Mobil brauzerlar uchun SameSite=Lax (default Strict ba'zan login formani bloklaydi)
-SESSION_COOKIE_SAMESITE = "Lax"
-CSRF_COOKIE_SAMESITE = "Lax"
 # CSRF cookie'ni JS orqali o'qilishini ta'minlash (kerak emas lekin xavfsiz)
 CSRF_COOKIE_HTTPONLY = False
 

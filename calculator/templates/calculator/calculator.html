@@ -425,26 +425,50 @@ input.qty-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0
 <script id="storages-data" type="application/json">{{ storage_data|safe }}</script>
 <script id="keyboard-mouse-data" type="application/json">{{ keyboard_mouse_data|safe }}</script>
 <script>
-  const bases = JSON.parse(document.getElementById("bases-data").textContent);
-  const cpus = JSON.parse(document.getElementById("cpus-data").textContent);
-  const rams = JSON.parse(document.getElementById("rams-data").textContent);
-  const storages = JSON.parse(document.getElementById("storages-data").textContent);
-  const keyboardMouse = JSON.parse(document.getElementById("keyboard-mouse-data").textContent);
-  const maps = {
-    base: new Map(bases.map((item) => [String(item.id), item])),
-    cpu: new Map(cpus.map((item) => [String(item.id), item])),
-    ram: new Map(rams.map((item) => [String(item.id), item])),
-    storage: new Map(storages.map((item) => [String(item.id), item])),
-    keyboardMouse: new Map(keyboardMouse.map((item) => [String(item.id), item])),
-  };
-  const form = document.getElementById("calculator-form");
-  const fields = {
-    base: document.getElementById("monoblock_base"),
-    cpu: document.getElementById("cpu"),
-    ram: document.getElementById("ram"),
-    keyboardMouse: document.getElementById("keyboard_mouse"),
-  };
-  const orderNumberEl = document.getElementById("summary-order-number");
+console.log('=== CALCULATOR SCRIPT STARTED ===');
+
+// Parse data
+const bases = JSON.parse(document.getElementById("bases-data")?.textContent || "[]");
+const cpus = JSON.parse(document.getElementById("cpus-data")?.textContent || "[]");
+const rams = JSON.parse(document.getElementById("rams-data")?.textContent || "[]");
+const storages = JSON.parse(document.getElementById("storages-data")?.textContent || "[]");
+const keyboardMouse = JSON.parse(document.getElementById("keyboard-mouse-data")?.textContent || "[]");
+
+console.log('Data loaded:', { bases: bases.length, cpus: cpus.length, rams: rams.length, storages: storages.length, keyboard: keyboardMouse.length });
+
+if (cpus.length === 0) {
+  console.error('NO CPUs FOUND! Check database or view.');
+}
+
+const maps = {
+  base: new Map(bases.map((item) => [String(item.id), item])),
+  cpu: new Map(cpus.map((item) => [String(item.id), item])),
+  ram: new Map(rams.map((item) => [String(item.id), item])),
+  storage: new Map(storages.map((item) => [String(item.id), item])),
+  keyboardMouse: new Map(keyboardMouse.map((item) => [String(item.id), item])),
+};
+
+const form = document.getElementById("calculator-form");
+const fields = {
+  base: document.getElementById("monoblock_base"),
+  cpu: document.getElementById("cpu"),
+  ram: document.getElementById("ram"),
+  keyboardMouse: document.getElementById("keyboard_mouse"),
+};
+const orderNumberEl = document.getElementById("summary-order-number");
+
+console.log('Form elements found:', {
+  form: !!form,
+  cpu: !!fields.cpu,
+  base: !!fields.base,
+  ram: !!fields.ram,
+  keyboard: !!fields.keyboardMouse
+});
+
+if (!fields.cpu) {
+  console.error('CRITICAL ERROR: CPU select element not found!');
+  alert('Xatolik: CPU select topilmadi!');
+}
 
   function parseDiscountValue(raw) {
     const text = String(raw).trim();
@@ -559,15 +583,31 @@ input.qty-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0
   }
 
   function fillOptions(select, items, placeholder = "Tanlang", includeEmpty = false, autoSelect = true) {
+    if (!select) {
+      console.error('fillOptions: select is null!');
+      return;
+    }
+
     const current = select.value;
     select.innerHTML = "";
-    select.add(new Option(includeEmpty ? "Tanlanmagan" : placeholder, ""));
-    items.forEach((item) => { select.add(new Option(item.name, item.id)); });
+
+    // Add placeholder
+    const placeholderOption = new Option(includeEmpty ? "Tanlanmagan" : placeholder, "");
+    select.add(placeholderOption);
+
+    // Add all items
+    items.forEach((item) => {
+      const option = new Option(item.name, String(item.id));
+      select.add(option);
+    });
+
+    // Restore previous value or auto-select
     if (items.some((item) => String(item.id) === current)) {
       select.value = current;
-    } else if (autoSelect && !includeEmpty && items.length) {
-      select.value = items[0].id;
+    } else if (autoSelect && !includeEmpty && items.length > 0) {
+      select.value = String(items[0].id);
     }
+
     select.disabled = items.length === 0 && !includeEmpty;
   }
 
@@ -600,10 +640,11 @@ input.qty-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0
     const sataGroup = document.getElementById("sata-storage-group");
     const nvmeContainer = document.getElementById("nvme-storage-slot");
     const sataContainer = document.getElementById("sata-storage-slot");
+    if (!nvmeContainer || !sataContainer) return;
     nvmeContainer.innerHTML = "";
     sataContainer.innerHTML = "";
-    nvmeGroup.classList.toggle("is-hidden", !base.supports_nvme);
-    sataGroup.classList.toggle("is-hidden", !base.supports_sata);
+    if (nvmeGroup) nvmeGroup.classList.toggle("is-hidden", !base.supports_nvme);
+    if (sataGroup) sataGroup.classList.toggle("is-hidden", !base.supports_sata);
 
     if (base.supports_nvme) {
       nvmeContainer.append(createSelect("nvme", "storage_slots", storages.filter((item) => item.interface === "nvme"), "Tanlanmagan"));
@@ -661,6 +702,7 @@ input.qty-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0
     const sataGroup = document.getElementById("sata-storage-group");
     const nvmeContainer = document.getElementById("nvme-storage-slot");
     const sataContainer = document.getElementById("sata-storage-slot");
+    if (!nvmeContainer || !sataContainer) return;
     const nvmeRendered = nvmeContainer.querySelector("select") !== null;
     const sataRendered = sataContainer.querySelector("select") !== null;
 
@@ -671,9 +713,9 @@ input.qty-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0
         nvmeContainer.innerHTML = "";
         nvmeContainer.append(createSelect("nvme", "storage_slots", storages.filter(item => item.interface === "nvme"), "Tanlanmagan"));
       }
-      nvmeGroup.classList.remove("is-hidden");
+      if (nvmeGroup) nvmeGroup.classList.remove("is-hidden");
     } else {
-      nvmeGroup.classList.add("is-hidden");
+      if (nvmeGroup) nvmeGroup.classList.add("is-hidden");
       nvmeContainer.querySelectorAll("select").forEach(s => { s.value = ""; });
     }
 
@@ -760,33 +802,52 @@ input.qty-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0
     fillOptions(fields.keyboardMouse, keyboardMouse, "Keyboard and Mouse", true, false);
     fields.ram.value = "";
     fields.keyboardMouse.value = "";
-    document.getElementById("nvme-storage-slot").innerHTML = "";
-    document.getElementById("sata-storage-slot").innerHTML = "";
-    document.getElementById("nvme-storage-group").classList.add("is-hidden");
-    document.getElementById("sata-storage-group").classList.add("is-hidden");
+    const nvmeSlot = document.getElementById("nvme-storage-slot");
+    const sataSlot = document.getElementById("sata-storage-slot");
+    const nvmeGroup = document.getElementById("nvme-storage-group");
+    const sataGroup = document.getElementById("sata-storage-group");
+    if (nvmeSlot) nvmeSlot.innerHTML = "";
+    if (sataSlot) sataSlot.innerHTML = "";
+    if (nvmeGroup) nvmeGroup.classList.add("is-hidden");
+    if (sataGroup) sataGroup.classList.add("is-hidden");
     refreshSummary();
   }
 
+  // ===== INITIALIZATION =====
+  console.log('=== Starting initialization ===');
+  console.log('CPU dropdown element:', fields.cpu);
+  console.log('CPUs available:', cpus.length);
+
+  // Initialize CPU dropdown
   fillOptions(fields.cpu, cpus, "CPU tanlang", false, false);
+  console.log('CPU dropdown filled. Options count:', fields.cpu ? fields.cpu.options.length : 0);
+
+  // Clear other fields initially
   clearSelections();
 
-  fields.cpu.addEventListener("change", () => { refreshForCpu(); clearStatus(); });
-  fields.base.addEventListener("change", () => {
-    const base = activeBase();
-    if (base) { renderRamSelect(base); refreshStorageVisibility(base); }
-    refreshSummary(); clearStatus();
-  });
-  fields.ram.addEventListener("change", refreshSummary);
-  fields.keyboardMouse.addEventListener("change", refreshSummary);
+  if (fields.cpu) fields.cpu.addEventListener("change", () => { refreshForCpu(); clearStatus(); });
+  if (fields.base) {
+    fields.base.addEventListener("change", () => {
+      const base = activeBase();
+      if (base) { renderRamSelect(base); refreshStorageVisibility(base); }
+      refreshSummary(); clearStatus();
+    });
+  }
+  if (fields.ram) fields.ram.addEventListener("change", refreshSummary);
+  if (fields.keyboardMouse) fields.keyboardMouse.addEventListener("change", refreshSummary);
 
-  discountInput.addEventListener("input", onDiscountEdited);
-  discountInput.addEventListener("keyup", onDiscountEdited);
-  discountInput.addEventListener("change", onDiscountEdited);
-  discountInput.addEventListener("cut", onDiscountEdited);
-  discountInput.addEventListener("paste", () => { requestAnimationFrame(onDiscountEdited); });
+  if (discountInput) {
+    discountInput.addEventListener("input", onDiscountEdited);
+    discountInput.addEventListener("keyup", onDiscountEdited);
+    discountInput.addEventListener("change", onDiscountEdited);
+    discountInput.addEventListener("cut", onDiscountEdited);
+    discountInput.addEventListener("paste", () => { requestAnimationFrame(onDiscountEdited); });
+  }
 
-  usdRateInput.addEventListener("input", () => { refreshSummary(); updateUsdRateSaveVisibility(); });
-  usdRateInput.addEventListener("change", () => { refreshSummary(); updateUsdRateSaveVisibility(); });
+  if (usdRateInput) {
+    usdRateInput.addEventListener("input", () => { refreshSummary(); updateUsdRateSaveVisibility(); });
+    usdRateInput.addEventListener("change", () => { refreshSummary(); updateUsdRateSaveVisibility(); });
+  }
   updateUsdRateSaveVisibility();
 
   function buildSummaryCanvas() {
@@ -802,7 +863,7 @@ input.qty-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0
     if (!discountWrap.hidden && !discountWrap.classList.contains("is-hidden")) {
       rows.push(["Chegirma", document.getElementById("summary-discount").textContent]);
     }
-    
+
     // Dark mode detection
     const isDark = document.documentElement.dataset.theme === 'dark';
     const colors = isDark ? {
@@ -820,7 +881,7 @@ input.qty-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0
       muted: '#60707c',
       accentDark: '#0a5f59'
     };
-    
+
     const scale = 2;
     const width = 720;
     const padding = 36;
@@ -891,6 +952,7 @@ input.qty-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0
 
   (function() {
     const btn = document.getElementById("copy-image");
+    if (!btn) return;
     let clickTimer = null;
 
     function validate() {
@@ -940,91 +1002,102 @@ input.qty-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0
   })();
 
   // Reset form button
-  document.getElementById("reset-form").addEventListener("click", () => {
-    if (!confirm("Hamma ma'lumotlarni tozalashni xohlaysizmi?")) return;
-    
-    // Clear all fields
-    fields.cpu.value = "";
-    fields.base.value = "";
-    fields.ram.value = "";
-    fields.keyboardMouse.value = "";
-    discountInput.value = "";
-    
-    // Clear storage slots
-    document.getElementById("nvme-storage-slot").innerHTML = "";
-    document.getElementById("sata-storage-slot").innerHTML = "";
-    document.getElementById("nvme-storage-group").classList.add("is-hidden");
-    document.getElementById("sata-storage-group").classList.add("is-hidden");
-    
-    // Clear status
-    const status = document.getElementById("status");
-    status.textContent = "";
-    status.classList.remove("error");
-    
-    // Refresh summary
-    clearSelections();
-    refreshSummary();
-  });
+  const resetFormBtn = document.getElementById("reset-form");
+  if (resetFormBtn) {
+    resetFormBtn.addEventListener("click", () => {
+      if (!confirm("Hamma ma'lumotlarni tozalashni xohlaysizmi?")) return;
 
-  document.getElementById("save-quote").addEventListener("click", async () => {
-    const status = document.getElementById("status");
-    const saveButton = document.getElementById("save-quote");
-    const hasRam = fields.ram.value !== "";
-    const hasStorage = selectedDynamic("storage_slots", maps.storage).length > 0;
-    const hasKeyboardMouse = fields.keyboardMouse.value !== "";
-    const errors = [];
-    if (!fields.cpu.value) errors.push("CPU tanlanmadi");
-    if (!fields.base.value) errors.push("AIO tanlanmadi");
-    if (!hasRam) errors.push("RAM tanlanmadi");
-    if (!hasKeyboardMouse) errors.push("Keyboard and Mouse tanlanmadi");
-    if (!hasStorage) errors.push("SSD/HDD tanlanmadi");
-    if (errors.length > 0) {
-      status.textContent = errors.join(" • ");
-      status.classList.add("error");
-      return;
-    }
-    const body = new FormData(form);
-    body.append("discount_percent", String(readDiscountPercent()));
-    body.append("usd_rate", String(readUsdRate()));
-    saveButton.disabled = true;
-    try {
-      const response = await fetch("{% url 'calculator:save_quote' %}", {
-        method: "POST", body, headers: { "X-Requested-With": "XMLHttpRequest" },
-      });
-      const data = await response.json();
-      if (response.ok) {
-        orderNumberEl.textContent = data.order_number || `AIO#${data.id}`;
-        const savedOrderNumber = orderNumberEl.textContent;
-        const totalUzs = Math.round(Number(data.total_price) * readUsdRate());
-        status.textContent = `${savedOrderNumber} saqlandi: ${totalUzs.toLocaleString("uz-UZ")} so'm`;
-        status.classList.remove("error");
-        orderNumberEl.textContent = nextOrderNumber(savedOrderNumber);
+      // Clear all fields
+      fields.cpu.value = "";
+      fields.base.value = "";
+      fields.ram.value = "";
+      fields.keyboardMouse.value = "";
+      discountInput.value = "";
 
-        // Savatga qo'shish
-        if (typeof window.addToCart === 'function') {
-          window.addToCart({
-            label: buildConfigLabel(),
-            price_uzs: totalUzs,
-            qty: 1,
-            category: "AIO",
-            orderNumber: savedOrderNumber
-          });
+      // Clear storage slots
+      const nvmeSlot = document.getElementById("nvme-storage-slot");
+      const sataSlot = document.getElementById("sata-storage-slot");
+      const nvmeGroup = document.getElementById("nvme-storage-group");
+      const sataGroup = document.getElementById("sata-storage-group");
+      if (nvmeSlot) nvmeSlot.innerHTML = "";
+      if (sataSlot) sataSlot.innerHTML = "";
+      if (nvmeGroup) nvmeGroup.classList.add("is-hidden");
+      if (sataGroup) sataGroup.classList.add("is-hidden");
+
+      // Clear status
+      const status = document.getElementById("status");
+      status.textContent = "";
+      status.classList.remove("error");
+
+      // Refresh summary
+      clearSelections();
+      refreshSummary();
+    });
+  }
+
+  const saveQuoteBtn = document.getElementById("save-quote");
+  if (saveQuoteBtn) {
+    saveQuoteBtn.addEventListener("click", async () => {
+      const status = document.getElementById("status");
+      const saveButton = document.getElementById("save-quote");
+      const hasRam = fields.ram.value !== "";
+      const hasStorage = selectedDynamic("storage_slots", maps.storage).length > 0;
+      const hasKeyboardMouse = fields.keyboardMouse.value !== "";
+      const errors = [];
+      if (!fields.cpu.value) errors.push("CPU tanlanmadi");
+      if (!fields.base.value) errors.push("AIO tanlanmadi");
+      if (!hasRam) errors.push("RAM tanlanmadi");
+      if (!hasKeyboardMouse) errors.push("Keyboard and Mouse tanlanmadi");
+      if (!hasStorage) errors.push("SSD/HDD tanlanmadi");
+      if (errors.length > 0) {
+        status.textContent = errors.join(" • ");
+        status.classList.add("error");
+        return;
+      }
+      const body = new FormData(form);
+      body.append("discount_percent", String(readDiscountPercent()));
+      body.append("usd_rate", String(readUsdRate()));
+      saveButton.disabled = true;
+      try {
+        const response = await fetch("{% url 'calculator:save_quote' %}", {
+          method: "POST", body, headers: { "X-Requested-With": "XMLHttpRequest" },
+        });
+        const data = await response.json();
+        if (response.ok) {
+          orderNumberEl.textContent = data.order_number || `AIO#${data.id}`;
+          const savedOrderNumber = orderNumberEl.textContent;
+          const totalUzs = Math.round(Number(data.total_price) * readUsdRate());
+          status.textContent = `${savedOrderNumber} saqlandi: ${totalUzs.toLocaleString("uz-UZ")} so'm`;
+          status.classList.remove("error");
+          orderNumberEl.textContent = nextOrderNumber(savedOrderNumber);
+
+          // Savatga qo'shish
+          if (typeof window.addToCart === 'function') {
+            window.addToCart({
+              label: buildConfigLabel(),
+              price_uzs: totalUzs,
+              qty: 1,
+              category: "AIO",
+              orderNumber: savedOrderNumber
+            });
+          }
+
+          discountInput.value = "";
+          fields.cpu.value = "";
+          clearSelections();
+          clearStatus();
+        } else {
+          status.textContent = "Saqlashda xatolik yuz berdi.";
+          status.classList.add("error");
         }
-        
-        discountInput.value = "";
-        fields.cpu.value = "";
-        clearSelections();
-        clearStatus();      } else {
+      } catch (error) {
         status.textContent = "Saqlashda xatolik yuz berdi.";
         status.classList.add("error");
+      } finally {
+        saveButton.disabled = false;
       }
-    } catch (error) {
-      status.textContent = "Saqlashda xatolik yuz berdi.";
-      status.classList.add("error");
-    } finally {
-      saveButton.disabled = false;
-    }
-  });
+    });
+  }
 
   // ── Konfiguratsiyalar to'plami ──
   const POOL_KEY = "order_configs_pool";
@@ -1124,7 +1197,9 @@ input.qty-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0
     const panel = document.getElementById("configs-panel");
     const list = document.getElementById("configs-list");
     const emptyState = document.getElementById("configs-empty");
-    
+
+    if (!list || !emptyState) return;
+
     if (!pool.length) {
       list.innerHTML = "";
       emptyState.style.display = "block";
@@ -1183,30 +1258,36 @@ input.qty-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0
 
   renderConfigsPanel();
 
-  document.getElementById("clear-all-configs-btn").addEventListener("click", () => {
-    if (!confirm("Barcha konfiguratsiyalar o'chirilsinmi?")) return;
-    clearConfigPool();
-    renderConfigsPanel();
-  });
-
-  document.getElementById("create-order-btn").addEventListener("click", () => {
-    const cart = getCart();
-    if (!cart.length) {
-      alert('Savat bo\'sh!');
-      return;
-    }
-    
-    const params = new URLSearchParams();
-    cart.forEach((item) => {
-      params.append('config_label', item.label);
-      params.append('quantity', item.qty || 1);
-      params.append('unit_price_uzs', item.price_uzs || 0);
+  const clearAllConfigsBtn = document.getElementById("clear-all-configs-btn");
+  if (clearAllConfigsBtn) {
+    clearAllConfigsBtn.addEventListener("click", () => {
+      if (!confirm("Barcha konfiguratsiyalar o'chirilsinmi?")) return;
+      clearConfigPool();
+      renderConfigsPanel();
     });
-    
-    const total = cart.reduce((s, item) => s + (item.qty || 1) * (item.price_uzs || 0), 0);
-    params.append('total_price_uzs', total);
-    
-    window.location.href = `/orders/create/?${params.toString()}`;
-  });
+  }
+
+  const createOrderBtn = document.getElementById("create-order-btn");
+  if (createOrderBtn) {
+    createOrderBtn.addEventListener("click", () => {
+      const cart = getCart();
+      if (!cart.length) {
+        alert('Savat bo\'sh!');
+        return;
+      }
+
+      const params = new URLSearchParams();
+      cart.forEach((item) => {
+        params.append('config_label', item.label);
+        params.append('quantity', item.qty || 1);
+        params.append('unit_price_uzs', item.price_uzs || 0);
+      });
+
+      const total = cart.reduce((s, item) => s + (item.qty || 1) * (item.price_uzs || 0), 0);
+      params.append('total_price_uzs', total);
+
+      window.location.href = `/orders/create/?${params.toString()}`;
+    });
+  }
 </script>
 {% endblock %}

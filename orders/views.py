@@ -16,8 +16,7 @@ User = get_user_model()
 STATUS_FLOW = [
     Order.ProductionStatus.QUEUED,
     Order.ProductionStatus.IN_PROGRESS,
-    Order.ProductionStatus.READY_DELIVERY,
-    Order.ProductionStatus.READY_PICKUP,
+    Order.ProductionStatus.READY,
     Order.ProductionStatus.DELIVERED,
 ]
 
@@ -183,6 +182,9 @@ def _form_context(order, initial, extra=None):
         "v_payment_status_label": payment_status_label_map.get(v_payment_status, ""),
         "v_production_status": v_production_status,
         "v_production_status_label": production_status_label_map.get(v_production_status, ""),
+        "v_delivery_date":  src.get("delivery_date", str(getattr(o, "delivery_date", "")) if getattr(o, "delivery_date", None) else ""),
+        "v_delivery_time":  src.get("delivery_time", getattr(o, "delivery_time", "")),
+        "v_partial_amount": src.get("partial_amount", str(getattr(o, "partial_amount", "0"))),
         "v_total_usd":      src.get("total_price_usd",str(getattr(o, "total_price_usd", "0"))),
         "v_total_uzs":      src.get("total_price_uzs",str(getattr(o, "total_price_uzs", "0"))),
         "v_notes":          src.get("notes",          getattr(o, "notes",          "")),
@@ -249,7 +251,8 @@ def order_create(request):
                 items_data.append({
                     "config_label": label,
                     "quantity": qty,
-                    "unit_price_usd": price_usd
+                    "unit_price_usd": price_usd,
+                    "unit_price_uzs": price_uzs
                 })
             initial["items"] = items_data
 
@@ -331,6 +334,19 @@ def order_update_status(request, pk):
 
 
 @login_required
+def order_delete(request, pk):
+    if not request.user.is_superuser:
+        from django.core.exceptions import PermissionDenied
+        raise PermissionDenied("Faqat administratorlar buyurtmani o'chira oladi.")
+    
+    order = get_object_or_404(Order, pk=pk)
+    if request.method == "POST":
+        order.delete()
+        return redirect("orders:list")
+    return redirect("orders:detail", pk=pk)
+
+
+@login_required
 def leaderboard(request):
     period = request.GET.get("period", "today")
     now = timezone.now()
@@ -349,7 +365,8 @@ def leaderboard(request):
     cancelled_filter = date_filter & Q(production_status=Order.ProductionStatus.CANCELLED)
 
     sellers = User.objects.filter(
-        Q(orders__isnull=False)
+        is_superuser=False,
+        orders__isnull=False
     ).distinct()
 
     board = []
@@ -408,9 +425,25 @@ def _save_order(request, instance=None):
     payment_status = post.get("payment_status", "").strip()
     production_status = post.get("production_status", Order.ProductionStatus.QUEUED).strip()
 
+    delivery_date_str = post.get("delivery_date", "").strip()
+    delivery_time = post.get("delivery_time", "").strip()
+    partial_amount_str = post.get("partial_amount", "0").strip()
+
     notes = post.get("notes", "").strip()
 
     errors = []
+    
+    delivery_date = None
+    if delivery_date_str:
+        from datetime import datetime
+        try:
+            delivery_date = datetime.strptime(delivery_date_str, "%Y-%m-%d").date()
+        except ValueError:
+            pass
+
+    clean_partial = "".join(c for c in partial_amount_str if c.isdigit() or c in ".,")
+    partial_amount = _parse_decimal(clean_partial, Decimal("0"))
+
     if not customer_name:
         errors.append("Mijoz ismi kiritilmadi.")
     if not customer_phone:
@@ -425,6 +458,8 @@ def _save_order(request, instance=None):
         errors.append("To'lov turi tanlanmadi.")
     if payment_status not in [p for p, _ in Order.PaymentStatus.choices]:
         errors.append("To'lov holati tanlanmadi.")
+    if delivery_type and (not delivery_date or not delivery_time):
+        errors.append("Yetkazib berish sanasi va vaqti kiritilmadi.")
 
     config_labels = post.getlist("config_label")
     quantities = post.getlist("quantity")
@@ -450,7 +485,7 @@ def _save_order(request, instance=None):
         # So'mdan USD ga konvertatsiya qilish (database uchun)
         price_usd = price_uzs / usd_rate if usd_rate > 0 else Decimal("0")
 
-        items_data.append({"config_label": label, "quantity": qty, "unit_price_usd": price_usd})
+        items_data.append({"config_label": label, "quantity": qty, "unit_price_usd": price_usd, "unit_price_uzs": price_uzs})
         total_price_uzs += price_uzs * qty
 
     total_price_usd = total_price_uzs / usd_rate if usd_rate > 0 else Decimal("0")
@@ -478,6 +513,9 @@ def _save_order(request, instance=None):
     order.production_status = production_status
     order.total_price_usd = total_price_usd
     order.total_price_uzs = total_price_uzs
+    order.delivery_date = delivery_date
+    order.delivery_time = delivery_time
+    order.partial_amount = partial_amount
     order.notes = notes
 
     if order.production_status == Order.ProductionStatus.DELIVERED and not order.delivered_at:

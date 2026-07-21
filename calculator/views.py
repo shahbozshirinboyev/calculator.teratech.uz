@@ -206,7 +206,7 @@ def profile(request):
     )
     total_uzs = stats["total_uzs"] or Decimal("0")
     completed_count = stats["completed_orders"] or 0
-    users = User.objects.filter(is_active=True).order_by("first_name", "last_name", "username")
+    users = User.objects.filter(is_active=True, is_superuser=False).order_by("first_name", "last_name", "username")
 
     all_time_stats = Order.objects.filter(
         sold_by=request.user,

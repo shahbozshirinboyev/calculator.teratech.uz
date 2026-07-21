@@ -1,5 +1,5 @@
 {% load order_tags %}
-<div class="order-card" id="order-{{ order.pk }}">
+<div class="order-card" id="order-{{ order.pk }}" data-href="{% url 'orders:detail' order.pk %}">
   <div class="order-card-header">
     <a href="{% url 'orders:detail' order.pk %}" class="order-number">{{ order.order_number }}</a>
     <span class="badge {{ order.payment_status|payment_badge }}">
@@ -18,7 +18,7 @@
 
   <div class="order-meta">
     <span>👤 <strong>{{ order.customer_name }}</strong></span>
-    <span>📞 {{ order.customer_phone }}</span>
+    <span>📞 {{ order.customer_phone|format_phone }}</span>
     <span>📍 {{ order.region }}, {{ order.district }}, {{ order.city }}{% if order.landmark %} — {{ order.landmark }}{% endif %}</span>
     <span>🚚 {{ order.get_delivery_type_display }}</span>
     <span>💳 {{ order.get_payment_type_display }}</span>
@@ -29,7 +29,7 @@
       <div class="order-item-row">
         <span class="item-label">{{ item.config_label }}</span>
         <span class="item-qty">{{ item.quantity }} ×</span>
-        <span style="font-weight:700;color:var(--accent-dark);">{% widthratio item.unit_price_usd 1 usd_rate %} so'm</span>
+        <span style="font-weight:700;color:var(--accent-dark);">{% if item.unit_price_uzs %}{{ item.unit_price_uzs|floatformat:0 }}{% else %}{% widthratio item.unit_price_usd 1 usd_rate %}{% endif %} so'm</span>
       </div>
     {% endfor %}
   </div>

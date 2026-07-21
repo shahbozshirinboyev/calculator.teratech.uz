@@ -7,10 +7,9 @@ User = get_user_model()
 
 class Order(models.Model):
     class DeliveryType(models.TextChoices):
-        BTS = "BTS", "BTS"
-        UZPOST = "UZPOST", "UZPOST"
-        PICKUP = "PICKUP", "Olib ketadi"
-        DELIVERY = "DELIVERY", "Olib borish kerak"
+        POST = "POST", "POCHTA (BTS, UZPOST, ...)"
+        PICKUP = "PICKUP", "OLIB KETADI"
+        DELIVERY = "DELIVERY", "OLIB BORISH KERAK"
 
     class PaymentType(models.TextChoices):
         CARD = "CARD", "Karta"
@@ -24,10 +23,9 @@ class Order(models.Model):
         PARTIAL = "PARTIAL", "Qisman"
 
     class ProductionStatus(models.TextChoices):
-        QUEUED = "QUEUED", "Yig'ish boshlansin"
-        IN_PROGRESS = "IN_PROGRESS", "Yig'ish boshlandi"
-        READY_DELIVERY = "READY_DELIVERY", "Yetkazib berishga tayyor"
-        READY_PICKUP = "READY_PICKUP", "Olib ketishga tayyor"
+        QUEUED = "QUEUED", "Navbatda"
+        IN_PROGRESS = "IN_PROGRESS", "Tayyorlanmoqda"
+        READY = "READY", "Tayyor"
         DELIVERED = "DELIVERED", "Yetkazildi"
         CANCELLED = "CANCELLED", "Bekor qilindi"
 
@@ -70,6 +68,12 @@ class Order(models.Model):
     )
     total_price_uzs = models.DecimalField(
         max_digits=16, decimal_places=0, default=0, verbose_name="Jami (so'm)"
+    )
+
+    delivery_date = models.DateField(null=True, blank=True, verbose_name="Yetkazib berish sanasi")
+    delivery_time = models.CharField(max_length=10, null=True, blank=True, verbose_name="Yetkazib berish vaqti")
+    partial_amount = models.DecimalField(
+        max_digits=16, decimal_places=0, default=0, verbose_name="Qisman to'langan summa"
     )
 
     notes = models.TextField(blank=True, verbose_name="Izoh")
@@ -118,6 +122,9 @@ class OrderItem(models.Model):
     quantity = models.PositiveIntegerField(default=1, verbose_name="Soni")
     unit_price_usd = models.DecimalField(
         max_digits=12, decimal_places=2, default=0, verbose_name="Dona narxi (USD)"
+    )
+    unit_price_uzs = models.DecimalField(
+        max_digits=16, decimal_places=2, default=0, verbose_name="Dona narxi (so'm)"
     )
 
     class Meta:

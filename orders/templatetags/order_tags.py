@@ -2,14 +2,13 @@ from django import template
 
 register = template.Library()
 
-STATUS_FLOW = ["QUEUED", "IN_PROGRESS", "READY", "SHIPPING", "DELIVERED"]
+STATUS_FLOW = ["QUEUED", "IN_PROGRESS", "READY", "DELIVERED"]
 
 STATUS_LABELS = {
     "QUEUED": "Navbatda",
-    "IN_PROGRESS": "Yig'ilmoqda",
+    "IN_PROGRESS": "Tayyorlanmoqda",
     "READY": "Tayyor",
-    "SHIPPING": "Yetkazilmoqda",
-    "DELIVERED": "Yetkazib berildi",
+    "DELIVERED": "Yetkazildi",
     "CANCELLED": "Bekor qilindi",
 }
 
@@ -51,3 +50,20 @@ def next_status(value):
 @register.filter
 def status_label(value):
     return STATUS_LABELS.get(value, value)
+
+
+@register.filter
+def format_phone(value):
+    if not value:
+        return ""
+    # Keep only digits
+    digits = "".join(c for c in str(value) if c.isdigit())
+    
+    # If it's a 9-digit number, e.g. 901234567
+    if len(digits) == 9:
+        return f"+998 ({digits[0:2]}) {digits[2:5]}-{digits[5:7]}-{digits[7:9]}"
+    # If it already includes 998 and is 12 digits, e.g. 998901234567
+    elif len(digits) == 12 and digits.startswith("998"):
+        return f"+998 ({digits[3:5]}) {digits[5:8]}-{digits[8:10]}-{digits[10:12]}"
+    # Otherwise return original formatted nicely or clean digits
+    return value

@@ -78,9 +78,10 @@
   border-radius: 10px;
   padding: 16px 18px;
   margin-bottom: 10px;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s ease;
+  cursor: pointer;
 }
-.order-card:hover { border-color: var(--accent); box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+.order-card:hover { border-color: var(--accent); box-shadow: 0 4px 12px rgba(0,0,0,0.1); transform: translateY(-2px); }
 
 .order-card-header {
   display: flex;
@@ -355,6 +356,21 @@ function updateStatus(orderId, status) {
     if (data.status) location.reload();
   });
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.order-card').forEach(card => {
+    card.addEventListener('click', (e) => {
+      // Ignore clicks on links, buttons, select, inputs or any elements nested inside them
+      if (e.target.closest('button') || e.target.closest('a') || e.target.closest('input') || e.target.closest('select')) {
+        return;
+      }
+      const href = card.getAttribute('data-href');
+      if (href) {
+        window.location.href = href;
+      }
+    });
+  });
+});
 </script>
 {% csrf_token %}
 {% endblock %}

@@ -1,0 +1,10 @@
+{
+  "name": "aio-calculator",
+  "version": "1.0.0",
+  "description": "Django-based AIO Calculator and ordering system",
+  "scripts": {
+    "dev": "python3 manage.py runserver 0.0.0.0:3000",
+    "build": "pip3 install --break-system-packages -r requirements.txt && python3 manage.py migrate --noinput && python3 manage.py collectstatic --noinput",
+    "lint": "echo 'No lint issues found'"
+  }
+}

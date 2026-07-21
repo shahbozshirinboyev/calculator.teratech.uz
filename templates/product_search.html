@@ -268,10 +268,13 @@
 <script id="product-data" type="application/json">{{ product_data|safe }}</script>
 <script>
 (function() {
-  const products = JSON.parse(document.getElementById("product-data").textContent);
+  const productDataEl = document.getElementById("product-data");
+  if (!productDataEl) return;
+  const products = JSON.parse(productDataEl.textContent || "[]");
   const searchInput = document.getElementById("product-search");
   const grid = document.getElementById("product-grid");
   const noResults = document.getElementById("no-results");
+  if (!searchInput || !grid || !noResults) return;
   let selectedProduct = null;
 
   // Copy icon SVG

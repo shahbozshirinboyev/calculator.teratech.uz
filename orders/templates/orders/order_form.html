@@ -239,7 +239,7 @@
                       <button type="button" class="quantity-btn" onclick="changeItemQuantity(this, 1)">+</button>
                     </div></div>
                   <div class="field"><label>Dona narxi (so'm)</label>
-                    <input type="text" name="unit_price_uzs" value="{% widthratio item.unit_price_usd 1 usd_rate %}" inputmode="numeric" class="money-input"></div>
+                    <input type="text" name="unit_price_uzs" value="{% if item.unit_price_uzs %}{{ item.unit_price_uzs|floatformat:0 }}{% else %}{% widthratio item.unit_price_usd 1 usd_rate %}{% endif %}" inputmode="numeric" class="money-input"></div>
                   <button type="button" class="remove-item-btn" onclick="removeItem(this)" title="O'chirish">×</button>
                 </div>
               {% endfor %}
@@ -255,7 +255,7 @@
                       <button type="button" class="quantity-btn" onclick="changeItemQuantity(this, 1)">+</button>
                     </div></div>
                   <div class="field"><label>Dona narxi (so'm)</label>
-                    <input type="text" name="unit_price_uzs" value="{% widthratio item.unit_price_usd 1 usd_rate %}" inputmode="numeric" class="money-input"></div>
+                    <input type="text" name="unit_price_uzs" value="{% if item.unit_price_uzs %}{{ item.unit_price_uzs|floatformat:0 }}{% else %}{% widthratio item.unit_price_usd 1 usd_rate %}{% endif %}" inputmode="numeric" class="money-input"></div>
                   <button type="button" class="remove-item-btn" onclick="removeItem(this)" title="O'chirish">×</button>
                 </div>
               {% endfor %}
@@ -285,6 +285,17 @@
               </div>
             </div>
           </div>
+          <!-- Qisman to'lov ma'lumotlari -->
+          <div id="partial-payment-group" class="form-row" style="display: none; margin-top: 12px; border-left: 3px solid var(--accent); padding-left: 12px;">
+            <div class="field">
+              <label>Qisman to'langan summa (so'm) *</label>
+              <input type="text" name="partial_amount" id="partial-amount-input" value="{{ v_partial_amount }}" inputmode="numeric" class="money-input">
+            </div>
+            <div class="field">
+              <label>Qoldiq summasi (Auto)</label>
+              <input type="text" id="remaining-amount-input" readonly style="background: var(--bg); font-weight: 700; color: var(--danger);" value="0 so'm">
+            </div>
+          </div>
         </div>
 
         <!-- V. Qo'shimcha ma'lumotlar -->
@@ -306,6 +317,19 @@
                 <input type="hidden" name="production_status" id="production-status-hidden" value="{{ v_production_status }}" required>
                 <div class="autocomplete-dropdown" id="production-status-dropdown"></div>
               </div>
+            </div>
+          </div>
+          <!-- Vaqt ma'lumotlari -->
+          <div id="time-info-group" class="form-row" style="display: none; margin-top: 12px; border-left: 3px solid var(--accent); padding-left: 12px;">
+            <div class="field">
+              <label id="delivery-date-label">Sana *</label>
+              <input type="date" name="delivery_date" id="delivery-date-input" value="{{ v_delivery_date }}">
+              <span id="date-hint" style="font-size: 11px; color: var(--muted); display: block; margin-top: 4px;"></span>
+            </div>
+            <div class="field">
+              <label id="delivery-time-label">Vaqt *</label>
+              <input type="time" name="delivery_time" id="delivery-time-input" value="{{ v_delivery_time }}">
+              <span id="time-hint" style="font-size: 11px; color: var(--muted); display: block; margin-top: 4px;"></span>
             </div>
           </div>
           <div class="form-row full">
@@ -472,10 +496,107 @@ function recalcOrderTotals() {
     }
   });
 
-  document.getElementById('s-items-list').innerHTML = itemsHtml.join('');
-  document.getElementById('s-total').textContent = `${formatInteger(sum)} so'm`;
+  const sItemsList = document.getElementById('s-items-list');
+  if (sItemsList) {
+    sItemsList.innerHTML = itemsHtml.join('');
+  }
+  const sTotal = document.getElementById('s-total');
+  if (sTotal) {
+    sTotal.textContent = `${formatInteger(sum)} so'm`;
+  }
+  recalcRemainingAmount();
+}
 
+function recalcRemainingAmount() {
+  let totalSum = 0;
+  const allRows = document.querySelectorAll('#items-container .item-row');
+  allRows.forEach(row => {
+    const qty = normalizeQuantity(row.querySelector('[name="quantity"]')?.value || '1');
+    const priceUzs = normalizeMoney(row.querySelector('[name="unit_price_uzs"]')?.value || '0');
+    totalSum += priceUzs * qty;
+  });
 
+  const partialVal = normalizeMoney(document.getElementById('partial-amount-input')?.value || '0');
+  const remaining = Math.max(0, totalSum - partialVal);
+
+  const remainingInput = document.getElementById('remaining-amount-input');
+  if (remainingInput) {
+    remainingInput.value = `${formatInteger(remaining)} so'm`;
+  }
+}
+
+function handlePaymentStatusChange(val) {
+  const group = document.getElementById('partial-payment-group');
+  const partialInput = document.getElementById('partial-amount-input');
+  if (!group || !partialInput) return;
+
+  if (val === 'PARTIAL') {
+    group.style.display = 'flex';
+    partialInput.setAttribute('required', 'required');
+    recalcRemainingAmount();
+  } else {
+    group.style.display = 'none';
+    partialInput.removeAttribute('required');
+    partialInput.value = '';
+    recalcRemainingAmount();
+  }
+}
+
+function handleDeliveryTypeChange(val) {
+  const group = document.getElementById('time-info-group');
+  const dateInput = document.getElementById('delivery-date-input');
+  const timeInput = document.getElementById('delivery-time-input');
+  const dateHint = document.getElementById('date-hint');
+  const timeHint = document.getElementById('time-hint');
+
+  if (!group || !dateInput || !timeInput) return;
+
+  if (!val) {
+    group.style.display = 'none';
+    dateInput.removeAttribute('required');
+    timeInput.removeAttribute('required');
+    return;
+  }
+
+  group.style.display = 'flex';
+  dateInput.setAttribute('required', 'required');
+  timeInput.setAttribute('required', 'required');
+
+  // Today's date in YYYY-MM-DD
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const todayStr = `${year}-${month}-${day}`;
+
+  if (val === 'BTS' || val === 'UZPOST' || val === 'POST') {
+    dateInput.value = todayStr;
+    dateInput.readOnly = true;
+    if (dateHint) dateHint.textContent = "Buyurtma yaratilayotgan sanada chiqib ketadi";
+
+    timeInput.value = "22:00";
+    timeInput.readOnly = true;
+    if (timeHint) timeHint.textContent = "Buyurtma soat 22:00dan chiqib ketadi";
+  } else {
+    // PICKUP or DELIVERY
+    if (!dateInput.value) {
+      dateInput.value = todayStr;
+    }
+    dateInput.readOnly = false;
+    if (dateHint) dateHint.textContent = "Buyurtma yaratilayotgan sana default turadi";
+
+    // Min time is current time + 1h 30m
+    const minTime = new Date(now.getTime() + 90 * 60 * 1000);
+    const minHour = String(minTime.getHours()).padStart(2, '0');
+    const minMinute = String(minTime.getMinutes()).padStart(2, '0');
+    const minTimeStr = `${minHour}:${minMinute}`;
+
+    if (!timeInput.value) {
+      timeInput.value = minTimeStr;
+    }
+    timeInput.readOnly = false;
+    if (timeHint) timeHint.textContent = "Kamida " + minTimeStr + " (yaratilgan vaqtdan 1 soat 30 minut keyingi vaqt)";
+  }
 }
 
 function updateSummary() {
@@ -493,11 +614,14 @@ function updateSummary() {
 }
 
 document.querySelectorAll('#items-container .item-row').forEach(attachItemRowBehavior);
-document.getElementById('order-form').addEventListener('input', function(event) {
-  if (!event.target.closest('#items-container')) {
-    updateSummary();
-  }
-});
+const orderFormEl1 = document.getElementById('order-form');
+if (orderFormEl1) {
+  orderFormEl1.addEventListener('input', function(event) {
+    if (!event.target.closest('#items-container')) {
+      updateSummary();
+    }
+  });
+}
 
 window.addItem = addItem;
 window.removeItem = removeItem;
@@ -536,6 +660,12 @@ updateSummary();
 
   // Generic autocomplete function
   function createAutocomplete(input, dropdown, items, onSelect) {
+    if (!input || !dropdown) {
+      return {
+        destroy: () => {},
+        updateItems: () => {}
+      };
+    }
     let currentItems = [];
     let selectedIndex = -1;
     let handlers = [];
@@ -543,6 +673,11 @@ updateSummary();
     function filter(query) {
       if (!query) return items;
       const lowerQuery = query.toLowerCase();
+      // If the current query is an exact match for one of the valid items,
+      // return all items so that clicking the dropdown shows all available choices
+      if (items.some(item => item.toLowerCase() === lowerQuery)) {
+        return items;
+      }
       return items.filter(item => item.toLowerCase().includes(lowerQuery));
     }
 
@@ -651,29 +786,35 @@ updateSummary();
   }
 
   // Region autocomplete
-  createAutocomplete(regionInput, regionDropdown, regions, (selectedRegion) => {
-    // Clear district input when region changes
-    districtInput.value = '';
-    districtInput.placeholder = 'Tanlang yoki yozing';
+  if (regionInput && regionDropdown) {
+    createAutocomplete(regionInput, regionDropdown, regions, (selectedRegion) => {
+      // Clear district input when region changes
+      if (districtInput) {
+        districtInput.value = '';
+        districtInput.placeholder = 'Tanlang yoki yozing';
+      }
 
-    // Get districts for selected region
-    const districts = regionsData[selectedRegion] || [];
+      // Get districts for selected region
+      const districts = regionsData[selectedRegion] || [];
 
-    // Create or update district autocomplete
-    if (districtAutocomplete) {
-      districtAutocomplete.updateItems(districts);
-    } else {
-      districtAutocomplete = createAutocomplete(districtInput, districtDropdown, districts, null);
-    }
+      // Create or update district autocomplete
+      if (districtAutocomplete) {
+        districtAutocomplete.updateItems(districts);
+      } else if (districtInput && districtDropdown) {
+        districtAutocomplete = createAutocomplete(districtInput, districtDropdown, districts, null);
+      }
 
-    // Focus on district input and show dropdown immediately
-    setTimeout(() => {
-      districtInput.focus();
-    }, 50);
-  });
+      // Focus on district input and show dropdown immediately
+      if (districtInput) {
+        setTimeout(() => {
+          districtInput.focus();
+        }, 50);
+      }
+    });
+  }
 
   // Initialize district autocomplete if region is already selected
-  if (regionInput.value && regionsData[regionInput.value]) {
+  if (regionInput && regionInput.value && regionsData[regionInput.value]) {
     const districts = regionsData[regionInput.value];
     districtAutocomplete = createAutocomplete(districtInput, districtDropdown, districts, null);
   }
@@ -683,52 +824,98 @@ updateSummary();
   const paymentTypeDropdown = document.getElementById('payment-type-dropdown');
   const paymentTypeHidden = document.getElementById('payment-type-hidden');
   // Set initial input value
-  if (paymentTypeHidden.value) {
+  if (paymentTypeHidden && paymentTypeHidden.value && paymentTypeInput) {
     paymentTypeInput.value = paymentTypeLabels[paymentTypeHidden.value] || '';
   }
-  createAutocomplete(paymentTypeInput, paymentTypeDropdown, paymentTypeOptions, (selectedLabel) => {
-    paymentTypeHidden.value = paymentTypeLabelToValue[selectedLabel];
-    updateSummary();
-  });
+  if (paymentTypeInput && paymentTypeDropdown) {
+    createAutocomplete(paymentTypeInput, paymentTypeDropdown, paymentTypeOptions, (selectedLabel) => {
+      if (paymentTypeHidden) {
+        paymentTypeHidden.value = paymentTypeLabelToValue[selectedLabel];
+      }
+      updateSummary();
+    });
+  }
 
   // Initialize To'lov holati dropdown
   const paymentStatusInput = document.getElementById('payment-status-input');
   const paymentStatusDropdown = document.getElementById('payment-status-dropdown');
   const paymentStatusHidden = document.getElementById('payment-status-hidden');
   // Set initial input value
-  if (paymentStatusHidden.value) {
+  if (paymentStatusHidden && paymentStatusHidden.value && paymentStatusInput) {
     paymentStatusInput.value = paymentStatusLabels[paymentStatusHidden.value] || '';
   }
-  createAutocomplete(paymentStatusInput, paymentStatusDropdown, paymentStatusOptions, (selectedLabel) => {
-    paymentStatusHidden.value = paymentStatusLabelToValue[selectedLabel];
-    updateSummary();
-  });
+  if (paymentStatusInput && paymentStatusDropdown) {
+    createAutocomplete(paymentStatusInput, paymentStatusDropdown, paymentStatusOptions, (selectedLabel) => {
+      if (paymentStatusHidden) {
+        paymentStatusHidden.value = paymentStatusLabelToValue[selectedLabel];
+      }
+      updateSummary();
+      handlePaymentStatusChange(paymentStatusHidden ? paymentStatusHidden.value : '');
+    });
+  }
 
   // Initialize Yetkazish turi dropdown
   const deliveryTypeInput = document.getElementById('delivery-type-input');
   const deliveryTypeDropdown = document.getElementById('delivery-type-dropdown');
   const deliveryTypeHidden = document.getElementById('delivery-type-hidden');
   // Set initial input value
-  if (deliveryTypeHidden.value) {
+  if (deliveryTypeHidden && deliveryTypeHidden.value && deliveryTypeInput) {
     deliveryTypeInput.value = deliveryLabels[deliveryTypeHidden.value] || '';
   }
-  createAutocomplete(deliveryTypeInput, deliveryTypeDropdown, deliveryOptions, (selectedLabel) => {
-    deliveryTypeHidden.value = deliveryLabelToValue[selectedLabel];
-    updateSummary();
-  });
+  if (deliveryTypeInput && deliveryTypeDropdown) {
+    createAutocomplete(deliveryTypeInput, deliveryTypeDropdown, deliveryOptions, (selectedLabel) => {
+      if (deliveryTypeHidden) {
+        deliveryTypeHidden.value = deliveryLabelToValue[selectedLabel];
+      }
+      updateSummary();
+      handleDeliveryTypeChange(deliveryTypeHidden ? deliveryTypeHidden.value : '');
+    });
+  }
 
   // Initialize Status dropdown
   const productionStatusInput = document.getElementById('production-status-input');
   const productionStatusDropdown = document.getElementById('production-status-dropdown');
   const productionStatusHidden = document.getElementById('production-status-hidden');
   // Set initial input value
-  if (productionStatusHidden.value) {
+  if (productionStatusHidden && productionStatusHidden.value && productionStatusInput) {
     productionStatusInput.value = productionStatusLabels[productionStatusHidden.value] || '';
   }
-  createAutocomplete(productionStatusInput, productionStatusDropdown, productionStatusOptions, (selectedLabel) => {
-    productionStatusHidden.value = productionStatusLabelToValue[selectedLabel];
-    updateSummary();
-  });
+  if (productionStatusInput && productionStatusDropdown) {
+    createAutocomplete(productionStatusInput, productionStatusDropdown, productionStatusOptions, (selectedLabel) => {
+      if (productionStatusHidden) {
+        productionStatusHidden.value = productionStatusLabelToValue[selectedLabel];
+      }
+      updateSummary();
+    });
+  }
+
+  // Call on load
+  if (paymentStatusHidden && paymentStatusHidden.value) {
+    handlePaymentStatusChange(paymentStatusHidden.value);
+  }
+  if (deliveryTypeHidden && deliveryTypeHidden.value) {
+    handleDeliveryTypeChange(deliveryTypeHidden.value);
+  }
+
+  // Format partial payment amount input
+  const partialAmountInput = document.getElementById('partial-amount-input');
+  if (partialAmountInput) {
+    // format initial value
+    const initVal = normalizeMoney(partialAmountInput.value);
+    partialAmountInput.value = initVal ? formatInteger(initVal) : '';
+    recalcRemainingAmount();
+
+    partialAmountInput.addEventListener('input', function() {
+      const val = normalizeMoney(this.value);
+      this.value = val ? formatInteger(val) : '';
+      recalcRemainingAmount();
+    });
+    partialAmountInput.addEventListener('blur', function() {
+      const val = normalizeMoney(this.value);
+      this.value = val ? formatInteger(val) : '';
+      recalcRemainingAmount();
+    });
+  }
 })();
 
 // Phone number input mask using IMask
@@ -762,25 +949,27 @@ updateSummary();
   // Custom validation on form submit
   const form = document.getElementById('order-form');
 
-  form.addEventListener('submit', function(e) {
-    const unmasked = phoneMask.unmaskedValue;
+  if (form) {
+    form.addEventListener('submit', function(e) {
+      const unmasked = phoneMask.unmaskedValue;
 
-    // Validate: must have exactly 9 digits
-    if (unmasked.length !== 9) {
-      e.preventDefault();
-      phoneInput.setCustomValidity('Telefon raqami to\'liq kiritilishi kerak (9 ta raqam)');
-      phoneInput.reportValidity();
-      phoneInput.focus();
-      return false;
-    }
+      // Validate: must have exactly 9 digits
+      if (unmasked.length !== 9) {
+        e.preventDefault();
+        phoneInput.setCustomValidity('Telefon raqami to\'liq kiritilishi kerak (9 ta raqam)');
+        phoneInput.reportValidity();
+        phoneInput.focus();
+        return false;
+      }
 
-    phoneInput.setCustomValidity('');
+      phoneInput.setCustomValidity('');
 
-    // Replace the input value with clean 9 digits for database storage
-    phoneInput.value = unmasked;
+      // Replace the input value with clean 9 digits for database storage
+      phoneInput.value = unmasked;
 
-    return true;
-  });
+      return true;
+    });
+  }
 
   // Clear validation error when user starts typing
   phoneMask.on('accept', function() {
@@ -790,13 +979,16 @@ updateSummary();
   });
 })();
 
-document.getElementById('order-form').addEventListener('submit', function() {
-  document.querySelectorAll('input[name="quantity"]').forEach(input => {
-    input.value = normalizeQuantity(input.value);
+const orderFormEl2 = document.getElementById('order-form');
+if (orderFormEl2) {
+  orderFormEl2.addEventListener('submit', function() {
+    document.querySelectorAll('input[name="quantity"]').forEach(input => {
+      input.value = normalizeQuantity(input.value);
+    });
+    document.querySelectorAll('input[name="unit_price_uzs"]').forEach(input => {
+      input.value = normalizeMoney(input.value);
+    });
   });
-  document.querySelectorAll('input[name="unit_price_uzs"]').forEach(input => {
-    input.value = normalizeMoney(input.value);
-  });
-});
+}
 </script>
 {% endblock %}
