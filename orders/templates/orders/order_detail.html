@@ -23,16 +23,28 @@
 
 .detail-row {
   display: flex;
-  justify-content: space-between;
-  align-items: baseline;
+  justify-content: flex-start;
+  align-items: center;
+  flex-wrap: wrap;
   padding: 7px 0;
   border-bottom: 1px solid var(--line);
   font-size: 14px;
-  gap: 10px;
+  gap: 8px;
 }
 .detail-row:last-child { border-bottom: none; }
 .detail-row span:first-child { color: var(--muted); white-space: nowrap; }
-.detail-row strong { text-align: right; }
+.detail-row strong { text-align: left; }
+
+.detail-row-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.detail-row-group .detail-row {
+  min-width: 0;
+  border-bottom: 1px solid var(--line);
+}
+.detail-row-group .detail-row:last-child { border-bottom: none; }
 
 .config-item {
   display: grid;
@@ -165,45 +177,54 @@
 
   <div class="detail-layout">
     <div>
-      <!-- Mijoz -->
+      <!-- Mijoz ma'lumotlari -->
       <div class="panel detail-section">
-        <h3>👤 Mijoz</h3>
-        <div class="detail-row"><span>Ismi</span><strong>{{ order.customer_name }}</strong></div>
-        <div class="detail-row"><span>Telefon</span><strong>{{ order.customer_phone|format_phone }}</strong></div>
+        <h3>👤 Mijoz ma'lumotlari</h3>
+        <div class="detail-row-group">
+          <div class="detail-row"><span>Ismi:</span><strong>{{ order.customer_name }}</strong></div>
+          <div class="detail-row"><span>Telefon:</span><strong>{{ order.customer_phone|format_phone }}</strong></div>
+        </div>
       </div>
 
-      <!-- Manzil -->
+      <!-- Manzil ma'lumotlari -->
       <div class="panel detail-section">
-        <h3>📍 Manzil</h3>
-        <div class="detail-row"><span>Viloyat</span><strong>{{ order.region }}</strong></div>
-        <div class="detail-row"><span>Tuman</span><strong>{{ order.district }}</strong></div>
-        <div class="detail-row"><span>Shahar</span><strong>{{ order.city }}</strong></div>
-        {% if order.landmark %}
-          <div class="detail-row"><span>Mo'ljal</span><strong>{{ order.landmark }}</strong></div>
-        {% endif %}
-        <div class="detail-row"><span>Yetkazish</span><strong>{{ order.get_delivery_type_display }}</strong></div>
-        {% if order.delivery_date %}
-          <div class="detail-row"><span>Yetkazish sanasi</span><strong>{{ order.delivery_date|date:"d.m.Y" }}</strong></div>
-        {% endif %}
-        {% if order.delivery_time %}
-          <div class="detail-row"><span>Yetkazish vaqti</span><strong>{{ order.delivery_time }}</strong></div>
-        {% endif %}
-        <div class="detail-row"><span>To'lov turi</span><strong>{{ order.get_payment_type_display }}</strong></div>
+        <h3>📍 Manzil ma'lumotlari</h3>
+        <div class="detail-row">
+          <span>Manzil:</span>
+          <strong>
+            {{ order.region }}, {{ order.district }}, {{ order.city }}
+            {% if order.landmark %}, {{ order.landmark }}{% endif %}
+          </strong>
+        </div>
+        <div class="detail-row-group">
+          <div class="detail-row"><span>Yetkazish turi:</span><strong>{{ order.get_delivery_type_display }}</strong></div>
+          {% if order.delivery_date %}
+            <div class="detail-row"><span>Sana:</span><strong>{{ order.delivery_date|date:"d.m.Y" }}</strong></div>
+          {% endif %}
+          {% if order.delivery_time %}
+            <div class="detail-row"><span>Vaqt:</span><strong>{{ order.delivery_time }}</strong></div>
+          {% endif %}
+        </div>
       </div>
 
       <!-- To'lov ma'lumotlari -->
       <div class="panel detail-section">
         <h3>💳 To'lov ma'lumotlari</h3>
-        <div class="detail-row"><span>To'lov holati</span><strong>{{ order.get_payment_status_display }}</strong></div>
+        <div class="detail-row-group">
+          <div class="detail-row"><span>To'lov turi:</span><strong>{{ order.get_payment_type_display }}</strong></div>
+          <div class="detail-row"><span>To'lov holati:</span><strong>{{ order.get_payment_status_display }}</strong></div>
+        </div>
         {% if order.payment_status == 'PARTIAL' %}
-          <div class="detail-row"><span>Qisman to'langan summa</span><strong>{{ order.partial_amount|format_uzs }} so'm</strong></div>
-          <div class="detail-row"><span>Qoldiq</span><strong style="color:var(--danger);">{{ order.total_price_uzs|remaining:order.partial_amount|format_uzs }} so'm</strong></div>
+          <div class="detail-row-group">
+            <div class="detail-row"><span>To'langan summa:</span><strong>{{ order.partial_amount|format_uzs }} so'm</strong></div>
+            <div class="detail-row"><span>Qoldiq summa:</span><strong style="color:var(--danger);">{{ order.total_price_uzs|remaining:order.partial_amount|format_uzs }} so'm</strong></div>
+          </div>
         {% endif %}
       </div>
 
-      <!-- Konfiguratsiyalar -->
+      <!-- Konfiguratsiya -->
       <div class="panel detail-section">
-        <h3>🖥 Konfiguratsiyalar</h3>
+        <h3>🖥 Konfiguratsiya</h3>
         {% for item in order.items.all %}
           <div class="config-item">
             <span class="label">{{ item.config_label }}</span>
@@ -230,7 +251,7 @@
       {% if order.notes %}
         <div class="panel detail-section">
           <h3>💬 Izoh</h3>
-          <p style="margin:0;font-size:14px;color:var(--muted);">{{ order.notes }}</p>
+          <p style="margin:0;font-size:14px;color:var(--text);">{{ order.notes }}</p>
         </div>
       {% endif %}
     </div>

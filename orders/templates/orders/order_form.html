@@ -12,15 +12,116 @@
   align-items: start;
   margin-top: 20px;
 }
-.form-section { padding: 20px; }
-.form-section h3 {
-  margin: 0 0 16px; font-size: 16px; font-weight: 700;
-  color: var(--accent-dark); border-bottom: 1px solid var(--line); padding-bottom: 10px;
+.order-page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 22px;
+  border-radius: 20px;
+  background: var(--panel);
+  border: 1px solid color-mix(in srgb, var(--line) 85%, transparent);
+  box-shadow: 0 18px 38px rgba(15, 23, 42, 0.08);
+}
+[data-theme="dark"] .order-page-header {
+  box-shadow: 0 20px 42px rgba(2, 6, 23, 0.3);
+}
+.order-page-header h2 {
+  margin: 0;
+  font-size: 24px;
+  line-height: 1.15;
+}
+.order-page-header p {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+.order-header-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--accent-dark);
+  border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--line));
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.form-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.form-section {
+  padding: 0;
+  overflow: visible;
+}
+.section-card {
+  border-radius: 20px;
+  border: 1px solid color-mix(in srgb, var(--line) 88%, transparent);
+  background: var(--panel);
+  box-shadow: 0 16px 34px rgba(15, 23, 42, 0.06);
+  overflow: visible;
+}
+[data-theme="dark"] .section-card {
+  box-shadow: 0 18px 34px rgba(2, 6, 23, 0.28);
+}
+.section-card-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 18px 20px 16px;
+  border-bottom: 1px solid color-mix(in srgb, var(--line) 72%, transparent);
+}
+.section-index {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+  flex-shrink: 0;
+  box-shadow: 0 12px 22px rgba(15, 118, 110, 0.22);
+}
+.section-title-wrap {
+  min-width: 0;
+  flex: 1;
+}
+.section-title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--text);
+}
+.section-subtitle {
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+.section-body {
+  padding: 18px 20px 20px;
 }
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+.form-row:last-child { margin-bottom: 0; }
 .form-row.full { grid-template-columns: 1fr; }
 .form-row.three { grid-template-columns: 1fr 1fr 1fr; }
-.field { display: flex; flex-direction: column; gap: 6px; }
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 0;
+  position: relative;
+}
+.field:focus-within { z-index: 20; }
 .field label { font-weight: 700; font-size: 13px; }
 .field input[type="text"],
 .field input[type="tel"],
@@ -30,6 +131,24 @@
   min-height: 40px; border: 1px solid var(--input-border); border-radius: 6px;
   padding: 8px 10px; background: var(--input-bg); color: var(--text);
   font: inherit; font-size: 14px; width: 100%;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+.field input[type="text"]:focus,
+.field input[type="tel"]:focus,
+.field input[type="number"]:focus,
+.field textarea:focus,
+.field select:focus {
+  outline: none;
+  border-color: color-mix(in srgb, var(--accent) 32%, var(--input-border));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 10%, transparent);
+}
+[data-theme="dark"] .field input[type="text"]:focus,
+[data-theme="dark"] .field input[type="tel"]:focus,
+[data-theme="dark"] .field input[type="number"]:focus,
+[data-theme="dark"] .field textarea:focus,
+[data-theme="dark"] .field select:focus {
+  border-color: color-mix(in srgb, var(--accent) 26%, var(--input-border));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 14%, transparent);
 }
 #customer_phone {
   font-family: 'Segoe UI', Arial, sans-serif;
@@ -39,7 +158,8 @@
 .field textarea { min-height: 80px; resize: vertical; }
 
 /* Custom autocomplete dropdown */
-.autocomplete-wrapper { position: relative; }
+.autocomplete-wrapper { position: relative; z-index: 1; }
+.autocomplete-wrapper:focus-within { z-index: 30; }
 .autocomplete-dropdown {
   position: absolute;
   top: 100%;
@@ -83,7 +203,7 @@
 .item-row {
   display: grid; grid-template-columns: minmax(0, 1fr) 132px 170px 38px;
   gap: 8px; align-items: end; margin-bottom: 10px;
-  background: var(--bg); border-radius: 8px; padding: 10px;
+  padding: 0;
 }
 .item-row .field label { font-size: 12px; }
 .quantity-control {
@@ -133,8 +253,25 @@
   font-size: 13px; cursor: pointer; min-height: 40px; margin-top: 4px;
 }
 .add-item-btn:hover { background: var(--toggle-bg); }
-.summary-panel { padding: 20px; position: sticky; top: 16px; }
-.summary-panel h3 { margin: 0 0 14px; font-size: 16px; }
+.summary-panel {
+  padding: 20px;
+  position: sticky;
+  top: 16px;
+  border-radius: 20px;
+  border: 1px solid color-mix(in srgb, var(--line) 88%, transparent);
+  background: var(--panel);
+  box-shadow: 0 18px 38px rgba(15, 23, 42, 0.08);
+}
+[data-theme="dark"] .summary-panel {
+  box-shadow: 0 20px 40px rgba(2, 6, 23, 0.3);
+}
+.summary-panel h3 { margin: 0 0 8px; font-size: 18px; }
+.summary-subtitle {
+  margin: 0 0 16px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
 .summary-line {
   display: flex; justify-content: space-between; align-items: baseline;
   padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 14px; gap: 10px;
@@ -143,6 +280,34 @@
 .summary-total { display: flex; justify-content: space-between; align-items: baseline; margin-top: 14px; font-size: 15px; font-weight: 700; }
 .summary-total strong { color: var(--accent-dark); }
 .form-actions { display: flex; gap: 10px; margin-top: 20px; }
+.highlight-group {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid color-mix(in srgb, var(--line) 72%, transparent);
+}
+.highlight-group-title {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--accent-dark);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.items-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.empty-items-state {
+  padding: 16px;
+  border-radius: 14px;
+  border: 1px dashed color-mix(in srgb, var(--line) 90%, transparent);
+  background: color-mix(in srgb, var(--bg) 54%, var(--panel));
+  color: var(--muted);
+  font-size: 13px;
+  text-align: center;
+}
 .error-box {
   background: #fee2e2; border: 1px solid #fca5a5; border-radius: 8px;
   padding: 12px 16px; color: #991b1b; font-size: 14px; margin-bottom: 16px;
@@ -153,8 +318,18 @@
   .summary-panel { position: static; }
   .form-row, .form-row.three { grid-template-columns: 1fr; }
   .item-row { grid-template-columns: minmax(0, 1fr) 132px 150px 38px; }
+  .order-page-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }
 @media (max-width: 480px) {
+  .section-card-header,
+  .section-body,
+  .summary-panel {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
   .item-row { grid-template-columns: 1fr; }
   .quantity-control {
     justify-content: stretch;
@@ -172,6 +347,14 @@
     <div class="error-box">{{ error }}</div>
   {% endif %}
 
+  <div class="order-page-header">
+    <div>
+      <h2>{% if order %}Buyurtmani tahrirlash{% else %}Yangi buyurtma{% endif %}</h2>
+      <p>Mijoz, manzil, to'lov va konfiguratsiya ma'lumotlarini qulay va chiroyli ko'rinishda boshqaring.</p>
+    </div>
+    <div class="order-header-badge">{% if order %}Tahrirlash rejimi{% else %}Yangi buyurtma{% endif %}</div>
+  </div>
+
   <form method="post" id="order-form">
     {% csrf_token %}
     {% if order %}
@@ -179,163 +362,205 @@
     {% endif %}
 
     <div class="order-form-layout">
-      <div>
+      <div class="form-sections">
         <!-- I. Mijoz ma'lumotlari -->
-        <div class="panel form-section" style="margin-bottom:16px;">
-          <h3>I. Mijoz ma'lumotlari</h3>
-          <div class="form-row">
-            <div class="field">
-              <label>Ismi *</label>
-              <input type="text" name="customer_name" value="{{ v_customer_name }}" placeholder="Ism Familiya" required>
+        <div class="panel form-section section-card">
+          <div class="section-card-header">
+            <div class="section-index">01</div>
+            <div class="section-title-wrap">
+              <h3 class="section-title">Mijoz ma'lumotlari</h3>
+              <p class="section-subtitle">Asosiy aloqa ma'lumotlarini kiriting, xulosa paneli shu zahoti yangilanadi.</p>
             </div>
-            <div class="field">
-              <label>Telefon raqami *</label>
-              <input type="tel" name="customer_phone" id="customer_phone" value="{{ v_customer_phone }}" placeholder="+998 −− −−− −− −−" required>
+          </div>
+          <div class="section-body">
+            <div class="form-row">
+              <div class="field">
+                <label>Ismi *</label>
+                <input type="text" name="customer_name" value="{{ v_customer_name }}" placeholder="Ism Familiya" required>
+              </div>
+              <div class="field">
+                <label>Telefon raqami *</label>
+                <input type="tel" name="customer_phone" id="customer_phone" value="{{ v_customer_phone }}" placeholder="+998 −− −−− −− −−" required>
+              </div>
             </div>
           </div>
         </div>
 
         <!-- II. Manzil ma'lumotlari -->
-        <div class="panel form-section" style="margin-bottom:16px;">
-          <h3>II. Manzil ma'lumotlari</h3>
-          <div class="form-row">
-            <div class="field">
-              <label>Viloyat *</label>
-              <div class="autocomplete-wrapper">
-                <input type="text" name="region" id="region-input" value="{{ v_region }}" placeholder="Tanlang yoki yozing" required autocomplete="off">
-                <div class="autocomplete-dropdown" id="region-dropdown"></div>
-              </div>
-            </div>
-            <div class="field">
-              <label>Shahar / Tuman *</label>
-              <div class="autocomplete-wrapper">
-                <input type="text" name="district" id="district-input" value="{{ v_district }}" placeholder="Avval viloyatni tanlang" required autocomplete="off">
-                <div class="autocomplete-dropdown" id="district-dropdown"></div>
-              </div>
+        <div class="panel form-section section-card">
+          <div class="section-card-header">
+            <div class="section-index">02</div>
+            <div class="section-title-wrap">
+              <h3 class="section-title">Manzil ma'lumotlari</h3>
+              <p class="section-subtitle">Viloyat, tuman va qo'shimcha manzilni bir xil uslubdagi kartalarda ko'ring.</p>
             </div>
           </div>
-          <div class="form-row full">
-            <div class="field">
-              <label>Qo'shimcha manzil (ixtiyoriy)</label>
-              <input type="text" name="city" value="{{ v_city }}" placeholder="Ko'cha, uy raqami, orientir...">
+          <div class="section-body">
+            <div class="form-row">
+              <div class="field">
+                <label>Viloyat *</label>
+                <div class="autocomplete-wrapper">
+                  <input type="text" name="region" id="region-input" value="{{ v_region }}" placeholder="Tanlang yoki yozing" required autocomplete="off">
+                  <div class="autocomplete-dropdown" id="region-dropdown"></div>
+                </div>
+              </div>
+              <div class="field">
+                <label>Shahar / Tuman *</label>
+                <div class="autocomplete-wrapper">
+                  <input type="text" name="district" id="district-input" value="{{ v_district }}" placeholder="Avval viloyatni tanlang" required autocomplete="off">
+                  <div class="autocomplete-dropdown" id="district-dropdown"></div>
+                </div>
+              </div>
             </div>
+            <div class="form-row full">
+              <div class="field">
+                <label>Qo'shimcha manzil (ixtiyoriy)</label>
+                <input type="text" name="city" value="{{ v_city }}" placeholder="Ko'cha, uy raqami, orientir...">
+              </div>
+            </div>
+            <input type="hidden" name="landmark" value="{{ v_landmark }}">
           </div>
-          <input type="hidden" name="landmark" value="{{ v_landmark }}">
         </div>
 
         <!-- III. Configurations (AIO, Monitors, Printers) -->
-        <div class="panel form-section" style="margin-bottom:16px;">
-          <h3>III. Configurations</h3>
-          <div id="items-container">
-            {% if order %}
-              {% for item in order.items.all %}
-                <div class="item-row">
-                  <div class="field"><label>Mahsulot nomi *</label>
-                    <input type="text" name="config_label" value="{{ item.config_label }}" placeholder="i5 / 16GB / 512GB SSD yoki Monitor yoki Printer" required></div>
-                  <div class="field"><label>Soni</label>
-                    <div class="quantity-control">
-                      <button type="button" class="quantity-btn" onclick="changeItemQuantity(this, -1)">-</button>
-                      <input type="text" name="quantity" value="{{ item.quantity }}" inputmode="numeric" class="quantity-input" required>
-                      <button type="button" class="quantity-btn" onclick="changeItemQuantity(this, 1)">+</button>
-                    </div></div>
-                  <div class="field"><label>Dona narxi (so'm)</label>
-                    <input type="text" name="unit_price_uzs" value="{% if item.unit_price_uzs %}{{ item.unit_price_uzs|floatformat:0 }}{% else %}{% widthratio item.unit_price_usd 1 usd_rate %}{% endif %}" inputmode="numeric" class="money-input"></div>
-                  <button type="button" class="remove-item-btn" onclick="removeItem(this)" title="O'chirish">×</button>
-                </div>
-              {% endfor %}
-            {% elif initial_items %}
-              {% for item in initial_items %}
-                <div class="item-row">
-                  <div class="field"><label>Mahsulot nomi *</label>
-                    <input type="text" name="config_label" value="{{ item.config_label }}" placeholder="i5 / 16GB / 512GB SSD yoki Monitor yoki Printer" required></div>
-                  <div class="field"><label>Soni</label>
-                    <div class="quantity-control">
-                      <button type="button" class="quantity-btn" onclick="changeItemQuantity(this, -1)">-</button>
-                      <input type="text" name="quantity" value="{{ item.quantity }}" inputmode="numeric" class="quantity-input" required>
-                      <button type="button" class="quantity-btn" onclick="changeItemQuantity(this, 1)">+</button>
-                    </div></div>
-                  <div class="field"><label>Dona narxi (so'm)</label>
-                    <input type="text" name="unit_price_uzs" value="{% if item.unit_price_uzs %}{{ item.unit_price_uzs|floatformat:0 }}{% else %}{% widthratio item.unit_price_usd 1 usd_rate %}{% endif %}" inputmode="numeric" class="money-input"></div>
-                  <button type="button" class="remove-item-btn" onclick="removeItem(this)" title="O'chirish">×</button>
-                </div>
-              {% endfor %}
-            {% endif %}
+        <div class="panel form-section section-card">
+          <div class="section-card-header">
+            <div class="section-index">03</div>
+            <div class="section-title-wrap">
+              <h3 class="section-title">Konfiguratsiya</h3>
+              <p class="section-subtitle">Mahsulotlar ro'yxati ixcham cardlar ko'rinishida turadi va jami narx avtomatik hisoblanadi.</p>
+            </div>
           </div>
-          <button type="button" class="add-item-btn" onclick="addItem()">+ Mahsulot qo'shish</button>
+          <div class="section-body">
+            <div id="items-container" class="items-container">
+              {% if order %}
+                {% for item in order.items.all %}
+                  <div class="item-row">
+                    <div class="field"><label>Mahsulot nomi *</label>
+                      <input type="text" name="config_label" value="{{ item.config_label }}" placeholder="i5 / 16GB / 512GB SSD yoki Monitor yoki Printer" required></div>
+                    <div class="field"><label>Soni</label>
+                      <div class="quantity-control">
+                        <button type="button" class="quantity-btn" onclick="changeItemQuantity(this, -1)">-</button>
+                        <input type="text" name="quantity" value="{{ item.quantity }}" inputmode="numeric" class="quantity-input" required>
+                        <button type="button" class="quantity-btn" onclick="changeItemQuantity(this, 1)">+</button>
+                      </div></div>
+                    <div class="field"><label>Dona narxi (so'm)</label>
+                      <input type="text" name="unit_price_uzs" value="{% if item.unit_price_uzs %}{{ item.unit_price_uzs|floatformat:0 }}{% else %}{% widthratio item.unit_price_usd 1 usd_rate %}{% endif %}" inputmode="numeric" class="money-input"></div>
+                    <button type="button" class="remove-item-btn" onclick="removeItem(this)" title="O'chirish">×</button>
+                  </div>
+                {% endfor %}
+              {% elif initial_items %}
+                {% for item in initial_items %}
+                  <div class="item-row">
+                    <div class="field"><label>Mahsulot nomi *</label>
+                      <input type="text" name="config_label" value="{{ item.config_label }}" placeholder="i5 / 16GB / 512GB SSD yoki Monitor yoki Printer" required></div>
+                    <div class="field"><label>Soni</label>
+                      <div class="quantity-control">
+                        <button type="button" class="quantity-btn" onclick="changeItemQuantity(this, -1)">-</button>
+                        <input type="text" name="quantity" value="{{ item.quantity }}" inputmode="numeric" class="quantity-input" required>
+                        <button type="button" class="quantity-btn" onclick="changeItemQuantity(this, 1)">+</button>
+                      </div></div>
+                    <div class="field"><label>Dona narxi (so'm)</label>
+                      <input type="text" name="unit_price_uzs" value="{% if item.unit_price_uzs %}{{ item.unit_price_uzs|floatformat:0 }}{% else %}{% widthratio item.unit_price_usd 1 usd_rate %}{% endif %}" inputmode="numeric" class="money-input"></div>
+                    <button type="button" class="remove-item-btn" onclick="removeItem(this)" title="O'chirish">×</button>
+                  </div>
+                {% endfor %}
+              {% else %}
+                <div class="empty-items-state">Mahsulot qo'shilgach konfiguratsiya shu yerda card ko'rinishida chiqadi.</div>
+              {% endif %}
+            </div>
+            <button type="button" class="add-item-btn" onclick="addItem()">+ Mahsulot qo'shish</button>
+          </div>
         </div>
 
         <!-- IV. To'lov ma'lumotlari -->
-        <div class="panel form-section" style="margin-bottom:16px;">
-          <h3>IV. To'lov ma'lumotlari</h3>
-          <div class="form-row">
-            <div class="field">
-              <label>To'lov turi *</label>
-              <div class="autocomplete-wrapper">
-                <input type="text" id="payment-type-input" value="{{ v_payment_type_label }}" placeholder="Tanlang" autocomplete="off">
-                <input type="hidden" name="payment_type" id="payment-type-hidden" value="{{ v_payment_type }}" required>
-                <div class="autocomplete-dropdown" id="payment-type-dropdown"></div>
-              </div>
-            </div>
-            <div class="field">
-              <label>To'lov holati *</label>
-              <div class="autocomplete-wrapper">
-                <input type="text" id="payment-status-input" value="{{ v_payment_status_label }}" placeholder="Tanlang" autocomplete="off">
-                <input type="hidden" name="payment_status" id="payment-status-hidden" value="{{ v_payment_status }}" required>
-                <div class="autocomplete-dropdown" id="payment-status-dropdown"></div>
-              </div>
+        <div class="panel form-section section-card">
+          <div class="section-card-header">
+            <div class="section-index">04</div>
+            <div class="section-title-wrap">
+              <h3 class="section-title">To'lov ma'lumotlari</h3>
+              <p class="section-subtitle">To'lov turi va holatini belgilang, qisman to'lov tafsilotlari alohida ajratiladi.</p>
             </div>
           </div>
-          <!-- Qisman to'lov ma'lumotlari -->
-          <div id="partial-payment-group" class="form-row" style="display: none; margin-top: 12px; border-left: 3px solid var(--accent); padding-left: 12px;">
-            <div class="field">
-              <label>Qisman to'langan summa (so'm) *</label>
-              <input type="text" name="partial_amount" id="partial-amount-input" value="{{ v_partial_amount }}" inputmode="numeric" class="money-input">
+          <div class="section-body">
+            <div class="form-row">
+              <div class="field">
+                <label>To'lov turi *</label>
+                <div class="autocomplete-wrapper">
+                  <input type="text" id="payment-type-input" value="{{ v_payment_type_label }}" placeholder="Tanlang" autocomplete="off">
+                  <input type="hidden" name="payment_type" id="payment-type-hidden" value="{{ v_payment_type }}" required>
+                  <div class="autocomplete-dropdown" id="payment-type-dropdown"></div>
+                </div>
+              </div>
+              <div class="field">
+                <label>To'lov holati *</label>
+                <div class="autocomplete-wrapper">
+                  <input type="text" id="payment-status-input" value="{{ v_payment_status_label }}" placeholder="Tanlang" autocomplete="off">
+                  <input type="hidden" name="payment_status" id="payment-status-hidden" value="{{ v_payment_status }}" required>
+                  <div class="autocomplete-dropdown" id="payment-status-dropdown"></div>
+                </div>
+              </div>
             </div>
-            <div class="field">
-              <label>Qoldiq summasi (Auto)</label>
-              <input type="text" id="remaining-amount-input" readonly style="background: var(--bg); font-weight: 700; color: var(--danger);" value="0 so'm">
+            <div id="partial-payment-group" class="form-row highlight-group" style="display: none;">
+              <div class="highlight-group-title">Qisman to'lov tafsilotlari</div>
+              <div class="field">
+                <label>Qisman to'langan summa (so'm) *</label>
+                <input type="text" name="partial_amount" id="partial-amount-input" value="{{ v_partial_amount }}" inputmode="numeric" class="money-input">
+              </div>
+              <div class="field">
+                <label>Qoldiq summasi (Auto)</label>
+                <input type="text" id="remaining-amount-input" readonly style="background: var(--bg); font-weight: 700; color: var(--danger);" value="0 so'm">
+              </div>
             </div>
           </div>
         </div>
 
         <!-- V. Qo'shimcha ma'lumotlar -->
-        <div class="panel form-section" style="margin-bottom:16px;">
-          <h3>V. Qo'shimcha ma'lumotlar</h3>
-          <div class="form-row">
-            <div class="field">
-              <label>Yetkazish turi *</label>
-              <div class="autocomplete-wrapper">
-                <input type="text" id="delivery-type-input" value="{{ v_delivery_type_label }}" placeholder="Tanlang" autocomplete="off">
-                <input type="hidden" name="delivery_type" id="delivery-type-hidden" value="{{ v_delivery_type }}" required>
-                <div class="autocomplete-dropdown" id="delivery-type-dropdown"></div>
-              </div>
-            </div>
-            <div class="field">
-              <label>Status *</label>
-              <div class="autocomplete-wrapper">
-                <input type="text" id="production-status-input" value="{{ v_production_status_label }}" placeholder="Tanlang" autocomplete="off">
-                <input type="hidden" name="production_status" id="production-status-hidden" value="{{ v_production_status }}" required>
-                <div class="autocomplete-dropdown" id="production-status-dropdown"></div>
-              </div>
+        <div class="panel form-section section-card">
+          <div class="section-card-header">
+            <div class="section-index">05</div>
+            <div class="section-title-wrap">
+              <h3 class="section-title">Qo'shimcha ma'lumotlar</h3>
+              <p class="section-subtitle">Yetkazish turi, status va izohlar bir xil vizual ierarxiyada ko'rsatiladi.</p>
             </div>
           </div>
-          <!-- Vaqt ma'lumotlari -->
-          <div id="time-info-group" class="form-row" style="display: none; margin-top: 12px; border-left: 3px solid var(--accent); padding-left: 12px;">
-            <div class="field">
-              <label id="delivery-date-label">Sana *</label>
-              <input type="date" name="delivery_date" id="delivery-date-input" value="{{ v_delivery_date }}">
-              <span id="date-hint" style="font-size: 11px; color: var(--muted); display: block; margin-top: 4px;"></span>
+          <div class="section-body">
+            <div class="form-row">
+              <div class="field">
+                <label>Yetkazish turi *</label>
+                <div class="autocomplete-wrapper">
+                  <input type="text" id="delivery-type-input" value="{{ v_delivery_type_label }}" placeholder="Tanlang" autocomplete="off">
+                  <input type="hidden" name="delivery_type" id="delivery-type-hidden" value="{{ v_delivery_type }}" required>
+                  <div class="autocomplete-dropdown" id="delivery-type-dropdown"></div>
+                </div>
+              </div>
+              <div class="field">
+                <label>Status *</label>
+                <div class="autocomplete-wrapper">
+                  <input type="text" id="production-status-input" value="{{ v_production_status_label }}" placeholder="Tanlang" autocomplete="off">
+                  <input type="hidden" name="production_status" id="production-status-hidden" value="{{ v_production_status }}" required>
+                  <div class="autocomplete-dropdown" id="production-status-dropdown"></div>
+                </div>
+              </div>
             </div>
-            <div class="field">
-              <label id="delivery-time-label">Vaqt *</label>
-              <input type="time" name="delivery_time" id="delivery-time-input" value="{{ v_delivery_time }}">
-              <span id="time-hint" style="font-size: 11px; color: var(--muted); display: block; margin-top: 4px;"></span>
+            <div id="time-info-group" class="form-row highlight-group" style="display: none;">
+              <div class="highlight-group-title">Sana va vaqt</div>
+              <div class="field">
+                <label id="delivery-date-label">Sana *</label>
+                <input type="date" name="delivery_date" id="delivery-date-input" value="{{ v_delivery_date }}">
+                <span id="date-hint" style="font-size: 11px; color: var(--muted); display: block; margin-top: 4px;"></span>
+              </div>
+              <div class="field">
+                <label id="delivery-time-label">Vaqt *</label>
+                <input type="time" name="delivery_time" id="delivery-time-input" value="{{ v_delivery_time }}">
+                <span id="time-hint" style="font-size: 11px; color: var(--muted); display: block; margin-top: 4px;"></span>
+              </div>
             </div>
-          </div>
-          <div class="form-row full">
-            <div class="field">
-              <label>Izoh (ixtiyoriy)</label>
-              <textarea name="notes" placeholder="Maxsus talablar, eslatmalar...">{{ v_notes }}</textarea>
+            <div class="form-row full">
+              <div class="field">
+                <label>Izoh (ixtiyoriy)</label>
+                <textarea name="notes" placeholder="Maxsus talablar, eslatmalar...">{{ v_notes }}</textarea>
+              </div>
             </div>
           </div>
         </div>
@@ -352,6 +577,7 @@
       <!-- Summary sidebar -->
       <aside class="panel summary-panel">
         <h3>Buyurtma xulosasi</h3>
+        <p class="summary-subtitle">Kiritilgan ma'lumotlarning asosiy ko'rinishi va jami summa shu yerda jamlanadi.</p>
         <div class="summary-line"><span>Mijoz:</span><strong id="s-customer">—</strong></div>
         <div class="summary-line"><span>Yetkazish:</span><strong id="s-delivery">—</strong></div>
         <div class="summary-line"><span>To'lov:</span><strong id="s-payment">—</strong></div>
@@ -461,6 +687,10 @@ function attachItemRowBehavior(row) {
 
 function addItem() {
   const container = document.getElementById('items-container');
+  const emptyState = container?.querySelector('.empty-items-state');
+  if (emptyState) {
+    emptyState.remove();
+  }
   const row = document.createElement('div');
   row.className = 'item-row';
   row.innerHTML = buildItemRowMarkup('', 1, 0);
