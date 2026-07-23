@@ -143,9 +143,9 @@ def order_list(request):
     queue_groups = group_by_date(queue_qs) if tab in ("queue", "all") else []
     done_groups = group_by_date(done_qs) if tab in ("done", "all") else []
 
-    # For superusers, show all sellers in filter; for others, no seller filter
+    # For superusers, show all regular sellers in filter; for others, no seller filter
     if request.user.is_superuser:
-        sellers = User.objects.filter(orders__isnull=False).distinct().order_by("username")
+        sellers = User.objects.filter(is_superuser=False).order_by("first_name", "username")
     else:
         sellers = []
 
@@ -402,7 +402,7 @@ def order_delete(request, pk):
     if not request.user.is_superuser:
         from django.core.exceptions import PermissionDenied
         raise PermissionDenied("Faqat administratorlar buyurtmani o'chira oladi.")
-    
+
     order = get_object_or_404(Order, pk=pk)
     if request.method == "POST":
         order.delete()
@@ -496,7 +496,7 @@ def _save_order(request, instance=None):
     notes = post.get("notes", "").strip()
 
     errors = []
-    
+
     delivery_date = None
     if delivery_date_str:
         from datetime import datetime
