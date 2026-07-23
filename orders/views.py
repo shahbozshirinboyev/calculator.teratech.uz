@@ -173,6 +173,14 @@ def _form_context(order, initial, extra=None):
         Order.production_status_choices_for_delivery(v_delivery_type or Order.DeliveryType.DELIVERY)
     )
 
+    raw_delivery_time = src.get("delivery_time", getattr(o, "delivery_time", ""))
+    if hasattr(raw_delivery_time, "strftime"):
+        formatted_delivery_time = raw_delivery_time.strftime("%H:%M")
+    elif isinstance(raw_delivery_time, str):
+        formatted_delivery_time = raw_delivery_time[:5] if raw_delivery_time else ""
+    else:
+        formatted_delivery_time = str(raw_delivery_time)[:5] if raw_delivery_time else ""
+
     ctx = {
         "v_customer_name":  src.get("customer_name",  getattr(o, "customer_name",  "")),
         "v_customer_phone": src.get("customer_phone", getattr(o, "customer_phone", "")),
@@ -189,7 +197,7 @@ def _form_context(order, initial, extra=None):
         "v_production_status": v_production_status,
         "v_production_status_label": production_status_label_map.get(v_production_status, ""),
         "v_delivery_date":  src.get("delivery_date", str(getattr(o, "delivery_date", "")) if getattr(o, "delivery_date", None) else ""),
-        "v_delivery_time":  src.get("delivery_time", getattr(o, "delivery_time", "")),
+        "v_delivery_time":  formatted_delivery_time,
         "v_partial_amount": src.get("partial_amount", str(getattr(o, "partial_amount", "0"))),
         "v_total_usd":      src.get("total_price_usd",str(getattr(o, "total_price_usd", "0"))),
         "v_total_uzs":      src.get("total_price_uzs",str(getattr(o, "total_price_uzs", "0"))),
@@ -352,7 +360,7 @@ def order_delete(request, pk):
     if not request.user.is_superuser:
         from django.core.exceptions import PermissionDenied
         raise PermissionDenied("Faqat administratorlar buyurtmani o'chira oladi.")
-
+    
     order = get_object_or_404(Order, pk=pk)
     if request.method == "POST":
         order.delete()
@@ -446,7 +454,7 @@ def _save_order(request, instance=None):
     notes = post.get("notes", "").strip()
 
     errors = []
-
+    
     delivery_date = None
     if delivery_date_str:
         from datetime import datetime
