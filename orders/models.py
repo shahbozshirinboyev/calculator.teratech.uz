@@ -134,8 +134,15 @@ class Order(models.Model):
         verbose_name = "Buyurtma"
         verbose_name_plural = "Buyurtmalar"
 
+    @property
+    def display_order_number(self):
+        raw_number = self.order_number or f"ORDER#{self.pk}"
+        if raw_number.startswith("ORD#"):
+            return raw_number.replace("ORD#", "ORDER#", 1)
+        return raw_number
+
     def __str__(self):
-        return self.order_number or f"ORD#{self.pk}"
+        return self.display_order_number
 
     @classmethod
     def production_status_flow(cls, delivery_type):

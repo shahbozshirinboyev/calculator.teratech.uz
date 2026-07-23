@@ -1,7 +1,7 @@
 {% load order_tags %}
 <div class="order-card" id="order-{{ order.pk }}" data-href="{% url 'orders:detail' order.pk %}">
   <div class="order-card-header">
-    <a href="{% url 'orders:detail' order.pk %}" class="order-number">{{ order.order_number }}</a>
+    <a href="{% url 'orders:detail' order.pk %}" class="order-number">{{ order.display_order_number }}</a>
     <span class="badge {{ order.payment_status|payment_badge }}">
       {{ order.get_payment_status_display }}
     </span>
@@ -29,7 +29,7 @@
       <div class="order-item-row">
         <span class="item-label">{{ item.config_label }}</span>
         <span class="item-qty">{{ item.quantity }} ×</span>
-        <span style="font-weight:700;color:var(--accent-dark);">{% if item.unit_price_uzs %}{{ item.unit_price_uzs|floatformat:0 }}{% else %}{% widthratio item.unit_price_usd 1 usd_rate %}{% endif %} so'm</span>
+        <span style="font-weight:700;color:var(--accent-dark);">{% if item.unit_price_uzs %}{{ item.unit_price_uzs|format_uzs }}{% else %}{% widthratio item.unit_price_usd 1 usd_rate %}{% endif %} so'm</span>
       </div>
     {% endfor %}
   </div>
@@ -40,24 +40,7 @@
 
   <div class="order-footer">
     <div>
-      <div class="order-total">{{ order.total_price_uzs|floatformat:0 }} so'm</div>
+      <div class="order-total">{{ order.total_price_uzs|format_uzs }} so'm</div>
     </div>
-
-    {% if show_status_btns %}
-      <div class="status-btns">
-        {% with next=order.production_status|next_status_for:order.delivery_type %}
-          {% if next %}
-            <button class="status-btn next-step" onclick="updateStatus({{ order.pk }}, '{{ next }}')">
-              {{ next|status_label:order.delivery_type }} →
-            </button>
-          {% endif %}
-        {% endwith %}
-        {% if order.production_status != 'CANCELLED' %}
-          <button class="status-btn cancel-btn" onclick="updateStatus({{ order.pk }}, 'CANCELLED')">
-            Bekor qilish
-          </button>
-        {% endif %}
-      </div>
-    {% endif %}
   </div>
 </div>

@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% load order_tags %}
-{% block title %}{{ order.order_number }} — Buyurtma{% endblock %}
+{% block title %}{{ order.display_order_number }} — Buyurtma{% endblock %}
 
 {% block extra_css %}
 .detail-layout {
@@ -166,7 +166,7 @@
   <!-- Header -->
   <div style="display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:16px;">
     <a href="{% url 'orders:list' %}" style="color:var(--muted);text-decoration:none;font-size:14px;">← Navbat</a>
-    <h2 style="margin:0;font-size:22px;">{{ order.order_number }}</h2>
+    <h2 style="margin:0;font-size:22px;">{{ order.display_order_number }}</h2>
     <span class="badge {{ order.payment_status|payment_badge }}">{{ order.get_payment_status_display }}</span>
     <span class="badge {{ order.production_status|status_badge }}">{{ order.production_status|status_label:order.delivery_type }}</span>
     <span style="font-size:13px;color:var(--muted);margin-left:auto;">

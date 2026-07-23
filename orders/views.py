@@ -266,7 +266,7 @@ def order_create(request):
                 return JsonResponse({
                     "ok": True,
                     "order_id": order.pk,
-                    "order_number": order.order_number,
+                    "order_number": order.display_order_number,
                     "redirect": f"/orders/{order.pk}/",
                 })
             return redirect("orders:detail", pk=order.pk)
@@ -597,7 +597,7 @@ def _save_order(request, instance=None):
     order.save()
 
     if not order.order_number:
-        order.order_number = f"ORD#{order.pk}"
+        order.order_number = f"ORDER#{order.pk}"
         order.save(update_fields=["order_number"])
 
     # Replace items
