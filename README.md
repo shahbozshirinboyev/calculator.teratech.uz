@@ -1,20 +1,57 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
-</div>
+# Calculator Teratech UZ
 
-# Run and deploy your AI Studio app
+Django asosidagi ichki calculator va buyurtma boshqaruv tizimi.
 
-This contains everything you need to run your app locally.
+## Texnologiyalar
 
-View your app in AI Studio: https://ai.studio/apps/debc4ddb-bb7c-4f36-a898-0c2a40195e53
+- Python 3.11
+- Django 5.2
+- WhiteNoise
+- SQLite yoki MySQL
 
-## Run Locally
+## Lokal ishga tushirish
 
-**Prerequisites:**  Node.js
+1. Virtual environment yarating va aktiv qiling
+2. Paketlarni o'rnating:
 
+```bash
+pip install -r requirements.txt
+```
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+3. `.env.example` dan nusxa olib `.env` yarating
+4. Migratsiyalarni ishlating:
+
+```bash
+python manage.py migrate
+```
+
+5. Static fayllarni yig'ing:
+
+```bash
+python manage.py collectstatic --noinput
+```
+
+6. Serverni ishga tushiring:
+
+```bash
+python manage.py runserver
+```
+
+## Muhit o'zgaruvchilari
+
+Asosiy o'zgaruvchilar:
+
+```text
+DJANGO_DEBUG=True
+DJANGO_SECRET_KEY=
+DJANGO_ALLOWED_HOSTS=127.0.0.1,localhost
+DJANGO_CSRF_TRUSTED_ORIGINS=
+DJANGO_DB_ENGINE=django.db.backends.sqlite3
+DJANGO_DB_NAME=db.sqlite3
+DJANGO_STATIC_ROOT=staticfiles
+DJANGO_MEDIA_ROOT=media
+```
+
+To'liq deploy yo'riqnomasi:
+
+- [DEPLOY_CPANEL.md](file:///c:/Users/shahb/OneDrive/Desktop/calculator.teratech.uz/DEPLOY_CPANEL.md)
