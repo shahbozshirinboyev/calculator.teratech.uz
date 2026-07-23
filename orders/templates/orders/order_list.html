@@ -49,20 +49,118 @@
   margin-bottom: 16px;
   align-items: flex-end;
 }
+.filters-bar > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  position: relative;
+}
+.filters-bar > div.filter-select::after {
+  content: "";
+  position: absolute;
+  right: 14px;
+  top: calc(100% - 19px);
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid color-mix(in srgb, var(--muted) 88%, white 12%);
+  border-bottom: 2px solid color-mix(in srgb, var(--muted) 88%, white 12%);
+  transform: translateY(-50%) rotate(45deg);
+  pointer-events: none;
+}
+.filters-bar > div.filter-date {
+  min-width: 168px;
+}
+.filters-bar > div.filter-date::after {
+  content: "";
+  position: absolute;
+  right: 12px;
+  top: calc(100% - 19px);
+  width: 16px;
+  height: 16px;
+  transform: translateY(-50%);
+  pointer-events: none;
+  opacity: 0.78;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 16px 16px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='none'%3E%3Crect x='2.25' y='3.25' width='11.5' height='10.5' rx='2' stroke='%2394A3B8' stroke-width='1.5'/%3E%3Cpath d='M5 2.5V4.25M11 2.5V4.25M2.75 6H13.25' stroke='%2394A3B8' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+}
+.filters-bar > div.filter-action {
+  justify-content: flex-end;
+}
 .filters-bar select,
 .filters-bar input[type="date"] {
   min-height: 38px;
   font-size: 13px;
-  padding: 6px 36px 6px 10px;
+  padding: 6px 40px 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  color: var(--text);
+  box-sizing: border-box;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+.filters-bar select {
   width: auto;
   min-width: 140px;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: none;
+}
+.filters-bar select:focus,
+.filters-bar input[type="date"]:focus {
+  outline: none;
+  border-color: color-mix(in srgb, var(--accent) 28%, var(--line));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 12%, transparent);
+}
+.filters-bar input[type="date"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 168px;
+  min-width: 168px;
+  padding-right: 42px;
+  font-variant-numeric: tabular-nums;
+}
+.filters-bar input[type="date"]::-webkit-calendar-picker-indicator {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 40px;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  opacity: 0;
+  cursor: pointer;
 }
 .filters-bar button {
   min-height: 38px;
   padding: 6px 14px;
   font-size: 13px;
 }
-.filter-label { font-size: 12px; color: var(--muted); margin-bottom: 3px; display: block; }
+.clear-filters-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 38px;
+  min-width: 108px;
+  padding: 0 14px;
+  border: 1px solid color-mix(in srgb, var(--danger) 55%, var(--line));
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--danger) 8%, var(--panel));
+  color: var(--danger);
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
+}
+.clear-filters-btn:hover {
+  background: color-mix(in srgb, var(--danger) 14%, var(--panel));
+  border-color: var(--danger);
+  transform: translateY(-1px);
+}
+.filter-label { font-size: 12px; color: var(--muted); margin-bottom: 3px; display: block; font-weight: 600; }
 
 .new-order-btn {
   margin-left: auto;
@@ -240,7 +338,7 @@
     <input type="hidden" name="tab" value="{{ tab }}">
     <div class="filters-bar" style="margin-top:14px;">
       {% if user.is_superuser %}
-        <div>
+        <div class="filter-select">
           <span class="filter-label">Sotuvchi</span>
           <select name="sold_by" onchange="this.form.submit()">
             <option value="">Barchasi</option>
@@ -252,7 +350,7 @@
           </select>
         </div>
       {% endif %}
-      <div>
+      <div class="filter-select">
         <span class="filter-label">Yetkazish</span>
         <select name="delivery_type" onchange="this.form.submit()">
           <option value="">Barchasi</option>
@@ -261,7 +359,7 @@
           {% endfor %}
         </select>
       </div>
-      <div>
+      <div class="filter-select">
         <span class="filter-label">To'lov holati</span>
         <select name="payment_status" onchange="this.form.submit()">
           <option value="">Barchasi</option>
@@ -270,18 +368,21 @@
           {% endfor %}
         </select>
       </div>
-      <div>
+      <div class="filter-date">
         <span class="filter-label">Dan</span>
         <input type="date" name="date_from" value="{{ filters.date_from }}" onchange="this.form.submit()">
       </div>
-      <div>
+      <div class="filter-date">
         <span class="filter-label">Gacha</span>
         <input type="date" name="date_to" value="{{ filters.date_to }}" onchange="this.form.submit()">
       </div>
       {% if filters.sold_by or filters.delivery_type or filters.payment_status or filters.date_from or filters.date_to %}
-        <a href="?tab={{ tab }}" style="display:inline-flex;align-items:center;font-size:13px;color:var(--danger);text-decoration:none;padding:6px 0;">
-          ✕ Tozalash
-        </a>
+        <div class="filter-action">
+          <a href="?tab={{ tab }}" class="clear-filters-btn">
+            <span aria-hidden="true">✕</span>
+            <span>Tozalash</span>
+          </a>
+        </div>
       {% endif %}
     </div>
   </form>

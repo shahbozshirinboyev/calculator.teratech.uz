@@ -139,18 +139,59 @@
   padding: 16px;
 }
 .modal-content {
-  background: var(--panel-bg);
+  background: #ffffff;
   color: var(--text);
   max-width: 420px;
   width: 100%;
-  padding: 24px;
-  border-radius: 12px;
+  padding: 28px;
+  border-radius: 18px;
   text-align: center;
-  border: 1px solid var(--line);
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
+  border: 1px solid color-mix(in srgb, var(--line) 82%, #ffffff);
+  box-shadow: 0 28px 60px rgba(15, 23, 42, 0.18), 0 10px 24px rgba(15, 23, 42, 0.1);
   transform: scale(0.95);
   transition: transform 0.2s ease-out, opacity 0.2s ease-out;
   opacity: 0;
+}
+[data-theme="dark"] .modal-content {
+  background: var(--panel);
+  border-color: color-mix(in srgb, var(--line) 88%, transparent);
+  box-shadow: 0 28px 60px rgba(2, 6, 23, 0.42), 0 10px 24px rgba(2, 6, 23, 0.28);
+}
+.modal-icon {
+  font-size: 48px;
+  line-height: 1;
+  margin-bottom: 14px;
+}
+.modal-title {
+  margin: 0 0 10px;
+  font-size: 22px;
+  line-height: 1.25;
+  font-weight: 800;
+  color: #0f172a;
+}
+[data-theme="dark"] .modal-title {
+  color: var(--text);
+}
+.modal-text {
+  margin: 0 0 24px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #475569;
+}
+[data-theme="dark"] .modal-text {
+  color: var(--muted);
+}
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+.modal-actions .action-btn {
+  margin: 0;
+  width: auto;
+  min-width: 128px;
+  padding: 10px 20px;
+  font-weight: 700;
 }
 .modal-overlay.show {
   display: flex;
@@ -338,14 +379,14 @@
 <!-- Custom Delete Confirmation Modal -->
 <div id="delete-confirm-modal" class="modal-overlay">
   <div class="panel modal-content">
-    <div style="font-size:48px; margin-bottom:12px;">⚠️</div>
-    <h3 style="margin:0 0 10px; font-size:18px; font-weight:700; color:var(--text);">O'chirishni tasdiqlaysizmi?</h3>
-    <p style="margin:0 0 24px; font-size:14px; color:var(--muted); line-height:1.5;">Haqiqatdan ham ushbu buyurtmani o'chirmoqchimisiz? Bu amalni qaytarib bo'lmaydi!</p>
-    <div style="display:flex; gap:12px; justify-content:center;">
-      <button type="button" onclick="closeDeleteModal()" class="action-btn secondary" style="margin:0; width:auto; padding:10px 20px; font-weight:700;">
+    <div class="modal-icon">⚠️</div>
+    <h3 class="modal-title">O'chirishni tasdiqlaysizmi?</h3>
+    <p class="modal-text">Haqiqatdan ham ushbu buyurtmani o'chirmoqchimisiz? Bu amalni qaytarib bo'lmaydi!</p>
+    <div class="modal-actions">
+      <button type="button" onclick="closeDeleteModal()" class="action-btn secondary">
         Bekor qilish
       </button>
-      <button type="button" onclick="confirmDelete()" class="action-btn" style="margin:0; width:auto; padding:10px 20px; background:var(--danger); color:white; font-weight:700;">
+      <button type="button" onclick="confirmDelete()" class="action-btn" style="background:var(--danger); color:white;">
         Ha, o'chirish
       </button>
     </div>
