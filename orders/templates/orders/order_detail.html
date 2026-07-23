@@ -309,7 +309,7 @@
             ✏️ Tahrirlash
           </a>
 
-          {% if order.production_status != 'CANCELLED' %}
+          {% if request.user.is_superuser and order.production_status != 'CANCELLED' %}
             <button class="action-btn danger" onclick="cancelOrderDirectly()">
               ✕ Bekor qilish
             </button>
