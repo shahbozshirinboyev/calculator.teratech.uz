@@ -31,7 +31,38 @@ def _serialize_choices(choices):
     return [{"value": value, "label": label} for value, label in choices]
 
 
-def _production_status_groups_json():
+def _allowed_production_status_choices_for_user(user, delivery_type):
+    choices = Order.production_status_choices_for_delivery(delivery_type)
+    if user.is_superuser:
+        return choices
+    allowed_statuses = {
+        Order.ProductionStatus.AGREED,
+        Order.ProductionStatus.QUEUED,
+    }
+    return [(value, label) for value, label in choices if value in allowed_statuses]
+
+
+def _can_user_set_production_status(user, target_status, current_status=None):
+    if user.is_superuser:
+        return True
+    if target_status in {
+        Order.ProductionStatus.AGREED,
+        Order.ProductionStatus.QUEUED,
+    }:
+        return True
+    return bool(current_status) and target_status == current_status
+
+
+def _production_status_groups_json_for_user(user):
+    groups = {}
+    for delivery_type, _ in Order.DeliveryType.choices:
+        groups[delivery_type] = _serialize_choices(
+            _allowed_production_status_choices_for_user(user, delivery_type)
+        )
+    return json.dumps(groups, ensure_ascii=False)
+
+
+def _all_production_status_groups_json():
     groups = {}
     for delivery_type, _ in Order.DeliveryType.choices:
         groups[delivery_type] = _serialize_choices(
@@ -145,7 +176,7 @@ def order_list(request):
     })
 
 
-def _form_context(order, initial, extra=None):
+def _form_context(user, order, initial, extra=None):
     """order_form.html uchun umumiy context yasaydi."""
     from calculator.models import CalculatorSettings
 
@@ -169,8 +200,12 @@ def _form_context(order, initial, extra=None):
     delivery_label_map = dict(Order.DeliveryType.choices)
     payment_type_label_map = dict(Order.PaymentType.choices)
     payment_status_label_map = dict(Order.PaymentStatus.choices)
-    production_status_label_map = dict(
+    all_production_status_label_map = dict(
         Order.production_status_choices_for_delivery(v_delivery_type or Order.DeliveryType.DELIVERY)
+    )
+    production_status_choices = _allowed_production_status_choices_for_user(
+        user,
+        v_delivery_type or Order.DeliveryType.DELIVERY,
     )
 
     raw_delivery_time = src.get("delivery_time", getattr(o, "delivery_time", ""))
@@ -195,7 +230,7 @@ def _form_context(order, initial, extra=None):
         "v_payment_status": v_payment_status,
         "v_payment_status_label": payment_status_label_map.get(v_payment_status, ""),
         "v_production_status": v_production_status,
-        "v_production_status_label": production_status_label_map.get(v_production_status, ""),
+        "v_production_status_label": all_production_status_label_map.get(v_production_status, ""),
         "v_delivery_date":  src.get("delivery_date", str(getattr(o, "delivery_date", "")) if getattr(o, "delivery_date", None) else ""),
         "v_delivery_time":  formatted_delivery_time,
         "v_partial_amount": src.get("partial_amount", str(getattr(o, "partial_amount", "0"))),
@@ -208,10 +243,9 @@ def _form_context(order, initial, extra=None):
         "delivery_choices": Order.DeliveryType.choices,
         "payment_type_choices": Order.PaymentType.choices,
         "payment_status_choices": Order.PaymentStatus.choices,
-        "production_status_choices": Order.production_status_choices_for_delivery(
-            v_delivery_type or Order.DeliveryType.DELIVERY
-        ),
-        "production_status_groups_json": _production_status_groups_json(),
+        "production_status_choices": production_status_choices,
+        "production_status_groups_json": _production_status_groups_json_for_user(user),
+        "all_production_status_groups_json": _all_production_status_groups_json(),
     }
 
     # URL parametrlaridan kelgan items ma'lumotlarini qo'shish
@@ -241,7 +275,7 @@ def order_create(request):
             if request.headers.get("X-Requested-With") == "XMLHttpRequest":
                 return JsonResponse({"ok": False, "error": error}, status=400)
             return render(request, "orders/order_form.html",
-                          _form_context(None, request.POST, {"error": error}))
+                          _form_context(request.user, None, request.POST, {"error": error}))
 
     # GET request - URL parametrlaridan ma'lumotlarni olish
     initial = {}
@@ -287,7 +321,7 @@ def order_create(request):
             except:
                 pass
 
-    return render(request, "orders/order_form.html", _form_context(None, initial))
+    return render(request, "orders/order_form.html", _form_context(request.user, None, initial))
 
 
 @login_required
@@ -306,7 +340,7 @@ def order_detail(request, pk):
         pk=pk,
     )
     if request.method == "GET" and request.GET.get("edit") == "1":
-        return render(request, "orders/order_form.html", _form_context(order, {}))
+        return render(request, "orders/order_form.html", _form_context(request.user, order, {}))
 
     if request.method == "POST":
         try:
@@ -315,7 +349,7 @@ def order_detail(request, pk):
         except ValueError as e:
             error = str(e)
             return render(request, "orders/order_form.html",
-                          _form_context(order, request.POST, {"error": error}))
+                          _form_context(request.user, order, request.POST, {"error": error}))
 
     return render(request, "orders/order_detail.html", {
         "active_nav": "orders",
@@ -330,7 +364,10 @@ def order_detail(request, pk):
         "delivery_choices": Order.DeliveryType.choices,
         "payment_type_choices": Order.PaymentType.choices,
         "payment_status_choices": Order.PaymentStatus.choices,
-        "production_status_choices": Order.production_status_choices_for_delivery(order.delivery_type),
+        "production_status_choices": _allowed_production_status_choices_for_user(
+            request.user,
+            order.delivery_type,
+        ),
     })
 
 
@@ -342,6 +379,11 @@ def order_update_status(request, pk):
     valid = [s for s, _ in Order.production_status_choices_for_delivery(order.delivery_type)]
     if new_status not in valid:
         return JsonResponse({"error": "Noto'g'ri status."}, status=400)
+    if not _can_user_set_production_status(request.user, new_status, order.production_status):
+        return JsonResponse(
+            {"error": "Siz faqat 'Kelishuvda' va 'Navbatda' statuslarini o'zgartira olasiz."},
+            status=403,
+        )
     order.production_status = new_status
     if new_status == Order.ProductionStatus.DELIVERED:
         order.delivered_at = timezone.now()
@@ -483,6 +525,12 @@ def _save_order(request, instance=None):
     valid_production_statuses = [s for s, _ in Order.production_status_choices_for_delivery(delivery_type)]
     if production_status not in valid_production_statuses:
         errors.append("Status tanlovi yetkazish turiga mos emas.")
+    if not _can_user_set_production_status(
+        request.user,
+        production_status,
+        getattr(instance, "production_status", None),
+    ):
+        errors.append("Siz faqat 'Kelishuvda' va 'Navbatda' statuslarini tanlay olasiz.")
     if delivery_type and (not delivery_date or not delivery_time):
         errors.append("Yetkazib berish sanasi va vaqti kiritilmadi.")
 

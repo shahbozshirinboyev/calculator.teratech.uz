@@ -114,6 +114,16 @@
 .form-row:last-child { margin-bottom: 0; }
 .form-row.full { grid-template-columns: 1fr; }
 .form-row.three { grid-template-columns: 1fr 1fr 1fr; }
+.partial-payment-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.partial-payment-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 14px;
+}
 .field {
   display: flex;
   flex-direction: column;
@@ -126,6 +136,8 @@
 .field input[type="text"],
 .field input[type="tel"],
 .field input[type="number"],
+.field input[type="date"],
+.field input[type="time"],
 .field textarea,
 .field select {
   min-height: 40px; border: 1px solid var(--input-border); border-radius: 6px;
@@ -136,6 +148,8 @@
 .field input[type="text"]:focus,
 .field input[type="tel"]:focus,
 .field input[type="number"]:focus,
+.field input[type="date"]:focus,
+.field input[type="time"]:focus,
 .field textarea:focus,
 .field select:focus {
   outline: none;
@@ -145,6 +159,8 @@
 [data-theme="dark"] .field input[type="text"]:focus,
 [data-theme="dark"] .field input[type="tel"]:focus,
 [data-theme="dark"] .field input[type="number"]:focus,
+[data-theme="dark"] .field input[type="date"]:focus,
+[data-theme="dark"] .field input[type="time"]:focus,
 [data-theme="dark"] .field textarea:focus,
 [data-theme="dark"] .field select:focus {
   border-color: color-mix(in srgb, var(--accent) 26%, var(--input-border));
@@ -182,10 +198,22 @@
   grid-template-columns: minmax(180px, 1fr) auto;
   gap: 16px;
   align-items: start;
-  margin-top: 6px;
+  margin-top: 14px;
   margin-bottom: 16px;
+  padding-top: 0;
   padding-left: 12px;
-  border-left: 3px solid color-mix(in srgb, var(--text) 86%, transparent);
+  border-top: none;
+  position: relative;
+}
+.datetime-layout::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 2px;
+  bottom: 2px;
+  width: 3px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-dark));
 }
 .datetime-title {
   padding-top: 4px;
@@ -210,19 +238,6 @@
   width: max-content;
   justify-self: end;
   margin-left: auto;
-}
-.datetime-field .field-hint {
-  margin-left: 2px;
-  margin-top: 4px;
-  font-size: 11px;
-  line-height: 1.45;
-}
-.field-hint {
-  font-size: 11px;
-  color: var(--muted);
-  display: block;
-  margin-top: 4px;
-  line-height: 1.45;
 }
 
 /* Custom autocomplete dropdown */
@@ -341,12 +356,34 @@
   line-height: 1.45;
 }
 .summary-line {
-  display: flex; justify-content: space-between; align-items: baseline;
-  padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 14px; gap: 10px;
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  align-items: start;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 14px;
+  gap: 10px;
 }
 .summary-line span:first-child { color: var(--muted); }
-.summary-total { display: flex; justify-content: space-between; align-items: baseline; margin-top: 14px; font-size: 15px; font-weight: 700; }
-.summary-total strong { color: var(--accent-dark); }
+.summary-line strong {
+  min-width: 0;
+  text-align: right;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+.summary-total {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  align-items: baseline;
+  margin-top: 14px;
+  font-size: 15px;
+  font-weight: 700;
+  gap: 10px;
+}
+.summary-total strong {
+  color: var(--accent-dark);
+  text-align: right;
+}
 .form-actions { display: flex; gap: 10px; margin-top: 20px; }
 .highlight-group {
   margin-top: 12px;
@@ -385,6 +422,7 @@
   .order-form-layout { grid-template-columns: 1fr; }
   .summary-panel { position: static; }
   .form-row, .form-row.three { grid-template-columns: 1fr; }
+  .partial-payment-fields { grid-template-columns: 1fr; }
   .item-row { grid-template-columns: minmax(0, 1fr) 132px 150px 38px; }
   .order-page-header {
     flex-direction: column;
@@ -582,15 +620,21 @@
                 </div>
               </div>
             </div>
-            <div id="partial-payment-group" class="form-row highlight-group" style="display: none;">
+            <div id="partial-payment-group" class="partial-payment-group highlight-group" style="display: none;">
               <div class="highlight-group-title">Qisman to'lov tafsilotlari</div>
-              <div class="field">
-                <label>Qisman to'langan summa (so'm) *</label>
-                <input type="text" name="partial_amount" id="partial-amount-input" value="{{ v_partial_amount }}" inputmode="numeric" class="money-input">
-              </div>
-              <div class="field">
-                <label>Qoldiq summasi (Auto)</label>
-                <input type="text" id="remaining-amount-input" readonly style="background: var(--bg); font-weight: 700; color: var(--danger);" value="0 so'm">
+              <div class="partial-payment-fields">
+                <div class="field">
+                  <label>Jami (Auto)</label>
+                  <input type="text" id="total-amount-input" readonly style="background: var(--bg); font-weight: 700;" value="0 so'm">
+                </div>
+                <div class="field">
+                  <label>Qisman to'langan summa (so'm) *</label>
+                  <input type="text" name="partial_amount" id="partial-amount-input" value="{{ v_partial_amount }}" inputmode="numeric" class="money-input">
+                </div>
+                <div class="field">
+                  <label>Qoldiq summasi (Auto)</label>
+                  <input type="text" id="remaining-amount-input" readonly style="background: var(--bg); font-weight: 700; color: var(--danger);" value="0 so'm">
+                </div>
               </div>
             </div>
           </div>
@@ -624,7 +668,7 @@
                 </div>
               </div>
             </div>
-            <div id="time-info-group" class="highlight-group datetime-layout" style="display: none;">
+            <div id="time-info-group" class="datetime-layout" style="display: none;">
               <div class="datetime-title">
                 <div class="highlight-group-title">Sana va vaqt</div>
                 <div class="datetime-delivery-label" id="datetime-delivery-label"></div>
@@ -632,11 +676,9 @@
               <div class="datetime-fields">
                 <div class="field datetime-field">
                   <input type="date" name="delivery_date" id="delivery-date-input" value="{{ v_delivery_date }}">
-                  <span id="date-hint" class="field-hint"></span>
                 </div>
                 <div class="field datetime-field">
                   <input type="time" name="delivery_time" id="delivery-time-input" value="{{ v_delivery_time }}" step="1800">
-                  <span id="time-hint" class="field-hint"></span>
                 </div>
               </div>
             </div>
@@ -681,6 +723,7 @@ const deliveryLabels = { {% for v,l in delivery_choices %}"{{ v|escapejs }}":"{{
 const paymentTypeLabels = { {% for v,l in payment_type_choices %}"{{ v|escapejs }}":"{{ l|escapejs }}"{% if not forloop.last %},{% endif %}{% endfor %} };
 const paymentStatusLabels = { {% for v,l in payment_status_choices %}"{{ v|escapejs }}":"{{ l|escapejs }}"{% if not forloop.last %},{% endif %}{% endfor %} };
 const productionStatusGroups = {{ production_status_groups_json|safe }};
+const allProductionStatusGroups = {{ all_production_status_groups_json|safe }};
 
 // Reverse maps: label to value
 const deliveryLabelToValue = Object.fromEntries(Object.entries(deliveryLabels).map(([k, v]) => [v, k]));
@@ -700,8 +743,12 @@ function getProductionStatusChoices(deliveryTypeValue) {
   return productionStatusGroups[deliveryTypeValue] || [];
 }
 
+function getAllProductionStatusChoices(deliveryTypeValue) {
+  return allProductionStatusGroups[deliveryTypeValue] || [];
+}
+
 function getProductionStatusLabel(statusValue, deliveryTypeValue) {
-  const choices = getProductionStatusChoices(deliveryTypeValue);
+  const choices = getAllProductionStatusChoices(deliveryTypeValue);
   const match = choices.find(item => item.value === statusValue);
   return match ? match.label : '';
 }
@@ -879,6 +926,11 @@ function recalcRemainingAmount() {
   const partialVal = normalizeMoney(document.getElementById('partial-amount-input')?.value || '0');
   const remaining = Math.max(0, totalSum - partialVal);
 
+  const totalAmountInput = document.getElementById('total-amount-input');
+  if (totalAmountInput) {
+    totalAmountInput.value = `${formatInteger(totalSum)} so'm`;
+  }
+
   const remainingInput = document.getElementById('remaining-amount-input');
   if (remainingInput) {
     remainingInput.value = `${formatInteger(remaining)} so'm`;
@@ -906,8 +958,6 @@ function handleDeliveryTypeChange(val) {
   const group = document.getElementById('time-info-group');
   const dateInput = document.getElementById('delivery-date-input');
   const timeInput = document.getElementById('delivery-time-input');
-  const dateHint = document.getElementById('date-hint');
-  const timeHint = document.getElementById('time-hint');
   const deliveryLabel = document.getElementById('datetime-delivery-label');
 
   setProductionStatusChoices(val);
@@ -943,11 +993,9 @@ function handleDeliveryTypeChange(val) {
     dateInput.value = todayStr;
     dateInput.readOnly = true;
     dateInput.style.pointerEvents = 'none';
-    if (dateHint) dateHint.textContent = "Buyurtma yaratilayotgan sanada chiqib ketadi";
 
     timeInput.value = "22:00";
     timeInput.readOnly = true;
-    if (timeHint) timeHint.textContent = "Buyurtma soat 22:00dan chiqib ketadi";
   } else {
     // PICKUP or DELIVERY
     if (!currentDateValue) {
@@ -958,7 +1006,6 @@ function handleDeliveryTypeChange(val) {
     }
     dateInput.readOnly = false;
     dateInput.style.pointerEvents = 'auto';
-    if (dateHint) dateHint.textContent = "Buyurtma yaratilayotgan sana default turadi";
 
     // Min time is current time + 1h 30m
     const minTime = new Date(now.getTime() + 90 * 60 * 1000);
@@ -970,7 +1017,6 @@ function handleDeliveryTypeChange(val) {
     if (!timeInput.value || timeInput.value < minTimeStr) {
       timeInput.value = minTimeStr;
     }
-    if (timeHint) timeHint.textContent = "Kamida " + minTimeStr + " (yaratilgan vaqtdan 1 soat 30 minut keyingi vaqt)";
   }
   updateSummary();
 }
@@ -1129,6 +1175,15 @@ updateSummary();
       render(filtered);
     };
 
+    const clickHandler = () => {
+      if ((input.readOnly && !isSelectOnly) || input.disabled) {
+        close();
+        return;
+      }
+      const filtered = filter(input.value);
+      render(filtered);
+    };
+
     const keydownHandler = (e) => {
       if (isSelectOnly && e.key !== 'Tab' && e.key !== 'Escape' && e.key !== 'ArrowDown' && e.key !== 'ArrowUp' && e.key !== 'Enter') {
         e.preventDefault();
@@ -1176,17 +1231,19 @@ updateSummary();
 
     input.addEventListener('input', inputHandler);
     input.addEventListener('focus', focusHandler);
+    input.addEventListener('click', clickHandler);
     input.addEventListener('blur', blurHandler);
     input.addEventListener('keydown', keydownHandler);
     document.addEventListener('click', clickOutsideHandler);
 
-    handlers.push({ input, focusHandler, inputHandler, keydownHandler, clickOutsideHandler });
+    handlers.push({ input, focusHandler, clickHandler, inputHandler, keydownHandler, clickOutsideHandler });
 
     // Return cleanup function
     return {
       destroy: () => {
         input.removeEventListener('input', inputHandler);
         input.removeEventListener('focus', focusHandler);
+        input.removeEventListener('click', clickHandler);
         input.removeEventListener('blur', blurHandler);
         input.removeEventListener('keydown', keydownHandler);
         document.removeEventListener('click', clickOutsideHandler);
