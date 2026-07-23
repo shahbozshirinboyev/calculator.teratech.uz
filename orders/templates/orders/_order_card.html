@@ -6,7 +6,7 @@
       {{ order.get_payment_status_display }}
     </span>
     <span class="badge {{ order.production_status|status_badge }}">
-      {{ order.get_production_status_display }}
+      {{ order.production_status|status_label:order.delivery_type }}
     </span>
     <span class="seller-tag">
       {{ order.sold_by.get_full_name|default:order.sold_by.username }}
@@ -45,10 +45,10 @@
 
     {% if show_status_btns %}
       <div class="status-btns">
-        {% with next=order.production_status|next_status %}
+        {% with next=order.production_status|next_status_for:order.delivery_type %}
           {% if next %}
             <button class="status-btn next-step" onclick="updateStatus({{ order.pk }}, '{{ next }}')">
-              {{ next|status_label }} →
+              {{ next|status_label:order.delivery_type }} →
             </button>
           {% endif %}
         {% endwith %}

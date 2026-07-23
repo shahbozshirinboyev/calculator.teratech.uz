@@ -1,3 +1,4 @@
+import json
 from decimal import Decimal, InvalidOperation
 
 from django.contrib.auth import get_user_model
@@ -12,15 +13,6 @@ from .models import Order, OrderItem
 
 User = get_user_model()
 
-# Status progression order for "next step" button
-STATUS_FLOW = [
-    Order.ProductionStatus.QUEUED,
-    Order.ProductionStatus.IN_PROGRESS,
-    Order.ProductionStatus.READY,
-    Order.ProductionStatus.DELIVERED,
-]
-
-
 def _parse_decimal(value, default=Decimal("0")):
     try:
         return Decimal(str(value).replace(",", ".").strip())
@@ -33,6 +25,19 @@ def _orders_for_user(user):
     if user.is_superuser:
         return qs
     return qs.filter(sold_by=user)
+
+
+def _serialize_choices(choices):
+    return [{"value": value, "label": label} for value, label in choices]
+
+
+def _production_status_groups_json():
+    groups = {}
+    for delivery_type, _ in Order.DeliveryType.choices:
+        groups[delivery_type] = _serialize_choices(
+            Order.production_status_choices_for_delivery(delivery_type)
+        )
+    return json.dumps(groups, ensure_ascii=False)
 
 
 @login_required
@@ -136,8 +141,7 @@ def order_list(request):
         },
         "delivery_choices": Order.DeliveryType.choices,
         "payment_status_choices": Order.PaymentStatus.choices,
-        "production_status_choices": Order.ProductionStatus.choices,
-        "status_flow": STATUS_FLOW,
+        "production_status_choices": Order.production_status_choices_for_delivery(Order.DeliveryType.DELIVERY),
     })
 
 
@@ -165,7 +169,9 @@ def _form_context(order, initial, extra=None):
     delivery_label_map = dict(Order.DeliveryType.choices)
     payment_type_label_map = dict(Order.PaymentType.choices)
     payment_status_label_map = dict(Order.PaymentStatus.choices)
-    production_status_label_map = dict(Order.ProductionStatus.choices)
+    production_status_label_map = dict(
+        Order.production_status_choices_for_delivery(v_delivery_type or Order.DeliveryType.DELIVERY)
+    )
 
     ctx = {
         "v_customer_name":  src.get("customer_name",  getattr(o, "customer_name",  "")),
@@ -194,7 +200,10 @@ def _form_context(order, initial, extra=None):
         "delivery_choices": Order.DeliveryType.choices,
         "payment_type_choices": Order.PaymentType.choices,
         "payment_status_choices": Order.PaymentStatus.choices,
-        "production_status_choices": Order.ProductionStatus.choices,
+        "production_status_choices": Order.production_status_choices_for_delivery(
+            v_delivery_type or Order.DeliveryType.DELIVERY
+        ),
+        "production_status_groups_json": _production_status_groups_json(),
     }
 
     # URL parametrlaridan kelgan items ma'lumotlarini qo'shish
@@ -304,11 +313,16 @@ def order_detail(request, pk):
         "active_nav": "orders",
         "order": order,
         "usd_rate": usd_rate,
-        "status_flow": STATUS_FLOW,
+        "status_flow": Order.production_status_flow(order.delivery_type),
+        "current_status_index": (
+            Order.production_status_flow(order.delivery_type).index(order.production_status)
+            if order.production_status in Order.production_status_flow(order.delivery_type)
+            else -1
+        ),
         "delivery_choices": Order.DeliveryType.choices,
         "payment_type_choices": Order.PaymentType.choices,
         "payment_status_choices": Order.PaymentStatus.choices,
-        "production_status_choices": Order.ProductionStatus.choices,
+        "production_status_choices": Order.production_status_choices_for_delivery(order.delivery_type),
     })
 
 
@@ -317,7 +331,7 @@ def order_detail(request, pk):
 def order_update_status(request, pk):
     order = get_object_or_404(_orders_for_user(request.user), pk=pk)
     new_status = request.POST.get("status")
-    valid = [s for s, _ in Order.ProductionStatus.choices]
+    valid = [s for s, _ in Order.production_status_choices_for_delivery(order.delivery_type)]
     if new_status not in valid:
         return JsonResponse({"error": "Noto'g'ri status."}, status=400)
     order.production_status = new_status
@@ -326,7 +340,7 @@ def order_update_status(request, pk):
     order.save(update_fields=["production_status", "delivered_at", "updated_at"])
     response_data = {
         "status": order.production_status,
-        "status_label": order.get_production_status_display(),
+        "status_label": Order.production_status_label(order.production_status, order.delivery_type),
     }
     if request.headers.get("X-Requested-With") == "XMLHttpRequest":
         return JsonResponse(response_data)
@@ -338,7 +352,7 @@ def order_delete(request, pk):
     if not request.user.is_superuser:
         from django.core.exceptions import PermissionDenied
         raise PermissionDenied("Faqat administratorlar buyurtmani o'chira oladi.")
-    
+
     order = get_object_or_404(Order, pk=pk)
     if request.method == "POST":
         order.delete()
@@ -423,7 +437,7 @@ def _save_order(request, instance=None):
     delivery_type = post.get("delivery_type", "").strip()
     payment_type = post.get("payment_type", "").strip()
     payment_status = post.get("payment_status", "").strip()
-    production_status = post.get("production_status", Order.ProductionStatus.QUEUED).strip()
+    production_status = post.get("production_status", Order.ProductionStatus.AGREED).strip()
 
     delivery_date_str = post.get("delivery_date", "").strip()
     delivery_time = post.get("delivery_time", "").strip()
@@ -432,7 +446,7 @@ def _save_order(request, instance=None):
     notes = post.get("notes", "").strip()
 
     errors = []
-    
+
     delivery_date = None
     if delivery_date_str:
         from datetime import datetime
@@ -458,6 +472,9 @@ def _save_order(request, instance=None):
         errors.append("To'lov turi tanlanmadi.")
     if payment_status not in [p for p, _ in Order.PaymentStatus.choices]:
         errors.append("To'lov holati tanlanmadi.")
+    valid_production_statuses = [s for s, _ in Order.production_status_choices_for_delivery(delivery_type)]
+    if production_status not in valid_production_statuses:
+        errors.append("Status tanlovi yetkazish turiga mos emas.")
     if delivery_type and (not delivery_date or not delivery_time):
         errors.append("Yetkazib berish sanasi va vaqti kiritilmadi.")
 
@@ -515,7 +532,7 @@ def _save_order(request, instance=None):
     order.total_price_uzs = total_price_uzs
     order.delivery_date = delivery_date
     order.delivery_time = delivery_time
-    order.partial_amount = partial_amount
+    order.partial_amount = partial_amount if payment_status == Order.PaymentStatus.PARTIAL else Decimal("0")
     order.notes = notes
 
     if order.production_status == Order.ProductionStatus.DELIVERED and not order.delivered_at:

@@ -1,23 +1,16 @@
 from django import template
+from orders.models import Order
 
 register = template.Library()
 
-STATUS_FLOW = ["QUEUED", "IN_PROGRESS", "READY", "DELIVERED"]
-
-STATUS_LABELS = {
-    "QUEUED": "Navbatda",
-    "IN_PROGRESS": "Tayyorlanmoqda",
-    "READY": "Tayyor",
-    "DELIVERED": "Yetkazildi",
-    "CANCELLED": "Bekor qilindi",
-}
-
 STATUS_BADGE = {
+    "AGREED": "badge-on-del",
     "QUEUED": "badge-queued",
     "IN_PROGRESS": "badge-in-progress",
     "READY": "badge-ready",
     "SHIPPING": "badge-shipping",
     "DELIVERED": "badge-delivered",
+    "ON_HOLD": "badge-on-del",
     "CANCELLED": "badge-cancelled",
 }
 
@@ -25,6 +18,8 @@ PAYMENT_BADGE = {
     "PAID": "badge-paid",
     "PARTIAL": "badge-partial",
     "ON_DELIVERY": "badge-on-del",
+    "ON_PICKUP": "badge-on-del",
+    "UNPAID": "badge-on-del",
 }
 
 
@@ -39,17 +34,18 @@ def payment_badge(value):
 
 
 @register.filter
-def next_status(value):
+def next_status_for(value, delivery_type):
     try:
-        idx = STATUS_FLOW.index(value)
-        return STATUS_FLOW[idx + 1] if idx + 1 < len(STATUS_FLOW) else None
+        status_flow = Order.production_status_flow(delivery_type)
+        idx = status_flow.index(value)
+        return status_flow[idx + 1] if idx + 1 < len(status_flow) else None
     except (ValueError, IndexError):
         return None
 
 
 @register.filter
-def status_label(value):
-    return STATUS_LABELS.get(value, value)
+def status_label(value, delivery_type=None):
+    return Order.production_status_label(value, delivery_type)
 
 
 @register.filter

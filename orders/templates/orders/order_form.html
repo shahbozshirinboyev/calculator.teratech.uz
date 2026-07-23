@@ -535,7 +535,7 @@
                 </div>
               </div>
               <div class="field">
-                <label>Status *</label>
+                <label>Buyurtma holati *</label>
                 <div class="autocomplete-wrapper">
                   <input type="text" id="production-status-input" value="{{ v_production_status_label }}" placeholder="Tanlang" autocomplete="off">
                   <input type="hidden" name="production_status" id="production-status-hidden" value="{{ v_production_status }}" required>
@@ -596,19 +596,56 @@
 const deliveryLabels = { {% for v,l in delivery_choices %}"{{ v|escapejs }}":"{{ l|escapejs }}"{% if not forloop.last %},{% endif %}{% endfor %} };
 const paymentTypeLabels = { {% for v,l in payment_type_choices %}"{{ v|escapejs }}":"{{ l|escapejs }}"{% if not forloop.last %},{% endif %}{% endfor %} };
 const paymentStatusLabels = { {% for v,l in payment_status_choices %}"{{ v|escapejs }}":"{{ l|escapejs }}"{% if not forloop.last %},{% endif %}{% endfor %} };
-const productionStatusLabels = { {% for v,l in production_status_choices %}"{{ v|escapejs }}":"{{ l|escapejs }}"{% if not forloop.last %},{% endif %}{% endfor %} };
+const productionStatusGroups = {{ production_status_groups_json|safe }};
 
 // Reverse maps: label to value
 const deliveryLabelToValue = Object.fromEntries(Object.entries(deliveryLabels).map(([k, v]) => [v, k]));
 const paymentTypeLabelToValue = Object.fromEntries(Object.entries(paymentTypeLabels).map(([k, v]) => [v, k]));
 const paymentStatusLabelToValue = Object.fromEntries(Object.entries(paymentStatusLabels).map(([k, v]) => [v, k]));
-const productionStatusLabelToValue = Object.fromEntries(Object.entries(productionStatusLabels).map(([k, v]) => [v, k]));
 
 // Option lists (labels only)
 const deliveryOptions = Object.values(deliveryLabels);
 const paymentTypeOptions = Object.values(paymentTypeLabels);
 const paymentStatusOptions = Object.values(paymentStatusLabels);
-const productionStatusOptions = Object.values(productionStatusLabels);
+let productionStatusLabels = {};
+let productionStatusLabelToValue = {};
+let productionStatusOptions = [];
+let productionStatusAutocomplete = null;
+
+function getProductionStatusChoices(deliveryTypeValue) {
+  return productionStatusGroups[deliveryTypeValue] || [];
+}
+
+function getProductionStatusLabel(statusValue, deliveryTypeValue) {
+  const choices = getProductionStatusChoices(deliveryTypeValue);
+  const match = choices.find(item => item.value === statusValue);
+  return match ? match.label : '';
+}
+
+function setProductionStatusChoices(deliveryTypeValue) {
+  const choices = getProductionStatusChoices(deliveryTypeValue);
+  productionStatusLabels = Object.fromEntries(choices.map(item => [item.value, item.label]));
+  productionStatusLabelToValue = Object.fromEntries(choices.map(item => [item.label, item.value]));
+  productionStatusOptions = choices.map(item => item.label);
+
+  if (productionStatusAutocomplete) {
+    productionStatusAutocomplete.updateItems(productionStatusOptions);
+  }
+
+  const productionStatusInput = document.getElementById('production-status-input');
+  const productionStatusHidden = document.getElementById('production-status-hidden');
+  const currentValue = productionStatusHidden ? productionStatusHidden.value : '';
+  const nextValue = productionStatusLabels[currentValue]
+    ? currentValue
+    : (choices[0] ? choices[0].value : '');
+
+  if (productionStatusHidden) {
+    productionStatusHidden.value = nextValue;
+  }
+  if (productionStatusInput) {
+    productionStatusInput.value = nextValue ? productionStatusLabels[nextValue] : '';
+  }
+}
 
 function formatInteger(value) {
   const num = Math.round(Number(value) || 0);
@@ -788,12 +825,15 @@ function handleDeliveryTypeChange(val) {
   const dateHint = document.getElementById('date-hint');
   const timeHint = document.getElementById('time-hint');
 
+  setProductionStatusChoices(val);
+
   if (!group || !dateInput || !timeInput) return;
 
   if (!val) {
     group.style.display = 'none';
     dateInput.removeAttribute('required');
     timeInput.removeAttribute('required');
+    updateSummary();
     return;
   }
 
@@ -836,6 +876,7 @@ function handleDeliveryTypeChange(val) {
     timeInput.readOnly = false;
     if (timeHint) timeHint.textContent = "Kamida " + minTimeStr + " (yaratilgan vaqtdan 1 soat 30 minut keyingi vaqt)";
   }
+  updateSummary();
 }
 
 function updateSummary() {
@@ -848,7 +889,7 @@ function updateSummary() {
   document.getElementById('s-customer').textContent = name;
   document.getElementById('s-delivery').textContent = deliveryLabels[dt] || '—';
   document.getElementById('s-payment').textContent = [paymentTypeLabels[pt], paymentStatusLabels[ps]].filter(Boolean).join(' / ') || '—';
-  document.getElementById('s-status').textContent = productionStatusLabels[psts] || '—';
+  document.getElementById('s-status').textContent = getProductionStatusLabel(psts, dt) || '—';
   recalcOrderTotals();
 }
 
@@ -1115,12 +1156,8 @@ updateSummary();
   const productionStatusInput = document.getElementById('production-status-input');
   const productionStatusDropdown = document.getElementById('production-status-dropdown');
   const productionStatusHidden = document.getElementById('production-status-hidden');
-  // Set initial input value
-  if (productionStatusHidden && productionStatusHidden.value && productionStatusInput) {
-    productionStatusInput.value = productionStatusLabels[productionStatusHidden.value] || '';
-  }
   if (productionStatusInput && productionStatusDropdown) {
-    createAutocomplete(productionStatusInput, productionStatusDropdown, productionStatusOptions, (selectedLabel) => {
+    productionStatusAutocomplete = createAutocomplete(productionStatusInput, productionStatusDropdown, productionStatusOptions, (selectedLabel) => {
       if (productionStatusHidden) {
         productionStatusHidden.value = productionStatusLabelToValue[selectedLabel];
       }
@@ -1134,6 +1171,8 @@ updateSummary();
   }
   if (deliveryTypeHidden && deliveryTypeHidden.value) {
     handleDeliveryTypeChange(deliveryTypeHidden.value);
+  } else {
+    setProductionStatusChoices('');
   }
 
   // Format partial payment amount input
