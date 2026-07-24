@@ -253,7 +253,7 @@
         <h3>💳 To'lov ma'lumotlari</h3>
         <div class="detail-row-group">
           <div class="detail-row"><span>To'lov turi:</span><strong>{{ order.get_payment_type_display }}</strong></div>
-          <div class="detail-row"><span>To'lov holati:</span><strong>{{ order.get_payment_status_display }}</strong></div>
+          <div class="detail-row"><span>To'lov statusi:</span><strong>{{ order.get_payment_status_display }}</strong></div>
         </div>
         {% if order.payment_status == 'PARTIAL' %}
           <div class="detail-row-group">
@@ -300,7 +300,7 @@
     <!-- Right sidebar: status & actions -->
     <aside>
       <div class="panel status-sidebar">
-        <h3>Holat</h3>
+        <h3>Status</h3>
         {% for s in status_flow %}
           <div class="status-step
             {% if order.production_status == s %}current
@@ -328,21 +328,29 @@
         {% endif %}
 
         <div style="margin-top: 16px; margin-bottom: 12px; border-top: 1px solid var(--line); padding-top: 14px;">
-          <label style="font-size:12px; color:var(--muted); font-weight:700; margin-bottom:4px; display:block;">Holatni o'zgartirish:</label>
-          <select id="status-select-dropdown" onchange="onStatusDropdownChange(this.value)" style="width:100%; padding:10px 12px; border-radius:8px; background:var(--bg); border:1px solid var(--line); color:var(--text); font-weight:700; font-size:14px; cursor:pointer;">
-            {% for s_val, s_label in production_status_choices %}
-              <option value="{{ s_val }}" {% if order.production_status == s_val %}selected{% endif %}>{{ s_label }}</option>
-            {% endfor %}
-          </select>
-          <!-- Save status button container, hidden by default -->
-          <div id="save-status-container" style="display:none; gap:8px; margin-top:8px;">
-            <button onclick="resetStatusChange()" class="action-btn secondary" style="flex:1; margin:0; padding:8px 10px; font-size:13px; font-weight:700;">
-              Bekor qilish
-            </button>
-            <button onclick="saveStatus()" class="action-btn" style="flex:1; margin:0; padding:8px 10px; font-size:13px; background:var(--accent); color:white; font-weight:700;">
-              💾 Saqlash
-            </button>
-          </div>
+          <label style="font-size:12px; color:var(--muted); font-weight:700; margin-bottom:4px; display:block;">Statusni o'zgartirish:</label>
+          {% if can_change_production_status %}
+            <select id="status-select-dropdown" onchange="onStatusDropdownChange(this.value)" style="width:100%; padding:10px 12px; border-radius:8px; background:var(--bg); border:1px solid var(--line); color:var(--text); font-weight:700; font-size:14px; cursor:pointer;">
+              {% if show_current_status_option %}
+                <option value="{{ order.production_status }}" selected>{{ current_status_label }}</option>
+              {% endif %}
+              {% for s_val, s_label in production_status_choices %}
+                <option value="{{ s_val }}" {% if order.production_status == s_val %}selected{% endif %}>{{ s_label }}</option>
+              {% endfor %}
+            </select>
+            <div id="save-status-container" style="display:none; gap:8px; margin-top:8px;">
+              <button onclick="resetStatusChange()" class="action-btn secondary" style="flex:1; margin:0; padding:8px 10px; font-size:13px; font-weight:700;">
+                Bekor qilish
+              </button>
+              <button onclick="saveStatus()" class="action-btn" style="flex:1; margin:0; padding:8px 10px; font-size:13px; background:var(--accent); color:white; font-weight:700;">
+                💾 Saqlash
+              </button>
+            </div>
+          {% else %}
+            <div style="padding:10px 12px; border-radius:8px; background:var(--bg); border:1px solid var(--line); color:var(--muted); font-size:13px; line-height:1.45;">
+              Bu buyurtmada statusni faqat admin o'zgartira oladi.
+            </div>
+          {% endif %}
         </div>
 
         <div class="action-btns">
@@ -436,7 +444,7 @@ function saveStatus() {
 
 function cancelOrderDirectly() {
   const label = statusLabels['CANCELLED'] || 'Bekor qilindi';
-  if (confirm(`Holatni "${label}" ga o'zgartirishni tasdiqlaysizmi?`)) {
+  if (confirm(`Statusni "${label}" ga o'zgartirishni tasdiqlaysizmi?`)) {
     document.getElementById('status-input').value = 'CANCELLED';
     document.getElementById('status-form').submit();
   }

@@ -31,10 +31,23 @@ def _serialize_choices(choices):
     return [{"value": value, "label": label} for value, label in choices]
 
 
-def _allowed_production_status_choices_for_user(user, delivery_type):
+def _can_user_change_production_status(user, current_status=None):
+    if user.is_superuser:
+        return True
+    if not current_status:
+        return True
+    return current_status in {
+        Order.ProductionStatus.AGREED,
+        Order.ProductionStatus.QUEUED,
+    }
+
+
+def _allowed_production_status_choices_for_user(user, delivery_type, current_status=None):
     choices = Order.production_status_choices_for_delivery(delivery_type)
     if user.is_superuser:
         return choices
+    if not _can_user_change_production_status(user, current_status):
+        return []
     allowed_statuses = {
         Order.ProductionStatus.AGREED,
         Order.ProductionStatus.QUEUED,
@@ -42,14 +55,21 @@ def _allowed_production_status_choices_for_user(user, delivery_type):
     return [(value, label) for value, label in choices if value in allowed_statuses]
 
 
+def _all_production_status_choices_map(delivery_type):
+    return dict(Order.production_status_choices_for_delivery(delivery_type))
+
+
 def _can_user_set_production_status(user, target_status, current_status=None):
     if user.is_superuser:
         return True
-    if target_status in {
+    allowed_statuses = {
         Order.ProductionStatus.AGREED,
         Order.ProductionStatus.QUEUED,
-    }:
-        return True
+    }
+    if not current_status:
+        return target_status in allowed_statuses
+    if current_status in allowed_statuses:
+        return target_status in allowed_statuses
     return bool(current_status) and target_status == current_status
 
 
@@ -206,6 +226,7 @@ def _form_context(user, order, initial, extra=None):
     production_status_choices = _allowed_production_status_choices_for_user(
         user,
         v_delivery_type or Order.DeliveryType.DELIVERY,
+        getattr(o, "production_status", None),
     )
 
     raw_delivery_time = src.get("delivery_time", getattr(o, "delivery_time", ""))
@@ -246,6 +267,10 @@ def _form_context(user, order, initial, extra=None):
         "production_status_choices": production_status_choices,
         "production_status_groups_json": _production_status_groups_json_for_user(user),
         "all_production_status_groups_json": _all_production_status_groups_json(),
+        "can_edit_production_status": _can_user_change_production_status(
+            user,
+            getattr(o, "production_status", None),
+        ),
     }
 
     # URL parametrlaridan kelgan items ma'lumotlarini qo'shish
@@ -351,6 +376,13 @@ def order_detail(request, pk):
             return render(request, "orders/order_form.html",
                           _form_context(request.user, order, request.POST, {"error": error}))
 
+    allowed_production_status_choices = _allowed_production_status_choices_for_user(
+        request.user,
+        order.delivery_type,
+        order.production_status,
+    )
+    allowed_production_status_values = {value for value, _ in allowed_production_status_choices}
+
     return render(request, "orders/order_detail.html", {
         "active_nav": "orders",
         "order": order,
@@ -364,9 +396,15 @@ def order_detail(request, pk):
         "delivery_choices": Order.DeliveryType.choices,
         "payment_type_choices": Order.PaymentType.choices,
         "payment_status_choices": Order.PaymentStatus.choices,
-        "production_status_choices": _allowed_production_status_choices_for_user(
+        "production_status_choices": allowed_production_status_choices,
+        "can_change_production_status": _can_user_change_production_status(
             request.user,
-            order.delivery_type,
+            order.production_status,
+        ),
+        "show_current_status_option": order.production_status not in allowed_production_status_values,
+        "current_status_label": _all_production_status_choices_map(order.delivery_type).get(
+            order.production_status,
+            order.production_status,
         ),
     })
 
@@ -381,7 +419,7 @@ def order_update_status(request, pk):
         return JsonResponse({"error": "Noto'g'ri status."}, status=400)
     if not _can_user_set_production_status(request.user, new_status, order.production_status):
         return JsonResponse(
-            {"error": "Siz faqat 'Kelishuvda' va 'Navbatda' statuslarini o'zgartira olasiz."},
+            {"error": "Oddiy user statusni faqat buyurtma joriy statusi 'Kelishuvda' yoki 'Navbatda' bo'lsa o'zgartira oladi."},
             status=403,
         )
     order.production_status = new_status
@@ -487,7 +525,9 @@ def _save_order(request, instance=None):
     delivery_type = post.get("delivery_type", "").strip()
     payment_type = post.get("payment_type", "").strip()
     payment_status = post.get("payment_status", "").strip()
-    production_status = post.get("production_status", Order.ProductionStatus.AGREED).strip()
+    production_status = post.get("production_status", "").strip()
+    if not production_status:
+        production_status = getattr(instance, "production_status", "") or Order.ProductionStatus.AGREED
 
     delivery_date_str = post.get("delivery_date", "").strip()
     delivery_time = post.get("delivery_time", "").strip()
@@ -521,7 +561,7 @@ def _save_order(request, instance=None):
     if payment_type not in [p for p, _ in Order.PaymentType.choices]:
         errors.append("To'lov turi tanlanmadi.")
     if payment_status not in [p for p, _ in Order.PaymentStatus.choices]:
-        errors.append("To'lov holati tanlanmadi.")
+        errors.append("To'lov statusi tanlanmadi.")
     valid_production_statuses = [s for s, _ in Order.production_status_choices_for_delivery(delivery_type)]
     if production_status not in valid_production_statuses:
         errors.append("Status tanlovi yetkazish turiga mos emas.")
@@ -530,7 +570,7 @@ def _save_order(request, instance=None):
         production_status,
         getattr(instance, "production_status", None),
     ):
-        errors.append("Siz faqat 'Kelishuvda' va 'Navbatda' statuslarini tanlay olasiz.")
+        errors.append("Oddiy user statusni faqat buyurtma joriy statusi 'Kelishuvda' yoki 'Navbatda' bo'lsa o'zgartira oladi.")
     if delivery_type and (not delivery_date or not delivery_time):
         errors.append("Yetkazib berish sanasi va vaqti kiritilmadi.")
 

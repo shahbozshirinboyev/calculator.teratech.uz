@@ -598,7 +598,7 @@
             <div class="section-index">04</div>
             <div class="section-title-wrap">
               <h3 class="section-title">To'lov ma'lumotlari</h3>
-              <p class="section-subtitle">To'lov turi va holatini belgilang, qisman to'lov tafsilotlari alohida ajratiladi.</p>
+              <p class="section-subtitle">To'lov turi va statusini belgilang, qisman to'lov tafsilotlari alohida ajratiladi.</p>
             </div>
           </div>
           <div class="section-body">
@@ -612,7 +612,7 @@
                 </div>
               </div>
               <div class="field">
-                <label>To'lov holati *</label>
+                <label>To'lov statusi *</label>
                 <div class="autocomplete-wrapper select-only">
                   <input type="text" id="payment-status-input" class="select-only-input" value="{{ v_payment_status_label }}" placeholder="Tanlang" autocomplete="off" inputmode="none" readonly data-select-only="true">
                   <input type="hidden" name="payment_status" id="payment-status-hidden" value="{{ v_payment_status }}" required>
@@ -660,12 +660,18 @@
                 </div>
               </div>
               <div class="field">
-                <label>Buyurtma holati *</label>
-                <div class="autocomplete-wrapper select-only">
-                  <input type="text" id="production-status-input" class="select-only-input" value="{{ v_production_status_label }}" placeholder="Tanlang" autocomplete="off" inputmode="none" readonly data-select-only="true">
+                <label>Buyurtma statusi *</label>
+                {% if can_edit_production_status %}
+                  <div class="autocomplete-wrapper select-only">
+                    <input type="text" id="production-status-input" class="select-only-input" value="{{ v_production_status_label }}" placeholder="Tanlang" autocomplete="off" inputmode="none" readonly data-select-only="true">
+                    <input type="hidden" name="production_status" id="production-status-hidden" value="{{ v_production_status }}" required>
+                    <div class="autocomplete-dropdown" id="production-status-dropdown"></div>
+                  </div>
+                {% else %}
+                  <input type="text" id="production-status-input" value="{{ v_production_status_label }}" readonly style="background:var(--bg); color:var(--muted); cursor:not-allowed;">
                   <input type="hidden" name="production_status" id="production-status-hidden" value="{{ v_production_status }}" required>
-                  <div class="autocomplete-dropdown" id="production-status-dropdown"></div>
-                </div>
+                  <div style="margin-top:6px; font-size:12px; color:var(--muted);">Bu buyurtmada statusni faqat admin o'zgartira oladi.</div>
+                {% endif %}
               </div>
             </div>
             <div id="time-info-group" class="datetime-layout" style="display: none;">
@@ -678,7 +684,7 @@
                   <input type="date" name="delivery_date" id="delivery-date-input" value="{{ v_delivery_date }}">
                 </div>
                 <div class="field datetime-field">
-                  <input type="time" name="delivery_time" id="delivery-time-input" value="{{ v_delivery_time }}" step="1800">
+                  <input type="time" name="delivery_time" id="delivery-time-input" value="{{ v_delivery_time }}">
                 </div>
               </div>
             </div>
@@ -707,7 +713,7 @@
         <div class="summary-line"><span>Mijoz:</span><strong id="s-customer">—</strong></div>
         <div class="summary-line"><span>Yetkazish:</span><strong id="s-delivery">—</strong></div>
         <div class="summary-line"><span>To'lov:</span><strong id="s-payment">—</strong></div>
-        <div class="summary-line"><span>Holati:</span><strong id="s-status">—</strong></div>
+        <div class="summary-line"><span>Status:</span><strong id="s-status">—</strong></div>
         <div id="s-items-list" style="margin:8px 0;"></div>
         <div class="summary-total"><span>Jami:</span><strong id="s-total">0 so'm</strong></div>
       </aside>
@@ -724,6 +730,7 @@ const paymentTypeLabels = { {% for v,l in payment_type_choices %}"{{ v|escapejs 
 const paymentStatusLabels = { {% for v,l in payment_status_choices %}"{{ v|escapejs }}":"{{ l|escapejs }}"{% if not forloop.last %},{% endif %}{% endfor %} };
 const productionStatusGroups = {{ production_status_groups_json|safe }};
 const allProductionStatusGroups = {{ all_production_status_groups_json|safe }};
+const canEditProductionStatus = {% if can_edit_production_status %}true{% else %}false{% endif %};
 
 // Reverse maps: label to value
 const deliveryLabelToValue = Object.fromEntries(Object.entries(deliveryLabels).map(([k, v]) => [v, k]));
@@ -754,6 +761,9 @@ function getProductionStatusLabel(statusValue, deliveryTypeValue) {
 }
 
 function setProductionStatusChoices(deliveryTypeValue) {
+  if (!canEditProductionStatus) {
+    return;
+  }
   const choices = getProductionStatusChoices(deliveryTypeValue);
   productionStatusLabels = Object.fromEntries(choices.map(item => [item.value, item.label]));
   productionStatusLabelToValue = Object.fromEntries(choices.map(item => [item.label, item.value]));
@@ -766,15 +776,18 @@ function setProductionStatusChoices(deliveryTypeValue) {
   const productionStatusInput = document.getElementById('production-status-input');
   const productionStatusHidden = document.getElementById('production-status-hidden');
   const currentValue = productionStatusHidden ? productionStatusHidden.value : '';
+  const currentLabel = getProductionStatusLabel(currentValue, deliveryTypeValue);
   const nextValue = productionStatusLabels[currentValue]
     ? currentValue
-    : (choices[0] ? choices[0].value : '');
+    : (currentLabel ? currentValue : (choices[0] ? choices[0].value : ''));
 
   if (productionStatusHidden) {
     productionStatusHidden.value = nextValue;
   }
   if (productionStatusInput) {
-    productionStatusInput.value = nextValue ? productionStatusLabels[nextValue] : '';
+    productionStatusInput.value = nextValue
+      ? (productionStatusLabels[nextValue] || getProductionStatusLabel(nextValue, deliveryTypeValue))
+      : '';
   }
 }
 
@@ -1311,7 +1324,7 @@ updateSummary();
     });
   }
 
-  // Initialize To'lov holati dropdown
+  // Initialize To'lov statusi dropdown
   const paymentStatusInput = document.getElementById('payment-status-input');
   const paymentStatusDropdown = document.getElementById('payment-status-dropdown');
   const paymentStatusHidden = document.getElementById('payment-status-hidden');
