@@ -7,7 +7,7 @@ Django asosidagi ichki calculator va buyurtma boshqaruv tizimi.
 - Python 3.11
 - Django 5.2
 - WhiteNoise
-- SQLite yoki MySQL
+- SQLite (default)
 
 ## Lokal ishga tushirish
 
