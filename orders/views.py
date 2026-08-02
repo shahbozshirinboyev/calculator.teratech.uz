@@ -135,6 +135,16 @@ def _attach_order_permissions(user, orders):
     return orders
 
 
+def _format_filter_date(value):
+    if not value:
+        return ""
+    try:
+        from datetime import datetime
+        return datetime.strptime(value, "%Y-%m-%d").strftime("%d.%m.%Y")
+    except (ValueError, TypeError):
+        return value
+
+
 def _order_status_tabs():
     return [
         {"value": "ALL", "icon": "📦", "label": "Barchasi"},
@@ -144,6 +154,7 @@ def _order_status_tabs():
         {"value": Order.ProductionStatus.READY, "icon": "✅", "label": "Tayyor"},
         {"value": Order.ProductionStatus.SHIPPING, "icon": "🚚", "label": "Yetkazilmoqda"},
         {"value": Order.ProductionStatus.DELIVERED, "icon": "✔️", "label": "Yakunlandi"},
+        {"value": Order.ProductionStatus.ON_HOLD, "icon": "⏸️", "label": "To'xtatildi"},
         {"value": Order.ProductionStatus.CANCELLED, "icon": "❌", "label": "Bekor qilindi"},
     ]
 
@@ -251,6 +262,8 @@ def order_list(request):
             "payment_status": payment_status,
             "date_from": date_from,
             "date_to": date_to,
+            "date_from_display": _format_filter_date(date_from),
+            "date_to_display": _format_filter_date(date_to),
         },
         "delivery_choices": Order.DeliveryType.choices,
         "payment_status_choices": Order.PaymentStatus.choices,

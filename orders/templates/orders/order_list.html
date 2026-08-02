@@ -20,80 +20,80 @@
 .status-tabs-wrap {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 .status-tabs {
   flex: 1;
   min-width: 0;
   display: flex;
-  gap: 10px;
-  overflow-x: auto;
-  padding: 4px 2px 8px;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: thin;
-  scrollbar-color: color-mix(in srgb, var(--accent) 42%, var(--line)) transparent;
+  flex-wrap: nowrap;
+  gap: 4px;
+  overflow: hidden;
 }
 
 .status-tab {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
-  min-height: 46px;
-  padding: 0 14px;
-  border-radius: 999px;
+  justify-content: center;
+  gap: 4px;
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 32px;
+  padding: 0 6px;
+  border-radius: 8px;
   border: 1px solid color-mix(in srgb, var(--line) 88%, transparent);
   background: color-mix(in srgb, var(--panel) 94%, var(--bg));
   color: var(--muted);
   cursor: pointer;
   white-space: nowrap;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
-  transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .status-tab:hover {
   color: var(--text);
   border-color: color-mix(in srgb, var(--accent) 28%, var(--line));
-  transform: translateY(-1px);
 }
 
 .status-tab.active {
   color: #ffffff;
   border-color: transparent;
   background: linear-gradient(135deg, var(--accent), var(--accent-dark));
-  box-shadow: 0 14px 26px rgba(15, 118, 110, 0.18);
+  box-shadow: 0 4px 12px rgba(15, 118, 110, 0.22);
 }
 
 [data-theme="dark"] .status-tab.active {
-  box-shadow: 0 14px 26px rgba(20, 184, 166, 0.18);
+  box-shadow: 0 4px 12px rgba(20, 184, 166, 0.22);
 }
 
 .status-tab-icon {
-  font-size: 16px;
+  font-size: 11px;
   line-height: 1;
+  flex-shrink: 0;
 }
 
 .status-tab-label {
-  font-size: 13px;
-  font-weight: 800;
-  line-height: 1;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.1;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .status-tab-count {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 24px;
-  height: 24px;
-  padding: 0 8px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
   border-radius: 999px;
   background: color-mix(in srgb, var(--bg) 82%, transparent);
   color: var(--text);
-  font-size: 12px;
+  font-size: 9px;
   font-weight: 800;
+  flex-shrink: 0;
 }
 
 .status-tab.active .status-tab-count {
@@ -101,11 +101,18 @@
   color: #ffffff;
 }
 
+.filters-panel {
+  margin-bottom: 12px;
+  padding: 12px 14px;
+  border: 1px solid color-mix(in srgb, var(--line) 88%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--panel) 92%, var(--bg));
+}
+
 .filters-bar {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 16px;
+  gap: 8px;
   align-items: flex-end;
 }
 .filters-bar > div {
@@ -113,6 +120,21 @@
   flex-direction: column;
   gap: 4px;
   position: relative;
+  flex: 1 1 130px;
+  min-width: 0;
+  max-width: 170px;
+}
+.filters-bar > div.filter-date {
+  flex: 0 1 148px;
+  max-width: 148px;
+  min-width: 148px;
+}
+.filters-bar > div.filter-action {
+  flex: 0 0 auto;
+  max-width: none;
+  min-width: auto;
+  margin-left: auto;
+  justify-content: flex-end;
 }
 .filters-bar > div.filter-select::after {
   content: "";
@@ -125,9 +147,6 @@
   border-bottom: 2px solid color-mix(in srgb, var(--muted) 88%, white 12%);
   transform: translateY(-50%) rotate(45deg);
   pointer-events: none;
-}
-.filters-bar > div.filter-date {
-  min-width: 168px;
 }
 .filters-bar > div.filter-date::after {
   content: "";
@@ -144,24 +163,21 @@
   background-size: 16px 16px;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='none'%3E%3Crect x='2.25' y='3.25' width='11.5' height='10.5' rx='2' stroke='%2394A3B8' stroke-width='1.5'/%3E%3Cpath d='M5 2.5V4.25M11 2.5V4.25M2.75 6H13.25' stroke='%2394A3B8' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
 }
-.filters-bar > div.filter-action {
-  justify-content: flex-end;
-}
 .filters-bar select,
 .filters-bar input[type="date"] {
-  min-height: 38px;
-  font-size: 13px;
-  padding: 6px 40px 6px 10px;
-  border: 1px solid var(--line);
+  width: 100%;
+  min-height: 34px;
+  font-size: 12px;
+  padding: 5px 34px 5px 10px;
+  border: 1px solid color-mix(in srgb, var(--line) 90%, transparent);
   border-radius: 8px;
   background: var(--panel);
   color: var(--text);
   box-sizing: border-box;
-  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 .filters-bar select {
-  width: auto;
-  min-width: 140px;
+  min-width: 0;
   appearance: none;
   -webkit-appearance: none;
   background-image: none;
@@ -175,9 +191,7 @@
 .filters-bar input[type="date"] {
   appearance: none;
   -webkit-appearance: none;
-  width: 168px;
-  min-width: 168px;
-  padding-right: 42px;
+  padding-right: 36px;
   font-variant-numeric: tabular-nums;
 }
 .filters-bar input[type="date"]::-webkit-calendar-picker-indicator {
@@ -192,40 +206,94 @@
   cursor: pointer;
 }
 .filters-bar button {
-  min-height: 38px;
-  padding: 6px 14px;
-  font-size: 13px;
+  min-height: 34px;
+  padding: 5px 12px;
+  font-size: 12px;
 }
-.clear-filters-btn {
+.filter-label {
+  font-size: 11px;
+  color: var(--muted);
+  display: block;
+  font-weight: 700;
+}
+
+.active-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
+}
+
+.active-filters-label {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-right: 2px;
+}
+
+.filter-chip {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  gap: 6px;
-  min-height: 38px;
-  min-width: 108px;
-  padding: 0 14px;
-  border: 1px solid color-mix(in srgb, var(--danger) 55%, var(--line));
-  border-radius: 8px;
+  gap: 5px;
+  min-height: 26px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--accent) 24%, var(--line));
+  background: color-mix(in srgb, var(--accent) 10%, var(--panel));
+  color: var(--text);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.filter-chip-key {
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.filter-chip-clear {
+  margin-left: auto;
+  border-color: color-mix(in srgb, var(--danger) 35%, var(--line));
   background: color-mix(in srgb, var(--danger) 8%, var(--panel));
   color: var(--danger);
-  font-size: 13px;
-  font-weight: 700;
   text-decoration: none;
-  white-space: nowrap;
-  transition: background 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
+  transition: background 0.15s ease, border-color 0.15s ease;
 }
-.clear-filters-btn:hover {
+
+.filter-chip-clear:hover {
   background: color-mix(in srgb, var(--danger) 14%, var(--panel));
-  border-color: var(--danger);
-  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--danger) 55%, var(--line));
 }
-.filter-label { font-size: 12px; color: var(--muted); margin-bottom: 3px; display: block; font-weight: 600; }
 
 .new-order-btn {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  min-height: 34px;
+  padding: 0 14px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+  color: #fff;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 12px;
   white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(15, 118, 110, 0.18);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.new-order-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(15, 118, 110, 0.22);
+}
+
+[data-theme="dark"] .new-order-btn {
+  box-shadow: 0 4px 12px rgba(20, 184, 166, 0.16);
 }
 
 .order-card {
@@ -616,10 +684,17 @@
 }
 
 @media (max-width: 640px) {
-  .status-tabs-wrap { gap: 10px; }
-  .status-tabs { width: 100%; padding-bottom: 6px; }
-  .filters-bar select, .filters-bar input[type="date"] { width: 100%; }
-  .new-order-btn { margin-left: 0; width: 100%; justify-content: center; }
+  .status-tab { min-height: 28px; padding: 0 4px; gap: 3px; }
+  .status-tab-icon { font-size: 10px; }
+  .status-tab-label { font-size: 9px; }
+  .status-tab-count { min-width: 14px; height: 14px; font-size: 8px; padding: 0 3px; }
+  .filters-panel { padding: 10px 12px; }
+  .filters-bar > div { flex: 1 1 calc(50% - 4px); max-width: none; }
+  .filters-bar > div.filter-date { flex: 1 1 calc(50% - 4px); min-width: 0; }
+  .filters-bar > div.filter-action { width: 100%; margin-left: 0; }
+  .new-order-btn { width: 100%; justify-content: center; }
+  .active-filters { gap: 5px; }
+  .filter-chip-clear { margin-left: 0; width: 100%; justify-content: center; }
   .order-header-side { margin-left: 0; width: 100%; justify-content: space-between; }
   .order-card-actions { width: 100%; justify-content: flex-start; }
   .order-card-status-select { min-width: 100%; width: 100%; }
@@ -630,23 +705,11 @@
 {% block content %}
 <div class="orders-layout">
 
-  <!-- Status Tabs -->
-  <div class="status-tabs-wrap">
-    <div class="status-tabs">
-      {% for item in status_tabs %}
-        <button type="button" class="status-tab {% if status_tab == item.value %}active{% endif %}" onclick="switchTab('{{ item.value }}')">
-          <span class="status-tab-icon">{{ item.icon }}</span>
-          <span class="status-tab-label">{{ item.label }}</span>
-          <span class="status-tab-count">{{ item.count }}</span>
-        </button>
-      {% endfor %}
-    </div>
-  </div>
-
   <!-- Filters -->
-  <form method="get" id="filter-form">
+  <form method="get" id="filter-form" class="filters-panel">
     <input type="hidden" name="status_tab" value="{{ status_tab }}">
-    <div class="filters-bar" style="margin-top:14px;">
+
+    <div class="filters-bar">
       {% if can_view_all_orders %}
         <div class="filter-select">
           <span class="filter-label">Sotuvchi</span>
@@ -686,24 +749,63 @@
         <span class="filter-label">Gacha</span>
         <input type="date" name="date_to" value="{{ filters.date_to }}" onchange="this.form.submit()">
       </div>
-      {% if filters.sold_by or filters.delivery_type or filters.payment_status or filters.date_from or filters.date_to %}
-        <div class="filter-action">
-          <a href="?status_tab={{ status_tab }}" class="clear-filters-btn">
-            <span aria-hidden="true">✕</span>
-            <span>Tozalash</span>
-          </a>
-        </div>
-      {% endif %}
-      <div class="filter-action" style="margin-left:auto;">
-        <a href="{% url 'orders:create' %}" class="new-order-btn" style="display:inline-flex;align-items:center;gap:6px;padding:10px 16px;border-radius:8px;background:var(--accent);color:#fff;text-decoration:none;font-weight:700;font-size:14px;">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+      <div class="filter-action">
+        <a href="{% url 'orders:create' %}" class="new-order-btn">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
             <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
           </svg>
           Yangi buyurtma
         </a>
       </div>
     </div>
+
+    {% if filters.sold_by or filters.delivery_type or filters.payment_status or filters.date_from or filters.date_to %}
+      <div class="active-filters">
+        <span class="active-filters-label">Faol</span>
+        {% if filters.sold_by %}
+          {% for seller in sellers %}
+            {% if filters.sold_by == seller.pk|stringformat:"s" %}
+              <span class="filter-chip"><span class="filter-chip-key">Sotuvchi</span> {{ seller.get_full_name|default:seller.username }}</span>
+            {% endif %}
+          {% endfor %}
+        {% endif %}
+        {% if filters.delivery_type %}
+          {% for val, label in delivery_choices %}
+            {% if filters.delivery_type == val %}
+              <span class="filter-chip"><span class="filter-chip-key">Yetkazish</span> {{ label }}</span>
+            {% endif %}
+          {% endfor %}
+        {% endif %}
+        {% if filters.payment_status %}
+          {% for val, label in payment_status_choices %}
+            {% if filters.payment_status == val %}
+              <span class="filter-chip"><span class="filter-chip-key">To'lov</span> {{ label }}</span>
+            {% endif %}
+          {% endfor %}
+        {% endif %}
+        {% if filters.date_from %}
+          <span class="filter-chip"><span class="filter-chip-key">Dan</span> {{ filters.date_from_display }}</span>
+        {% endif %}
+        {% if filters.date_to %}
+          <span class="filter-chip"><span class="filter-chip-key">Gacha</span> {{ filters.date_to_display }}</span>
+        {% endif %}
+        <a href="?status_tab={{ status_tab }}" class="filter-chip filter-chip-clear">✕ Tozalash</a>
+      </div>
+    {% endif %}
   </form>
+
+  <!-- Status Tabs -->
+  <div class="status-tabs-wrap">
+    <div class="status-tabs">
+      {% for item in status_tabs %}
+        <button type="button" class="status-tab {% if status_tab == item.value %}active{% endif %}" onclick="switchTab('{{ item.value }}')">
+          <span class="status-tab-icon">{{ item.icon }}</span>
+          <span class="status-tab-label">{{ item.label }}</span>
+          <span class="status-tab-count">{{ item.count }}</span>
+        </button>
+      {% endfor %}
+    </div>
+  </div>
 
   {% if status_groups %}
     {% for date, orders, is_today in status_groups %}
