@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Buyurtmalar — Navbat{% endblock %}
+{% block title %}Buyurtmalar{% endblock %}
 
 {% block extra_css %}
 .rate-bar {
@@ -17,30 +17,89 @@
   color: var(--text);
 }
 
-.tabs {
+.status-tabs-wrap {
   display: flex;
-  gap: 4px;
-  margin-bottom: 16px;
-  border-bottom: 2px solid var(--line);
-  padding-bottom: 0;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 12px;
 }
 
-.tab-btn {
-  background: none;
-  border: none;
-  border-bottom: 2px solid transparent;
-  margin-bottom: -2px;
-  padding: 10px 18px;
-  font-weight: 700;
-  font-size: 14px;
+.status-tabs {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 4px 2px 8px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--accent) 42%, var(--line)) transparent;
+}
+
+.status-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  min-height: 46px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--line) 88%, transparent);
+  background: color-mix(in srgb, var(--panel) 94%, var(--bg));
   color: var(--muted);
   cursor: pointer;
-  border-radius: 0;
-  min-height: unset;
-  transition: color 0.15s, border-color 0.15s;
+  white-space: nowrap;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
 }
-.tab-btn:hover { color: var(--text); }
-.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+.status-tab:hover {
+  color: var(--text);
+  border-color: color-mix(in srgb, var(--accent) 28%, var(--line));
+  transform: translateY(-1px);
+}
+
+.status-tab.active {
+  color: #ffffff;
+  border-color: transparent;
+  background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+  box-shadow: 0 14px 26px rgba(15, 118, 110, 0.18);
+}
+
+[data-theme="dark"] .status-tab.active {
+  box-shadow: 0 14px 26px rgba(20, 184, 166, 0.18);
+}
+
+.status-tab-icon {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.status-tab-label {
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.status-tab-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--bg) 82%, transparent);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.status-tab.active .status-tab-count {
+  background: rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+}
 
 .filters-bar {
   display: flex;
@@ -163,7 +222,6 @@
 .filter-label { font-size: 12px; color: var(--muted); margin-bottom: 3px; display: block; font-weight: 600; }
 
 .new-order-btn {
-  margin-left: auto;
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -188,6 +246,16 @@
   flex-wrap: wrap;
   margin-bottom: 10px;
 }
+
+.order-header-side {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
 .order-number {
   font-weight: 800;
   font-size: 15px;
@@ -224,6 +292,34 @@
 [data-theme="dark"] .badge-shipping    { background: #4c1d95; color: #c4b5fd; }
 [data-theme="dark"] .badge-delivered   { background: #14532d; color: #86efac; }
 [data-theme="dark"] .badge-cancelled   { background: #7f1d1d; color: #fca5a5; }
+
+.seller-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--line));
+  background: color-mix(in srgb, var(--panel) 86%, var(--bg));
+  color: var(--accent-dark);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.order-created-at {
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+[data-theme="dark"] .seller-pill {
+  border-color: color-mix(in srgb, var(--accent) 32%, var(--line));
+  background: color-mix(in srgb, var(--panel) 92%, black 8%);
+  color: #99f6e4;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
 
 .order-meta {
   font-size: 13px;
@@ -267,22 +363,151 @@
 .order-total { font-weight: 700; font-size: 15px; }
 .order-total-uzs { font-size: 13px; color: var(--muted); }
 
-.status-btns {
+.order-card-actions {
   display: flex;
-  gap: 6px;
+  align-items: center;
+  justify-content: flex-end;
   flex-wrap: wrap;
+  gap: 8px;
 }
+
+.order-card-actions form {
+  margin: 0;
+  display: inline-flex;
+}
+
+.order-card-status-box {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.order-card-status-field {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.order-card-status-field::after {
+  content: "";
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid color-mix(in srgb, var(--muted) 80%, white 20%);
+  border-bottom: 2px solid color-mix(in srgb, var(--muted) 80%, white 20%);
+  transform: translateY(-65%) rotate(45deg);
+  pointer-events: none;
+}
+
+.order-card-status-select {
+  min-width: 188px;
+  min-height: 36px;
+  padding: 6px 34px 6px 12px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--accent) 20%, var(--line));
+  background: color-mix(in srgb, var(--panel) 84%, var(--bg));
+  background-image: none !important;
+  background-repeat: no-repeat !important;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 700;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  outline: none;
+  line-height: 1.2;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+}
+
+.order-card-status-select::-ms-expand {
+  display: none;
+}
+
+.order-card-status-select option {
+  background: var(--panel);
+  color: var(--text);
+}
+
+.order-card-status-select:hover {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
+}
+
+.order-card-status-select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 14%, transparent);
+}
+
+.order-card-status-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.order-card-action-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--btn-secondary-border);
+  background: var(--btn-secondary-bg);
+  color: var(--btn-secondary-color);
+  font-size: 13px;
+  font-weight: 700;
+  font-family: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+
+.order-card-action-link svg {
+  flex-shrink: 0;
+}
+
+.order-card-action-link.icon-only {
+  width: 36px;
+  min-width: 36px;
+  min-height: 36px;
+  padding: 0;
+  border-radius: 10px;
+}
+
+.order-card-action-link:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--toggle-bg);
+}
+
+.order-card-action-link.danger {
+  border-color: var(--danger);
+  color: var(--danger);
+  background: transparent;
+}
+
+.order-card-action-link.danger:hover {
+  background: #fee2e2;
+}
+
+[data-theme="dark"] .order-card-action-link.danger:hover {
+  background: #7f1d1d;
+}
+
 .status-btn {
   font-size: 12px;
   font-weight: 700;
-  min-height: 34px;
-  padding: 5px 12px;
-  border-radius: 6px;
+  min-height: 32px;
+  padding: 4px 10px;
+  border-radius: 999px;
   cursor: pointer;
   background: var(--btn-secondary-bg);
   color: var(--btn-secondary-color);
   border: 1px solid var(--btn-secondary-border);
-  transition: background 0.15s, border-color 0.15s;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
 }
 .status-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--toggle-bg); }
 .status-btn.next-step { background: var(--accent); color: #fff; border-color: var(--accent); }
@@ -291,12 +516,6 @@
 
 [data-theme="dark"] .status-btn.cancel-btn:hover { background: #7f1d1d; }
 
-.seller-tag {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--muted);
-}
-
 .empty-state {
   text-align: center;
   padding: 48px 20px;
@@ -304,40 +523,131 @@
   font-size: 15px;
 }
 
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.modal-content {
+  background: #ffffff;
+  color: var(--text);
+  max-width: 420px;
+  width: 100%;
+  padding: 28px;
+  border-radius: 18px;
+  text-align: center;
+  border: 1px solid color-mix(in srgb, var(--line) 82%, #ffffff);
+  box-shadow: 0 28px 60px rgba(15, 23, 42, 0.18), 0 10px 24px rgba(15, 23, 42, 0.1);
+  transform: scale(0.95);
+  transition: transform 0.2s ease-out, opacity 0.2s ease-out;
+  opacity: 0;
+}
+
+[data-theme="dark"] .modal-content {
+  background: var(--panel);
+  border-color: color-mix(in srgb, var(--line) 88%, transparent);
+  box-shadow: 0 28px 60px rgba(2, 6, 23, 0.42), 0 10px 24px rgba(2, 6, 23, 0.28);
+}
+
+.modal-icon {
+  font-size: 48px;
+  line-height: 1;
+  margin-bottom: 14px;
+}
+
+.modal-title {
+  margin: 0 0 10px;
+  font-size: 22px;
+  line-height: 1.25;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+[data-theme="dark"] .modal-title {
+  color: var(--text);
+}
+
+.modal-text {
+  margin: 0 0 24px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #475569;
+}
+
+[data-theme="dark"] .modal-text {
+  color: var(--muted);
+}
+
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.modal-actions .status-btn,
+.modal-actions .delete-confirm-btn {
+  min-width: 128px;
+  min-height: 40px;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-weight: 700;
+}
+
+.delete-confirm-btn {
+  border: none;
+  background: var(--danger);
+  color: white;
+}
+
+.modal-overlay.show {
+  display: flex;
+}
+
+.modal-overlay.show .modal-content {
+  transform: scale(1);
+  opacity: 1;
+}
+
 @media (max-width: 640px) {
+  .status-tabs-wrap { gap: 10px; }
+  .status-tabs { width: 100%; padding-bottom: 6px; }
   .filters-bar select, .filters-bar input[type="date"] { width: 100%; }
   .new-order-btn { margin-left: 0; width: 100%; justify-content: center; }
+  .order-header-side { margin-left: 0; width: 100%; justify-content: space-between; }
+  .order-card-actions { width: 100%; justify-content: flex-start; }
+  .order-card-status-select { min-width: 100%; width: 100%; }
+  .order-card-status-field { width: 100%; }
 }
 {% endblock %}
 
 {% block content %}
 <div class="orders-layout">
 
-  <!-- Tabs -->
-  <div style="display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:0;">
-    <div class="tabs" style="flex:1;min-width:200px;">
-      <button class="tab-btn {% if tab == 'queue' %}active{% endif %}" onclick="switchTab('queue')">
-        Navbat
-        <span style="margin-left:4px;opacity:0.7;font-weight:400;">({{ queue_count }})</span>
-      </button>
-      <button class="tab-btn {% if tab == 'done' %}active{% endif %}" onclick="switchTab('done')">
-        Yakunlangan
-        <span style="margin-left:4px;opacity:0.7;font-weight:400;">({{ done_count }})</span>
-      </button>
+  <!-- Status Tabs -->
+  <div class="status-tabs-wrap">
+    <div class="status-tabs">
+      {% for item in status_tabs %}
+        <button type="button" class="status-tab {% if status_tab == item.value %}active{% endif %}" onclick="switchTab('{{ item.value }}')">
+          <span class="status-tab-icon">{{ item.icon }}</span>
+          <span class="status-tab-label">{{ item.label }}</span>
+          <span class="status-tab-count">{{ item.count }}</span>
+        </button>
+      {% endfor %}
     </div>
-    <a href="{% url 'orders:create' %}" class="new-order-btn" style="display:inline-flex;align-items:center;gap:6px;padding:10px 16px;border-radius:8px;background:var(--accent);color:#fff;text-decoration:none;font-weight:700;font-size:14px;">
-      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-        <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
-      </svg>
-      Yangi buyurtma
-    </a>
   </div>
 
   <!-- Filters -->
   <form method="get" id="filter-form">
-    <input type="hidden" name="tab" value="{{ tab }}">
+    <input type="hidden" name="status_tab" value="{{ status_tab }}">
     <div class="filters-bar" style="margin-top:14px;">
-      {% if user.is_superuser %}
+      {% if can_view_all_orders %}
         <div class="filter-select">
           <span class="filter-label">Sotuvchi</span>
           <select name="sold_by" onchange="this.form.submit()">
@@ -378,67 +688,70 @@
       </div>
       {% if filters.sold_by or filters.delivery_type or filters.payment_status or filters.date_from or filters.date_to %}
         <div class="filter-action">
-          <a href="?tab={{ tab }}" class="clear-filters-btn">
+          <a href="?status_tab={{ status_tab }}" class="clear-filters-btn">
             <span aria-hidden="true">✕</span>
             <span>Tozalash</span>
           </a>
         </div>
       {% endif %}
+      <div class="filter-action" style="margin-left:auto;">
+        <a href="{% url 'orders:create' %}" class="new-order-btn" style="display:inline-flex;align-items:center;gap:6px;padding:10px 16px;border-radius:8px;background:var(--accent);color:#fff;text-decoration:none;font-weight:700;font-size:14px;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
+          </svg>
+          Yangi buyurtma
+        </a>
+      </div>
     </div>
   </form>
 
-  <!-- Queue tab -->
-  <div id="tab-queue" {% if tab != 'queue' %}style="display:none"{% endif %}>
-    {% if queue_groups %}
-      {% for date, orders, is_today in queue_groups %}
-        <div class="date-group" {% if not is_today %}style="border-left:3px solid var(--line);padding-left:12px;margin-left:6px;"{% endif %}>
-          <h3 class="date-header" {% if not is_today %}style="color:var(--muted);"{% endif %}>
-            {% if is_today %}
-              📅 Bugun, {{ date|date:"d.m.Y" }}
-            {% else %}
-              📅 {{ date|date:"d.m.Y" }}
-            {% endif %}
-          </h3>
-          {% for order in orders %}
-            {% include "orders/_order_card.html" with order=order show_status_btns=True %}
-          {% endfor %}
-        </div>
-      {% endfor %}
-    {% else %}
-      <div class="empty-state">Navbatda buyurtma yo'q</div>
-    {% endif %}
-  </div>
+  {% if status_groups %}
+    {% for date, orders, is_today in status_groups %}
+      <div class="date-group" {% if not is_today %}style="border-left:3px solid var(--line);padding-left:12px;margin-left:6px;"{% endif %}>
+        <h3 class="date-header" {% if not is_today %}style="color:var(--muted);"{% endif %}>
+          {% if is_today %}
+            📅 Bugun, {{ date|date:"d.m.Y" }}
+          {% else %}
+            📅 {{ date|date:"d.m.Y" }}
+          {% endif %}
+        </h3>
+        {% for order in orders %}
+          {% include "orders/_order_card.html" with order=order %}
+        {% endfor %}
+      </div>
+    {% endfor %}
+  {% else %}
+    <div class="empty-state">{% if status_tab == "ALL" %}Buyurtma yo'q{% else %}{{ selected_status_label }} statusida buyurtma yo'q{% endif %}</div>
+  {% endif %}
 
-  <!-- Done tab -->
-  <div id="tab-done" {% if tab != 'done' %}style="display:none"{% endif %}>
-    {% if done_groups %}
-      {% for date, orders, is_today in done_groups %}
-        <div class="date-group" {% if not is_today %}style="border-left:3px solid var(--line);padding-left:12px;margin-left:6px;"{% endif %}>
-          <h3 class="date-header" {% if not is_today %}style="color:var(--muted);"{% endif %}>
-            {% if is_today %}
-              📅 Bugun, {{ date|date:"d.m.Y" }}
-            {% else %}
-              📅 {{ date|date:"d.m.Y" }}
-            {% endif %}
-          </h3>
-          {% for order in orders %}
-            {% include "orders/_order_card.html" with order=order show_status_btns=False %}
-          {% endfor %}
-        </div>
-      {% endfor %}
-    {% else %}
-      <div class="empty-state">Yakunlangan buyurtma yo'q</div>
-    {% endif %}
-  </div>
+</div>
 
+<div id="delete-confirm-modal" class="modal-overlay">
+  <div class="panel modal-content">
+    <div class="modal-icon">⚠️</div>
+    <h3 class="modal-title">O'chirishni tasdiqlaysizmi?</h3>
+    <p class="modal-text">
+      <strong id="delete-order-number-label"></strong> buyurtmasi o'chiriladi. Bu amalni qaytarib bo'lmaydi.
+    </p>
+    <div class="modal-actions">
+      <button type="button" onclick="closeCardDeleteModal()" class="status-btn">
+        Bekor qilish
+      </button>
+      <button type="button" onclick="confirmCardDelete()" class="delete-confirm-btn">
+        Ha, o'chirish
+      </button>
+    </div>
+  </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
+let pendingDeleteForm = null;
+
 function switchTab(tab) {
   const form = document.getElementById('filter-form');
-  form.querySelector('[name="tab"]').value = tab;
+  form.querySelector('[name="status_tab"]').value = tab;
   form.submit();
 }
 
@@ -446,19 +759,95 @@ function updateStatus(orderId, status) {
   const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')
     ? document.querySelector('[name=csrfmiddlewaretoken]').value
     : '{{ csrf_token }}';
-  fetch(`/orders/${orderId}/status/`, {
+  return fetch(`/orders/${orderId}/status/`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
+      'X-Requested-With': 'XMLHttpRequest',
       'X-CSRFToken': csrfToken,
     },
     body: `status=${encodeURIComponent(status)}`,
-  }).then(r => r.json()).then(data => {
-    if (data.status) location.reload();
   });
 }
 
+function onCardStatusChange(orderId, select) {
+  const actions = document.getElementById(`card-status-actions-${orderId}`);
+  if (!actions) return;
+  actions.style.display = select.value !== select.dataset.originalStatus ? 'flex' : 'none';
+}
+
+function resetCardStatus(orderId) {
+  const wrapper = document.querySelector(`.order-card-status-box[data-order-id="${orderId}"]`);
+  const select = wrapper ? wrapper.querySelector('.order-card-status-select') : null;
+  const actions = document.getElementById(`card-status-actions-${orderId}`);
+  if (!select || !actions) return;
+  select.value = select.dataset.originalStatus;
+  actions.style.display = 'none';
+}
+
+function saveCardStatus(orderId) {
+  const wrapper = document.querySelector(`.order-card-status-box[data-order-id="${orderId}"]`);
+  const select = wrapper ? wrapper.querySelector('.order-card-status-select') : null;
+  if (!select) return;
+
+  updateStatus(orderId, select.value)
+    .then(async (response) => {
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data.error || "Statusni saqlashda xatolik yuz berdi.");
+      }
+      return data;
+    })
+    .then(() => {
+      location.reload();
+    })
+    .catch((error) => {
+      alert(error.message || "Statusni saqlab bo'lmadi.");
+      resetCardStatus(orderId);
+    });
+}
+
+function openCardDeleteModal(button) {
+  const form = button ? button.closest('form') : null;
+  const modal = document.getElementById('delete-confirm-modal');
+  const label = document.getElementById('delete-order-number-label');
+  if (!form || !modal || !label) return;
+
+  pendingDeleteForm = form;
+  label.textContent = form.dataset.orderNumber || 'Ushbu';
+  modal.classList.add('show');
+}
+
+function closeCardDeleteModal() {
+  const modal = document.getElementById('delete-confirm-modal');
+  if (modal) {
+    modal.classList.remove('show');
+  }
+  pendingDeleteForm = null;
+}
+
+function confirmCardDelete() {
+  if (pendingDeleteForm) {
+    pendingDeleteForm.submit();
+  }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+  const deleteModal = document.getElementById('delete-confirm-modal');
+  if (deleteModal) {
+    deleteModal.addEventListener('click', (e) => {
+      if (e.target === deleteModal) {
+        closeCardDeleteModal();
+      }
+    });
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      closeCardDeleteModal();
+    }
+  });
+
   document.querySelectorAll('.order-card').forEach(card => {
     card.addEventListener('click', (e) => {
       // Ignore clicks on links, buttons, select, inputs or any elements nested inside them

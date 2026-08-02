@@ -348,23 +348,25 @@
             </div>
           {% else %}
             <div style="padding:10px 12px; border-radius:8px; background:var(--bg); border:1px solid var(--line); color:var(--muted); font-size:13px; line-height:1.45;">
-              Bu buyurtmada statusni faqat admin o'zgartira oladi.
+              Bu buyurtmada statusni faqat ruxsat berilgan user o'zgartira oladi.
             </div>
           {% endif %}
         </div>
 
         <div class="action-btns">
-          <a href="{% url 'orders:detail' order.pk %}?edit=1" class="action-btn secondary">
-            ✏️ Tahrirlash
-          </a>
+          {% if can_edit_order %}
+            <a href="{% url 'orders:detail' order.pk %}?edit=1" class="action-btn secondary">
+              ✏️ Tahrirlash
+            </a>
+          {% endif %}
 
-          {% if request.user.is_superuser and order.production_status != 'CANCELLED' %}
+          {% if can_cancel_order and order.production_status != 'CANCELLED' %}
             <button class="action-btn danger" onclick="cancelOrderDirectly()">
               ✕ Bekor qilish
             </button>
           {% endif %}
 
-          {% if request.user.is_superuser %}
+          {% if can_delete_order %}
             <form id="delete-order-form" action="{% url 'orders:delete' order.pk %}" method="post" style="width: 100%; margin-top: 4px;">
               {% csrf_token %}
               <button type="button" onclick="openDeleteModal()" class="action-btn" style="background: var(--danger); color: white; width: 100%; border: none; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 6px;">

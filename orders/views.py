@@ -4,6 +4,7 @@ from decimal import Decimal, InvalidOperation
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count, Q, Sum
+from django.core.exceptions import PermissionDenied
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
@@ -12,6 +13,27 @@ from django.views.decorators.http import require_POST
 from .models import Order, OrderItem
 
 User = get_user_model()
+
+def _can_user_view_all_orders(user):
+    return user.is_superuser or user.has_perm("orders.view_order") or user.has_perm("orders.change_order") or user.has_perm("orders.delete_order")
+
+
+def _can_user_edit_order(user, order):
+    return user.is_superuser or user.has_perm("orders.change_order") or order.sold_by_id == user.id
+
+
+def _can_user_delete_order(user):
+    return user.is_superuser or user.has_perm("orders.delete_order")
+
+
+def _can_user_cancel_order(user, order):
+    return _can_user_set_production_status(
+        user,
+        Order.ProductionStatus.CANCELLED,
+        order.production_status,
+        order,
+    )
+
 
 def _parse_decimal(value, default=Decimal("0")):
     try:
@@ -22,7 +44,7 @@ def _parse_decimal(value, default=Decimal("0")):
 
 def _orders_for_user(user):
     qs = Order.objects.all()
-    if user.is_superuser:
+    if _can_user_view_all_orders(user):
         return qs
     return qs.filter(sold_by=user)
 
@@ -31,9 +53,11 @@ def _serialize_choices(choices):
     return [{"value": value, "label": label} for value, label in choices]
 
 
-def _can_user_change_production_status(user, current_status=None):
-    if user.is_superuser:
+def _can_user_change_production_status(user, current_status=None, order=None):
+    if user.is_superuser or user.has_perm("orders.change_order"):
         return True
+    if order is not None and order.sold_by_id != user.id:
+        return False
     if not current_status:
         return True
     return current_status in {
@@ -42,11 +66,11 @@ def _can_user_change_production_status(user, current_status=None):
     }
 
 
-def _allowed_production_status_choices_for_user(user, delivery_type, current_status=None):
+def _allowed_production_status_choices_for_user(user, delivery_type, current_status=None, order=None):
     choices = Order.production_status_choices_for_delivery(delivery_type)
-    if user.is_superuser:
+    if user.is_superuser or user.has_perm("orders.change_order"):
         return choices
-    if not _can_user_change_production_status(user, current_status):
+    if not _can_user_change_production_status(user, current_status, order):
         return []
     allowed_statuses = {
         Order.ProductionStatus.AGREED,
@@ -59,9 +83,11 @@ def _all_production_status_choices_map(delivery_type):
     return dict(Order.production_status_choices_for_delivery(delivery_type))
 
 
-def _can_user_set_production_status(user, target_status, current_status=None):
-    if user.is_superuser:
+def _can_user_set_production_status(user, target_status, current_status=None, order=None):
+    if user.is_superuser or user.has_perm("orders.change_order"):
         return True
+    if order is not None and order.sold_by_id != user.id:
+        return False
     allowed_statuses = {
         Order.ProductionStatus.AGREED,
         Order.ProductionStatus.QUEUED,
@@ -91,6 +117,37 @@ def _all_production_status_groups_json():
     return json.dumps(groups, ensure_ascii=False)
 
 
+def _attach_order_permissions(user, orders):
+    for order in orders:
+        order.card_can_edit = _can_user_edit_order(user, order)
+        order.card_can_delete = _can_user_delete_order(user)
+        order.card_can_change_status = _can_user_change_production_status(
+            user,
+            order.production_status,
+            order,
+        )
+        order.card_status_choices = _allowed_production_status_choices_for_user(
+            user,
+            order.delivery_type,
+            order.production_status,
+            order,
+        )
+    return orders
+
+
+def _order_status_tabs():
+    return [
+        {"value": "ALL", "icon": "📦", "label": "Barchasi"},
+        {"value": Order.ProductionStatus.AGREED, "icon": "🤝", "label": "Kelishuvda"},
+        {"value": Order.ProductionStatus.QUEUED, "icon": "📋", "label": "Navbatda"},
+        {"value": Order.ProductionStatus.IN_PROGRESS, "icon": "🛠️", "label": "Tayyorlanmoqda"},
+        {"value": Order.ProductionStatus.READY, "icon": "✅", "label": "Tayyor"},
+        {"value": Order.ProductionStatus.SHIPPING, "icon": "🚚", "label": "Yetkazilmoqda"},
+        {"value": Order.ProductionStatus.DELIVERED, "icon": "✔️", "label": "Yakunlandi"},
+        {"value": Order.ProductionStatus.CANCELLED, "icon": "❌", "label": "Bekor qilindi"},
+    ]
+
+
 @login_required
 def order_list(request):
     from calculator.models import CalculatorSettings
@@ -104,28 +161,21 @@ def order_list(request):
     except:
         usd_rate = 12850
 
-    tab = request.GET.get("tab", "queue")  # queue | done | all
+    status_tabs = _order_status_tabs()
+    valid_status_values = {item["value"] for item in status_tabs}
+    selected_status = request.GET.get("status_tab", "ALL")
+    if selected_status not in valid_status_values:
+        selected_status = "ALL"
 
     # Base querysets: if superuser, show all; else only own orders
-    if request.user.is_superuser:
-        queue_qs = Order.queue_queryset().prefetch_related("items").select_related("sold_by")
-        done_qs = Order.objects.filter(
-            production_status__in=[
-                Order.ProductionStatus.DELIVERED,
-                Order.ProductionStatus.CANCELLED,
-            ]
-        ).prefetch_related("items").select_related("sold_by").order_by("-updated_at")
-    else:
-        queue_qs = Order.queue_queryset().filter(sold_by=request.user).prefetch_related("items").select_related("sold_by")
-        done_qs = Order.objects.filter(
-            production_status__in=[
-                Order.ProductionStatus.DELIVERED,
-                Order.ProductionStatus.CANCELLED,
-            ],
-            sold_by=request.user
-        ).prefetch_related("items").select_related("sold_by").order_by("-updated_at")
+    can_view_all_orders = _can_user_view_all_orders(request.user)
 
-    # Filters (apply to both tabs)
+    if can_view_all_orders:
+        orders_qs = Order.objects.all().prefetch_related("items").select_related("sold_by").order_by("-updated_at")
+    else:
+        orders_qs = Order.objects.filter(sold_by=request.user).prefetch_related("items").select_related("sold_by").order_by("-updated_at")
+
+    # Common filters
     sold_by = request.GET.get("sold_by")
     delivery_type = request.GET.get("delivery_type")
     payment_status = request.GET.get("payment_status")
@@ -133,7 +183,7 @@ def order_list(request):
     date_to = request.GET.get("date_to")
 
     def apply_filters(qs):
-        if sold_by and request.user.is_superuser:
+        if sold_by and can_view_all_orders:
             qs = qs.filter(sold_by_id=sold_by)
         if delivery_type:
             qs = qs.filter(delivery_type=delivery_type)
@@ -145,8 +195,19 @@ def order_list(request):
             qs = qs.filter(created_at__date__lte=date_to)
         return qs
 
-    queue_qs = apply_filters(queue_qs)
-    done_qs = apply_filters(done_qs)
+    filtered_qs = apply_filters(orders_qs)
+
+    status_counts_map = {}
+    for item in status_tabs:
+        if item["value"] == "ALL":
+            status_counts_map[item["value"]] = filtered_qs.count()
+        else:
+            status_counts_map[item["value"]] = filtered_qs.filter(production_status=item["value"]).count()
+
+    if selected_status == "ALL":
+        selected_qs = filtered_qs
+    else:
+        selected_qs = filtered_qs.filter(production_status=selected_status)
 
     # Group orders by date
     def group_by_date(orders):
@@ -158,32 +219,33 @@ def order_list(request):
         # Sort groups by date descending
         sorted_groups = sorted(groups.items(), key=lambda x: x[0], reverse=True)
         # Add "is_today" flag
-        return [(date, orders, date == today) for date, orders in sorted_groups]
+        return [(date, _attach_order_permissions(request.user, orders), date == today) for date, orders in sorted_groups]
 
-    queue_groups = group_by_date(queue_qs) if tab in ("queue", "all") else []
-    done_groups = group_by_date(done_qs) if tab in ("done", "all") else []
+    status_groups = group_by_date(selected_qs)
 
     # For superusers, show all regular sellers in filter; for others, no seller filter
-    if request.user.is_superuser:
+    if can_view_all_orders:
         sellers = User.objects.filter(is_superuser=False).order_by("first_name", "username")
     else:
         sellers = []
 
     return render(request, "orders/order_list.html", {
         "active_nav": "orders",
-        "tab": tab,
-        "queue_groups": queue_groups,
-        "done_groups": done_groups,
-        "queue_count": Order.queue_queryset().count() if request.user.is_superuser else Order.queue_queryset().filter(sold_by=request.user).count(),
-        "done_count": Order.objects.filter(
-            production_status__in=[Order.ProductionStatus.DELIVERED, Order.ProductionStatus.CANCELLED]
-        ).count() if request.user.is_superuser else Order.objects.filter(
-            production_status__in=[Order.ProductionStatus.DELIVERED, Order.ProductionStatus.CANCELLED],
-            sold_by=request.user
-        ).count(),
+        "status_tab": selected_status,
+        "selected_status_label": next((item["label"] for item in status_tabs if item["value"] == selected_status), ""),
+        "status_groups": status_groups,
+        "status_tabs": [
+            {
+                **item,
+                "count": status_counts_map.get(item["value"], 0),
+            }
+            for item in status_tabs
+        ],
         "sellers": sellers,
+        "can_view_all_orders": can_view_all_orders,
         "usd_rate": usd_rate,
         "filters": {
+            "status_tab": selected_status,
             "sold_by": sold_by,
             "delivery_type": delivery_type,
             "payment_status": payment_status,
@@ -227,6 +289,7 @@ def _form_context(user, order, initial, extra=None):
         user,
         v_delivery_type or Order.DeliveryType.DELIVERY,
         getattr(o, "production_status", None),
+        o,
     )
 
     raw_delivery_time = src.get("delivery_time", getattr(o, "delivery_time", ""))
@@ -270,6 +333,7 @@ def _form_context(user, order, initial, extra=None):
         "can_edit_production_status": _can_user_change_production_status(
             user,
             getattr(o, "production_status", None),
+            o,
         ),
     }
 
@@ -365,9 +429,13 @@ def order_detail(request, pk):
         pk=pk,
     )
     if request.method == "GET" and request.GET.get("edit") == "1":
+        if not _can_user_edit_order(request.user, order):
+            raise PermissionDenied("Sizda buyurtmani tahrirlash huquqi yo'q.")
         return render(request, "orders/order_form.html", _form_context(request.user, order, {}))
 
     if request.method == "POST":
+        if not _can_user_edit_order(request.user, order):
+            raise PermissionDenied("Sizda buyurtmani tahrirlash huquqi yo'q.")
         try:
             _save_order(request, instance=order)
             return redirect("orders:detail", pk=order.pk)
@@ -380,6 +448,7 @@ def order_detail(request, pk):
         request.user,
         order.delivery_type,
         order.production_status,
+        order,
     )
     allowed_production_status_values = {value for value, _ in allowed_production_status_choices}
 
@@ -397,9 +466,13 @@ def order_detail(request, pk):
         "payment_type_choices": Order.PaymentType.choices,
         "payment_status_choices": Order.PaymentStatus.choices,
         "production_status_choices": allowed_production_status_choices,
+        "can_edit_order": _can_user_edit_order(request.user, order),
+        "can_delete_order": _can_user_delete_order(request.user),
+        "can_cancel_order": _can_user_cancel_order(request.user, order),
         "can_change_production_status": _can_user_change_production_status(
             request.user,
             order.production_status,
+            order,
         ),
         "show_current_status_option": order.production_status not in allowed_production_status_values,
         "current_status_label": _all_production_status_choices_map(order.delivery_type).get(
@@ -417,9 +490,9 @@ def order_update_status(request, pk):
     valid = [s for s, _ in Order.production_status_choices_for_delivery(order.delivery_type)]
     if new_status not in valid:
         return JsonResponse({"error": "Noto'g'ri status."}, status=400)
-    if not _can_user_set_production_status(request.user, new_status, order.production_status):
+    if not _can_user_set_production_status(request.user, new_status, order.production_status, order):
         return JsonResponse(
-            {"error": "Oddiy user statusni faqat buyurtma joriy statusi 'Kelishuvda' yoki 'Navbatda' bo'lsa o'zgartira oladi."},
+            {"error": "Siz bu buyurtma uchun ushbu statusni o'zgartira olmaysiz."},
             status=403,
         )
     order.production_status = new_status
@@ -437,11 +510,10 @@ def order_update_status(request, pk):
 
 @login_required
 def order_delete(request, pk):
-    if not request.user.is_superuser:
-        from django.core.exceptions import PermissionDenied
-        raise PermissionDenied("Faqat administratorlar buyurtmani o'chira oladi.")
+    if not _can_user_delete_order(request.user):
+        raise PermissionDenied("Sizda buyurtmani o'chirish huquqi yo'q.")
 
-    order = get_object_or_404(Order, pk=pk)
+    order = get_object_or_404(_orders_for_user(request.user), pk=pk)
     if request.method == "POST":
         order.delete()
         return redirect("orders:list")
@@ -569,8 +641,9 @@ def _save_order(request, instance=None):
         request.user,
         production_status,
         getattr(instance, "production_status", None),
+        instance,
     ):
-        errors.append("Oddiy user statusni faqat buyurtma joriy statusi 'Kelishuvda' yoki 'Navbatda' bo'lsa o'zgartira oladi.")
+        errors.append("Siz bu buyurtma uchun ushbu statusni o'zgartira olmaysiz.")
     if delivery_type and (not delivery_date or not delivery_time):
         errors.append("Yetkazib berish sanasi va vaqti kiritilmadi.")
 

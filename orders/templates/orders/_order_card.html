@@ -8,12 +8,14 @@
     <span class="badge {{ order.production_status|status_badge }}">
       {{ order.production_status|status_label:order.delivery_type }}
     </span>
-    <span class="seller-tag">
-      {{ order.sold_by.get_full_name|default:order.sold_by.username }}
-    </span>
-    <span style="margin-left:auto;font-size:12px;color:var(--muted);">
-      {{ order.created_at|date:"d.m.Y H:i" }}
-    </span>
+    <div class="order-header-side">
+      <span class="seller-pill">
+        {{ order.sold_by.get_full_name|default:order.sold_by.username }}
+      </span>
+      <span class="order-created-at">
+        {{ order.created_at|date:"d.m.Y H:i" }}
+      </span>
+    </div>
   </div>
 
   <div class="order-meta">
@@ -42,5 +44,51 @@
     <div>
       <div class="order-total">{{ order.total_price_uzs|format_uzs }} so'm</div>
     </div>
+    {% if order.card_can_change_status or order.card_can_edit or order.card_can_delete %}
+      <div class="order-card-actions">
+        {% if order.card_can_change_status and order.card_status_choices %}
+          <div class="order-card-status-box" data-order-id="{{ order.pk }}">
+            <div class="order-card-status-field">
+              <select
+                class="order-card-status-select"
+                onchange="onCardStatusChange({{ order.pk }}, this)"
+                data-original-status="{{ order.production_status }}"
+              >
+                {% for s_val, s_label in order.card_status_choices %}
+                  <option value="{{ s_val }}" {% if order.production_status == s_val %}selected{% endif %}>{{ s_label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="order-card-status-actions" id="card-status-actions-{{ order.pk }}" style="display:none;">
+              <button type="button" class="status-btn" onclick="resetCardStatus({{ order.pk }})">Bekor qilish</button>
+              <button type="button" class="status-btn next-step" onclick="saveCardStatus({{ order.pk }})">Saqlash</button>
+            </div>
+          </div>
+        {% endif %}
+
+        {% if order.card_can_edit %}
+          <a href="{% url 'orders:detail' order.pk %}?edit=1" class="order-card-action-link icon-only" title="Tahrirlash" aria-label="Tahrirlash">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M4 20h4l10.5-10.5a2.121 2.121 0 0 0-3-3L5 17v3Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="m13.5 6.5 4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </a>
+        {% endif %}
+
+        {% if order.card_can_delete %}
+          <form action="{% url 'orders:delete' order.pk %}" method="post" data-order-number="{{ order.display_order_number }}">
+            {% csrf_token %}
+            <button type="button" class="order-card-action-link danger icon-only" title="O'chirish" aria-label="O'chirish" onclick="openCardDeleteModal(this)">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M4 7h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                <path d="M10 11v6M14 11v6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                <path d="M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </form>
+        {% endif %}
+      </div>
+    {% endif %}
   </div>
 </div>
