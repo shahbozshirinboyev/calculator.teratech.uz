@@ -28,9 +28,9 @@ STATUS_ICONS = {
 PAYMENT_BADGE = {
     "PAID": "badge-paid",
     "PARTIAL": "badge-partial",
-    "ON_DELIVERY": "badge-on-del",
-    "ON_PICKUP": "badge-on-del",
-    "UNPAID": "badge-on-del",
+    "ON_DELIVERY": "badge-on-delivery",
+    "ON_PICKUP": "badge-on-pickup",
+    "UNPAID": "badge-unpaid",
 }
 
 

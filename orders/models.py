@@ -141,6 +141,13 @@ class Order(models.Model):
             return raw_number.replace("ORD#", "ORDER#", 1)
         return raw_number
 
+    @property
+    def remaining_amount(self):
+        """Qoldiq summa - jami narxdan to'langan summani ayirish"""
+        if self.paid_amount:
+            return self.total_price_uzs - self.paid_amount
+        return self.total_price_uzs
+
     def __str__(self):
         return self.display_order_number
 

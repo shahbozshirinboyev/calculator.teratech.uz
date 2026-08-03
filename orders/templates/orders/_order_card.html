@@ -47,19 +47,15 @@
 
     <div class="order-card-content">
   <div class="order-card-header">
-    <a href="{% url 'orders:detail' order.pk %}" class="order-number">{{ order.display_order_number }}</a>
-    <span class="badge {{ order.payment_status|payment_badge }}">
-      {{ order.get_payment_status_display }}
-    </span>
-    <span class="badge {{ order.production_status|status_badge }}">
-      {{ order.production_status|status_label:order.delivery_type }}
-    </span>
+    <div class="order-number-block">
+      <a href="{% url 'orders:detail' order.pk %}" class="order-number">{{ order.display_order_number }}</a>
+      <span class="order-created-at">
+        {{ order.created_at|date:"d.m.Y H:i" }}
+      </span>
+    </div>
     <div class="order-header-side">
       <span class="seller-pill">
         {{ order.sold_by.get_full_name|default:order.sold_by.username }}
-      </span>
-      <span class="order-created-at">
-        {{ order.created_at|date:"d.m.Y H:i" }}
       </span>
     </div>
   </div>
@@ -89,6 +85,15 @@
   <div class="order-footer">
     <div>
       <div class="order-total">{{ order.total_price_uzs|format_uzs }} so'm</div>
+      <div class="order-payment-status-line">
+        <span class="badge {{ order.payment_status|payment_badge }}">
+          {{ order.get_payment_status_display }}
+        </span>
+        {% if order.payment_status == 'PARTIAL' and order.paid_amount %}
+          <span class="payment-detail-inline">To'langan: <strong>{{ order.paid_amount|format_uzs }} so'm</strong></span>
+          <span class="payment-detail-inline">Qoldiq: <strong>{{ order.remaining_amount|format_uzs }} so'm</strong></span>
+        {% endif %}
+      </div>
     </div>
     {% if order.card_can_change_status or order.card_can_edit or order.card_can_delete %}
       <div class="order-card-actions">
