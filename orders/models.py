@@ -144,8 +144,8 @@ class Order(models.Model):
     @property
     def remaining_amount(self):
         """Qoldiq summa - jami narxdan to'langan summani ayirish"""
-        if self.paid_amount:
-            return self.total_price_uzs - self.paid_amount
+        if self.partial_amount:
+            return self.total_price_uzs - self.partial_amount
         return self.total_price_uzs
 
     def __str__(self):
