@@ -300,12 +300,182 @@
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 10px;
-  padding: 16px 18px;
+  padding: 0;
   margin-bottom: 10px;
   transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s ease;
   cursor: pointer;
+  overflow: hidden;
 }
 .order-card:hover { border-color: var(--accent); box-shadow: 0 4px 12px rgba(0,0,0,0.1); transform: translateY(-2px); }
+
+.order-card-layout {
+  display: flex;
+  align-items: stretch;
+  min-height: 100%;
+}
+
+.order-card-status-track {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  padding: 12px 10px 12px 12px;
+  border-right: 1px solid var(--line);
+  background: color-mix(in srgb, var(--bg) 60%, var(--panel));
+  min-width: 168px;
+  max-width: 190px;
+  flex-shrink: 0;
+}
+
+.order-card-status-track::before {
+  content: "";
+  position: absolute;
+  left: 33px;
+  top: 16px;
+  bottom: 16px;
+  width: 2px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 24%, var(--line));
+  z-index: 0;
+}
+
+.order-card-status-step {
+  display: grid;
+  grid-template-columns: 22px 14px 1fr;
+  align-items: center;
+  gap: 4px;
+  position: relative;
+  z-index: 1;
+  padding: 5px 6px;
+  font-size: 11px;
+  line-height: 1.25;
+  color: var(--muted);
+  border-radius: 8px;
+  border-left: 3px solid transparent;
+  transition: background 0.15s;
+}
+
+.order-card-status-icon {
+  font-size: 13px;
+  line-height: 1;
+  text-align: center;
+  opacity: 0.45;
+  filter: grayscale(0.4);
+  transition: opacity 0.15s, filter 0.15s, transform 0.15s;
+}
+
+.order-card-status-step.done .order-card-status-icon {
+  opacity: 0.85;
+  filter: none;
+}
+
+.order-card-status-step.current .order-card-status-icon {
+  opacity: 1;
+  filter: none;
+  transform: scale(1.15);
+}
+
+.order-card-status-marker {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  align-self: stretch;
+  padding-top: 0;
+  z-index: 1;
+}
+
+.order-card-status-step.done:not(:last-child) .order-card-status-marker::after {
+  background: var(--accent);
+}
+
+.order-card-status-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--line);
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.order-card-status-dot.done { background: var(--accent); }
+.order-card-status-dot.current {
+  background: var(--accent-dark);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 30%, transparent);
+  animation: status-pulse 2s ease-in-out infinite;
+}
+
+@keyframes status-pulse {
+  0%, 100% { box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 30%, transparent); }
+  50% { box-shadow: 0 0 0 5px color-mix(in srgb, var(--accent) 18%, transparent); }
+}
+
+.order-card-status-dot.cancelled { background: var(--danger); }
+.order-card-status-dot.on-hold { background: var(--muted); }
+
+.order-card-status-step.done .order-card-status-label { color: var(--accent-dark); font-weight: 600; }
+
+.order-card-status-step.current {
+  background: color-mix(in srgb, var(--accent) 14%, var(--panel));
+  border-left-color: var(--accent-dark);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+.order-card-status-step.current .order-card-status-label {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.order-card-status-step.cancelled.current {
+  background: color-mix(in srgb, var(--danger) 10%, var(--panel));
+  border-left-color: var(--danger);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--danger) 18%, transparent);
+}
+
+.order-card-status-step.cancelled .order-card-status-label { color: var(--danger); font-weight: 700; }
+
+.order-card-status-step.on-hold.current {
+  background: color-mix(in srgb, var(--muted) 12%, var(--panel));
+  border-left-color: var(--muted);
+}
+
+.order-card-status-step.on-hold .order-card-status-label { color: var(--muted); font-weight: 700; }
+
+.order-card-status-label {
+  word-break: break-word;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.order-card-status-now {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--accent-dark);
+  background: color-mix(in srgb, var(--accent) 22%, var(--panel));
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+}
+
+.order-card-status-step.cancelled .order-card-status-now {
+  color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 14%, var(--panel));
+  border-color: color-mix(in srgb, var(--danger) 30%, transparent);
+}
+
+.order-card-content {
+  flex: 1;
+  min-width: 0;
+  padding: 16px 18px;
+}
 
 .order-card-header {
   display: flex;
@@ -699,6 +869,31 @@
   .order-card-actions { width: 100%; justify-content: flex-start; }
   .order-card-status-select { min-width: 100%; width: 100%; }
   .order-card-status-field { width: 100%; }
+  .order-card-layout { flex-direction: column; }
+  .order-card-status-track {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    align-items: stretch;
+    gap: 6px;
+    min-width: 0;
+    max-width: none;
+    width: 100%;
+    padding: 10px 12px;
+    border-right: none;
+    border-bottom: 1px solid var(--line);
+  }
+  .order-card-status-step {
+    grid-template-columns: auto auto;
+    flex: 1 1 calc(50% - 6px);
+    min-width: 130px;
+    padding: 6px 8px;
+  }
+  .order-card-status-marker { display: none; }
+  .order-card-status-step:not(:last-child) .order-card-status-marker::after { display: none; }
+  .order-card-status-icon { font-size: 14px; }
+  .order-card-status-label { flex-direction: row; align-items: center; flex-wrap: wrap; gap: 4px; }
+  .order-card-content { padding: 12px 14px; }
 }
 {% endblock %}
 

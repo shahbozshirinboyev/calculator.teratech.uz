@@ -1,5 +1,51 @@
 {% load order_tags %}
+{% order_status_flow order as status_flow %}
+{% order_status_index order as current_status_index %}
 <div class="order-card" id="order-{{ order.pk }}" data-href="{% url 'orders:detail' order.pk %}">
+  <div class="order-card-layout">
+    <div class="order-card-status-track" aria-label="Buyurtma holati">
+      {% for s in status_flow %}
+        <div class="order-card-status-step
+          {% if order.production_status == s %}current
+          {% elif current_status_index != -1 and forloop.counter0 < current_status_index %}done
+          {% endif %}">
+          <span class="order-card-status-icon" aria-hidden="true">{{ s|status_icon }}</span>
+          <div class="order-card-status-marker">
+            <div class="order-card-status-dot
+              {% if order.production_status == s %}current
+              {% elif current_status_index != -1 and forloop.counter0 < current_status_index %}done
+              {% endif %}"></div>
+          </div>
+          <span class="order-card-status-label">
+            {{ s|status_label:order.delivery_type }}
+            {% if order.production_status == s %}{% endif %}
+          </span>
+        </div>
+      {% endfor %}
+      {% if order.production_status == 'CANCELLED' %}
+        <div class="order-card-status-step cancelled current">
+          <span class="order-card-status-icon" aria-hidden="true">❌</span>
+          <div class="order-card-status-marker">
+            <div class="order-card-status-dot cancelled"></div>
+          </div>
+          <span class="order-card-status-label">
+            Bekor qilindi
+          </span>
+        </div>
+      {% elif order.production_status == 'ON_HOLD' %}
+        <div class="order-card-status-step on-hold current">
+          <span class="order-card-status-icon" aria-hidden="true">⏸️</span>
+          <div class="order-card-status-marker">
+            <div class="order-card-status-dot on-hold"></div>
+          </div>
+          <span class="order-card-status-label">
+            To'xtatildi
+          </span>
+        </div>
+      {% endif %}
+    </div>
+
+    <div class="order-card-content">
   <div class="order-card-header">
     <a href="{% url 'orders:detail' order.pk %}" class="order-number">{{ order.display_order_number }}</a>
     <span class="badge {{ order.payment_status|payment_badge }}">
@@ -90,5 +136,7 @@
         {% endif %}
       </div>
     {% endif %}
+  </div>
+    </div>
   </div>
 </div>

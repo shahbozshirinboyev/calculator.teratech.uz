@@ -14,6 +14,17 @@ STATUS_BADGE = {
     "CANCELLED": "badge-cancelled",
 }
 
+STATUS_ICONS = {
+    "AGREED": "🤝",
+    "QUEUED": "📋",
+    "IN_PROGRESS": "🛠️",
+    "READY": "✅",
+    "SHIPPING": "🚚",
+    "DELIVERED": "✔️",
+    "ON_HOLD": "⏸️",
+    "CANCELLED": "❌",
+}
+
 PAYMENT_BADGE = {
     "PAID": "badge-paid",
     "PARTIAL": "badge-partial",
@@ -26,6 +37,11 @@ PAYMENT_BADGE = {
 @register.filter
 def status_badge(value):
     return STATUS_BADGE.get(value, "")
+
+
+@register.filter
+def status_icon(value):
+    return STATUS_ICONS.get(value, "📦")
 
 
 @register.filter
@@ -46,6 +62,20 @@ def next_status_for(value, delivery_type):
 @register.filter
 def status_label(value, delivery_type=None):
     return Order.production_status_label(value, delivery_type)
+
+
+@register.simple_tag
+def order_status_flow(order):
+    return Order.production_status_flow(order.delivery_type)
+
+
+@register.simple_tag
+def order_status_index(order):
+    flow = Order.production_status_flow(order.delivery_type)
+    try:
+        return flow.index(order.production_status)
+    except ValueError:
+        return -1
 
 
 @register.filter
