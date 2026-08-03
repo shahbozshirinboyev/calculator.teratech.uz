@@ -419,28 +419,6 @@ input.qty-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0
 {% endblock %}
 
 {% block extra_js %}
-<script>
-// Test - to'g'ridan-to'g'ri CPU qo'shish
-window.addEventListener('DOMContentLoaded', function() {
-  console.log('=== DOM READY ===');
-  
-  const cpuSelect = document.getElementById('cpu');
-  console.log('CPU select element:', cpuSelect);
-  
-  if (cpuSelect) {
-    // Test CPU lar qo'shish
-    cpuSelect.innerHTML = '<option value="">CPU tanlang</option>';
-    cpuSelect.add(new Option('Intel i5-12400F', '1'));
-    cpuSelect.add(new Option('Intel i7-12700F', '2'));
-    cpuSelect.add(new Option('AMD Ryzen 5 5600X', '3'));
-    
-    console.log('CPU options added. Total:', cpuSelect.options.length);
-  } else {
-    console.error('CPU select element NOT FOUND!');
-  }
-});
-</script>
-
 <script id="bases-data" type="application/json">{{ base_data|safe }}</script>
 <script id="cpus-data" type="application/json">{{ cpu_data|safe }}</script>
 <script id="rams-data" type="application/json">{{ ram_data|safe }}</script>

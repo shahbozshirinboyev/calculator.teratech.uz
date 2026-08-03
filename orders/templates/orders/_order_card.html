@@ -87,12 +87,12 @@
       <div class="order-total">{{ order.total_price_uzs|format_uzs }} so'm</div>
       <div class="order-payment-status-line">
         <span class="badge {{ order.payment_status|payment_badge }}">
-          {{ order.get_payment_status_display }}
+          {% if order.payment_status == 'PARTIAL' and order.paid_amount %}
+            Qisman to'langan: {{ order.paid_amount|format_uzs }} so'm
+          {% else %}
+            {{ order.get_payment_status_display }}
+          {% endif %}
         </span>
-        {% if order.payment_status == 'PARTIAL' and order.paid_amount %}
-          <span class="payment-detail-inline">To'langan: <strong>{{ order.paid_amount|format_uzs }} so'm</strong></span>
-          <span class="payment-detail-inline">Qoldiq: <strong>{{ order.remaining_amount|format_uzs }} so'm</strong></span>
-        {% endif %}
       </div>
     </div>
     {% if order.card_can_change_status or order.card_can_edit or order.card_can_delete %}
