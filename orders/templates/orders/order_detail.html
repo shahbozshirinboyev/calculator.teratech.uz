@@ -48,7 +48,7 @@
 
 .config-item {
   display: grid;
-  grid-template-columns: 1fr 60px 90px;
+  grid-template-columns: 1fr 60px minmax(110px, auto);
   gap: 8px;
   align-items: center;
   padding: 8px 12px;
@@ -59,7 +59,7 @@
 }
 .config-item .label { font-weight: 600; }
 .config-item .qty { color: var(--muted); text-align: center; }
-.config-item .price { font-weight: 700; color: var(--accent-dark); text-align: right; }
+.config-item .price { font-weight: 700; color: var(--accent-dark); text-align: right; white-space: nowrap; }
 
 .status-sidebar { padding: 20px; position: sticky; top: 16px; }
 .status-sidebar h3 { margin: 0 0 14px; font-size: 15px; }
@@ -281,8 +281,7 @@
             </span>
           </div>
         {% endfor %}
-        <div style="display:flex;justify-content:space-between;margin-top:12px;padding-top:10px;border-top:1px solid var(--line);">
-          <strong style="font-size:15px;">Jami:</strong>
+        <div style="display:flex;margin-top:12px;padding-top:10px;border-top:1px solid var(--line);">
           <div style="text-align:right;">
             <div style="font-weight:800;font-size:17px;color:var(--accent-dark)">{{ order.total_price_uzs|format_uzs }} so'm</div>
           </div>
