@@ -61,11 +61,15 @@
   </div>
 
   <div class="order-meta">
-    <span>👤 <strong>{{ order.customer_name }}</strong></span>
-    <span>📞 {{ order.customer_phone|format_phone }}</span>
-    <span>📍 {{ order.region }}, {{ order.district }}, {{ order.city }}{% if order.landmark %} — {{ order.landmark }}{% endif %}</span>
-    <span>🚚 {{ order.get_delivery_type_display }}</span>
-    <span>💳 {{ order.get_payment_type_display }}</span>
+    <span><span class="meta-icon">👤</span> <strong>{{ order.customer_name }}</strong></span>
+    <span><span class="meta-icon">📞</span> {{ order.customer_phone|format_phone }}</span>
+    <span><span class="meta-icon">📍</span> {{ order.region }}, {{ order.district }}{% if order.city %}, {{ order.city }}{% endif %}{% if order.landmark %}, {{ order.landmark }}{% endif %}</span>
+    <span><span class="meta-icon">💳</span> {{ order.get_payment_type_display }}</span>
+  </div>
+  <div class="order-meta">
+    <span><span class="meta-icon">🚚</span> {{ order.get_delivery_type_display }}</span>
+    {% if order.delivery_date %}<span><span class="meta-icon">📅</span> {{ order.delivery_date|date:"d.m.Y" }}</span>{% endif %}
+    {% if order.delivery_time %}<span><span class="meta-icon">🕐</span> {{ order.delivery_time }}</span>{% endif %}
   </div>
 
   <div class="order-items-list">

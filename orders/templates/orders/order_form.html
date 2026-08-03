@@ -967,6 +967,10 @@ function handlePaymentStatusChange(val) {
   }
 }
 
+// Reference time: order creation time or current time for new orders
+const ORDER_CREATED_AT = {% if order %}"{{ order.created_at|date:'c' }}"{% else %}null{% endif %};
+const referenceTime = ORDER_CREATED_AT ? new Date(ORDER_CREATED_AT) : new Date();
+
 function handleDeliveryTypeChange(val) {
   const group = document.getElementById('time-info-group');
   const dateInput = document.getElementById('delivery-date-input');
@@ -993,7 +997,7 @@ function handleDeliveryTypeChange(val) {
   dateInput.setAttribute('required', 'required');
   timeInput.setAttribute('required', 'required');
 
-  // Today's date in YYYY-MM-DD
+  // Use current date for min date
   const now = new Date();
   const year = now.getFullYear();
   const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -1011,17 +1015,24 @@ function handleDeliveryTypeChange(val) {
     timeInput.readOnly = true;
   } else {
     // PICKUP or DELIVERY
+    // Use reference time (order creation time) + 1h 30m for initial value
     if (!currentDateValue) {
-      dateInput.value = todayStr;
+      const refYear = referenceTime.getFullYear();
+      const refMonth = String(referenceTime.getMonth() + 1).padStart(2, '0');
+      const refDay = String(referenceTime.getDate()).padStart(2, '0');
+      dateInput.value = `${refYear}-${refMonth}-${refDay}`;
     }
     if (!dateInput.value) {
-      dateInput.value = todayStr;
+      const refYear = referenceTime.getFullYear();
+      const refMonth = String(referenceTime.getMonth() + 1).padStart(2, '0');
+      const refDay = String(referenceTime.getDate()).padStart(2, '0');
+      dateInput.value = `${refYear}-${refMonth}-${refDay}`;
     }
     dateInput.readOnly = false;
     dateInput.style.pointerEvents = 'auto';
 
-    // Min time is current time + 1h 30m
-    const minTime = new Date(now.getTime() + 90 * 60 * 1000);
+    // Min time is reference time (order creation time) + 1h 30m
+    const minTime = new Date(referenceTime.getTime() + 90 * 60 * 1000);
     const minHour = String(minTime.getHours()).padStart(2, '0');
     const minMinute = String(minTime.getMinutes()).padStart(2, '0');
     const minTimeStr = `${minHour}:${minMinute}`;

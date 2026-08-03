@@ -233,8 +233,7 @@
         <div class="detail-row">
           <span>Manzil:</span>
           <strong>
-            {{ order.region }}, {{ order.district }}, {{ order.city }}
-            {% if order.landmark %}, {{ order.landmark }}{% endif %}
+            {{ order.region }}, {{ order.district }}{% if order.city %}, {{ order.city }}{% endif %}{% if order.landmark %}, {{ order.landmark }}{% endif %}
           </strong>
         </div>
         <div class="detail-row-group">

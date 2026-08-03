@@ -618,14 +618,29 @@
 }
 
 .order-meta {
-  font-size: 13px;
+  font-size: 14px;
   color: var(--muted);
   display: flex;
   flex-wrap: wrap;
-  gap: 6px 16px;
+  align-items: center;
+  gap: 8px 18px;
   margin-bottom: 10px;
 }
-.order-meta strong { color: var(--text); }
+.order-meta strong { 
+  color: var(--text);
+  font-weight: 600;
+}
+.order-meta > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.order-meta .meta-icon {
+  display: inline-block;
+  font-size: 15px;
+  line-height: 1;
+  flex-shrink: 0;
+}
 
 .order-items-list {
   display: flex;
