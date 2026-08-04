@@ -444,39 +444,213 @@
   text-align: center;
 }
 
-@media (max-width: 720px) {
+@media (max-width: 1024px) {
+  .profile-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+  
+  .board-table {
+    min-width: 680px;
+  }
+}
+
+@media (max-width: 860px) {
   .profile-hero {
-    flex-direction: column;
+    flex-direction: column !important;
   }
 
   .profile-main {
-    align-items: flex-start;
+    align-items: flex-start !important;
+  }
+  
+  .hero-actions {
+    width: 100% !important;
+  }
+  
+  .admin-button {
+    width: 100% !important;
+    justify-content: center !important;
   }
 
-  .profile-details,
-  .profile-summary,
+  .board-header {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+  
+  .period-filter {
+    min-width: 0 !important;
+    width: 100% !important;
+  }
+  
+  .board-copy {
+    min-width: 0 !important;
+  }
+}
+
+@media (max-width: 720px) {
+  .profile-page {
+    gap: 16px !important;
+    margin-top: 16px !important;
+  }
+  
+  .profile-hero,
+  .profile-card,
+  .sales-board {
+    padding: 16px !important;
+  }
+
+  .profile-details {
+    grid-template-columns: 1fr !important;
+  }
+  
+  .profile-summary {
+    grid-template-columns: 1fr !important;
+  }
+  
   .podium {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+    margin-top: 24px !important;
+  }
+  
+  .podium-card.position-1 {
+    transform: translateY(0) !important;
+    order: -1;
+  }
+  
+  .summary-box strong {
+    font-size: 20px !important;
+  }
+  
+  .board-table {
+    min-width: 600px;
   }
 }
 
 @media (max-width: 520px) {
   .profile-main {
-    flex-direction: column;
+    flex-direction: column !important;
+    gap: 14px !important;
   }
 
   .profile-avatar {
-    width: 72px;
-    height: 72px;
-    font-size: 28px;
+    width: 64px !important;
+    height: 64px !important;
+    font-size: 24px !important;
   }
 
   .profile-copy h1 {
-    font-size: 24px;
+    font-size: 20px !important;
+  }
+  
+  .profile-copy p {
+    font-size: 13px !important;
+  }
+  
+  .profile-badges {
+    gap: 6px !important;
+  }
+  
+  .profile-badge {
+    padding: 6px 10px !important;
+    font-size: 11px !important;
+  }
+  
+  .section-title {
+    font-size: 16px !important;
+  }
+  
+  .board-copy p {
+    font-size: 12px !important;
   }
 
   .podium-metrics {
-    flex-direction: column;
+    flex-direction: column !important;
+    gap: 8px !important;
+  }
+  
+  .podium-metric {
+    min-width: 0 !important;
+    width: 100% !important;
+  }
+  
+  .podium-avatar {
+    width: 56px !important;
+    height: 56px !important;
+    font-size: 20px !important;
+  }
+  
+  .podium-name {
+    font-size: 15px !important;
+  }
+  
+  .podium-subtitle {
+    font-size: 12px !important;
+  }
+  
+  .summary-box {
+    padding: 12px !important;
+  }
+  
+  .summary-box span {
+    font-size: 11px !important;
+  }
+  
+  .summary-box strong {
+    font-size: 16px !important;
+  }
+  
+  .detail-item {
+    padding: 12px !important;
+  }
+  
+  .detail-item span {
+    font-size: 11px !important;
+  }
+  
+  .detail-item strong {
+    font-size: 14px !important;
+  }
+  
+  .table-panel {
+    padding: 10px !important;
+  }
+  
+  .board-table {
+    min-width: 520px;
+    font-size: 12px !important;
+  }
+  
+  .board-table tbody tr td {
+    padding: 10px 8px !important;
+  }
+  
+  .seller-avatar {
+    width: 32px !important;
+    height: 32px !important;
+    font-size: 13px !important;
+  }
+  
+  .seller-meta strong {
+    font-size: 13px !important;
+  }
+  
+  .seller-meta span {
+    font-size: 11px !important;
+  }
+  
+  .rank-badge {
+    min-width: 32px !important;
+    height: 28px !important;
+    font-size: 13px !important;
+  }
+  
+  .table-value {
+    font-size: 14px !important;
+  }
+  
+  .table-muted {
+    font-size: 11px !important;
   }
 }
 {% endblock %}
