@@ -970,6 +970,7 @@ function handlePaymentStatusChange(val) {
 // Reference time: order creation time or current time for new orders
 const ORDER_CREATED_AT = {% if order %}"{{ order.created_at|date:'c' }}"{% else %}null{% endif %};
 const referenceTime = ORDER_CREATED_AT ? new Date(ORDER_CREATED_AT) : new Date();
+const IS_EXISTING_ORDER = {% if order %}true{% else %}false{% endif %};
 
 function handleDeliveryTypeChange(val) {
   const group = document.getElementById('time-info-group');
@@ -997,49 +998,69 @@ function handleDeliveryTypeChange(val) {
   dateInput.setAttribute('required', 'required');
   timeInput.setAttribute('required', 'required');
 
+  // Current date/time values (from server, HTML attributes)
+  const existingDateValue = dateInput.value.trim();
+  const existingTimeValue = timeInput.value.trim();
+  
   // Use current date for min date
   const now = new Date();
   const year = now.getFullYear();
   const month = String(now.getMonth() + 1).padStart(2, '0');
   const day = String(now.getDate()).padStart(2, '0');
   const todayStr = `${year}-${month}-${day}`;
-  const currentDateValue = dateInput.value;
-  dateInput.min = todayStr;
-
+  
   if (val === 'BTS' || val === 'UZPOST' || val === 'POST') {
+    // POST turi uchun har doim bugungi sana va 22:00
     dateInput.value = todayStr;
     dateInput.readOnly = true;
     dateInput.style.pointerEvents = 'none';
-
     timeInput.value = "22:00";
     timeInput.readOnly = true;
   } else {
     // PICKUP or DELIVERY
-    // Use reference time (order creation time) + 1h 30m for initial value
-    if (!currentDateValue) {
-      const refYear = referenceTime.getFullYear();
-      const refMonth = String(referenceTime.getMonth() + 1).padStart(2, '0');
-      const refDay = String(referenceTime.getDate()).padStart(2, '0');
-      dateInput.value = `${refYear}-${refMonth}-${refDay}`;
-    }
-    if (!dateInput.value) {
-      const refYear = referenceTime.getFullYear();
-      const refMonth = String(referenceTime.getMonth() + 1).padStart(2, '0');
-      const refDay = String(referenceTime.getDate()).padStart(2, '0');
-      dateInput.value = `${refYear}-${refMonth}-${refDay}`;
-    }
     dateInput.readOnly = false;
     dateInput.style.pointerEvents = 'auto';
-
-    // Min time is reference time (order creation time) + 1h 30m
-    const minTime = new Date(referenceTime.getTime() + 90 * 60 * 1000);
-    const minHour = String(minTime.getHours()).padStart(2, '0');
-    const minMinute = String(minTime.getMinutes()).padStart(2, '0');
-    const minTimeStr = `${minHour}:${minMinute}`;
-    timeInput.min = minTimeStr;
     timeInput.readOnly = false;
-    if (!timeInput.value || timeInput.value < minTimeStr) {
-      timeInput.value = minTimeStr;
+
+    // Agar existing order bo'lsa va sana/vaqt allaqachon belgilangan bo'lsa
+    if (IS_EXISTING_ORDER && existingDateValue && existingTimeValue) {
+      // MUHIM: Eski qiymatlarni SAQLAB QOLISH, hech nima o'zgartirmaslik!
+      // dateInput.value va timeInput.value ni o'zgartirmaslik
+      // Faqat min restriction'ni o'chirish
+      dateInput.removeAttribute('min');
+      timeInput.removeAttribute('min');
+      // Qiymatlarni o'zgartirmaslik - ular allaqachon HTML'da to'g'ri
+    } else {
+      // Yangi order yoki sana/vaqt kiritilmagan
+      dateInput.min = todayStr;
+      
+      // Faqat sana bo'sh bo'lsa to'ldirish
+      if (!existingDateValue) {
+        if (IS_EXISTING_ORDER) {
+          // Edit qilayotgan order, lekin sana yo'q - order yaratilgan sanani qo'yish
+          const refYear = referenceTime.getFullYear();
+          const refMonth = String(referenceTime.getMonth() + 1).padStart(2, '0');
+          const refDay = String(referenceTime.getDate()).padStart(2, '0');
+          dateInput.value = `${refYear}-${refMonth}-${refDay}`;
+        } else {
+          // Yangi order - bugungi sanani qo'yish
+          dateInput.value = todayStr;
+        }
+      }
+
+      // Faqat vaqt bo'sh bo'lsa to'ldirish
+      if (!existingTimeValue) {
+        const minTime = new Date(referenceTime.getTime() + 90 * 60 * 1000);
+        const minHour = String(minTime.getHours()).padStart(2, '0');
+        const minMinute = String(minTime.getMinutes()).padStart(2, '0');
+        const minTimeStr = `${minHour}:${minMinute}`;
+        
+        if (!IS_EXISTING_ORDER) {
+          timeInput.min = minTimeStr;
+        }
+        
+        timeInput.value = minTimeStr;
+      }
     }
   }
   updateSummary();

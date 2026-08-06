@@ -451,7 +451,7 @@ def order_detail(request, pk):
             raise PermissionDenied("Sizda buyurtmani tahrirlash huquqi yo'q.")
         try:
             _save_order(request, instance=order)
-            return redirect("orders:detail", pk=order.pk)
+            return redirect("orders:list")
         except ValueError as e:
             error = str(e)
             return render(request, "orders/order_form.html",

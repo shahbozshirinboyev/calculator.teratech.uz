@@ -513,9 +513,8 @@
 
 .order-card-header {
   display: flex;
-  align-items: center;
+  justify-content: space-between;
   gap: 10px;
-  flex-wrap: wrap;
   margin-bottom: 10px;
 }
 
@@ -532,12 +531,13 @@
 }
 
 .order-header-side {
-  margin-left: auto;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-  justify-content: flex-end;
+  <!-- margin-left: auto; -->
+  <!-- display: inline-flex; -->
+  <!-- align-items: center; -->
+  <!-- gap: 8px; -->
+  <!-- flex-wrap: wrap; -->
+  <!-- justify-content: flex-end; -->
+  <!-- border: 1px solid red; -->
 }
 
 .order-number {
@@ -963,35 +963,154 @@
   .new-order-btn { width: 100%; justify-content: center; }
   .active-filters { gap: 5px; }
   .filter-chip-clear { margin-left: 0; width: 100%; justify-content: center; }
-  .order-header-side { margin-left: 0; width: 100%; justify-content: space-between; }
+  .order-header-side { margin-left: 0; justify-content: space-between; }
   .order-card-actions { width: 100%; justify-content: flex-start; }
   .order-card-status-select { min-width: 100%; width: 100%; }
   .order-card-status-field { width: 100%; }
   .order-card-layout { flex-direction: column; }
+  
+  /* Horizontal progress bar for mobile */
   .order-card-status-track {
+    display: flex;
     flex-direction: row;
-    flex-wrap: wrap;
-    justify-content: flex-start;
-    align-items: stretch;
-    gap: 6px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0;
     min-width: 0;
     max-width: none;
     width: 100%;
-    padding: 10px 12px;
+    padding: 20px 16px;
     border-right: none;
     border-bottom: 1px solid var(--line);
+    background: var(--bg);
+    position: relative;
   }
+  
+  /* Grey background line (full width between first and last icon) - REMOVED, now using per-step lines */
+  
+  /* Step container with line segment */
   .order-card-status-step {
-    grid-template-columns: auto auto;
-    flex: 1 1 calc(50% - 6px);
-    min-width: 130px;
-    padding: 6px 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    z-index: 1;
+    padding: 0;
+    border: none;
+    background: transparent;
+    box-shadow: none;
+    flex: 0 0 auto;
   }
-  .order-card-status-marker { display: none; }
-  .order-card-status-step:not(:last-child) .order-card-status-marker::after { display: none; }
-  .order-card-status-icon { font-size: 14px; }
-  .order-card-status-label { flex-direction: row; align-items: center; flex-wrap: wrap; gap: 4px; }
-  .order-card-content { padding: 12px 14px; }
+  
+  /* Grey line after each step (default for all steps) */
+  .order-card-status-step:not(:last-child)::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 3px;
+    background: var(--line);
+    width: calc((100vw - 32px - 72px) / 5);
+    z-index: -1;
+  }
+  
+  /* First step grey line adjustment */
+  .order-card-status-step:first-child:not(:last-child)::before {
+    left: 20px;
+    width: calc((100vw - 32px - 72px) / 5 + 20px);
+  }
+  
+  /* Green line segment after each done step (overlays grey line) */
+  .order-card-status-step.done::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 3px;
+    background: var(--accent);
+    z-index: -1;
+  }
+  
+  /* Calculate width of green line segment - only if next sibling exists and is done or current */
+  .order-card-status-step.done:has(~ .order-card-status-step.done)::after,
+  .order-card-status-step.done:has(~ .order-card-status-step.current)::after {
+    width: calc((100vw - 32px - 72px) / 5);
+  }
+  
+  /* First step special handling */
+  .order-card-status-step.done:first-child:has(~ .order-card-status-step.done)::after,
+  .order-card-status-step.done:first-child:has(~ .order-card-status-step.current)::after {
+    left: 20px;
+    width: calc((100vw - 32px - 72px) / 5 + 20px);
+  }
+  
+  /* Hide line after done if next is not done or current */
+  .order-card-status-step.done:not(:has(~ .order-card-status-step.done)):not(:has(~ .order-card-status-step.current))::after {
+    display: none;
+  }
+  
+  /* Hide marker */
+  .order-card-status-marker {
+    display: none;
+  }
+  
+  /* Icon as circle with proper sizing */
+  .order-card-status-icon {
+    font-size: 16px;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: var(--bg);
+    border: 3px solid var(--line);
+    opacity: 1;
+    filter: none;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 10;
+  }
+  
+  /* Done steps - green circle */
+  .order-card-status-step.done .order-card-status-icon {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+  }
+  
+  /* Current step - darker green with glow */
+  .order-card-status-step.current .order-card-status-icon {
+    background: var(--accent-dark);
+    border-color: var(--accent-dark);
+    color: white;
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 22%, transparent);
+  }
+  
+  /* Cancelled - red */
+  .order-card-status-step.cancelled .order-card-status-icon {
+    background: var(--danger);
+    border-color: var(--danger);
+    color: white;
+  }
+  
+  /* On hold - orange */
+  .order-card-status-step.on-hold .order-card-status-icon {
+    background: #f59e0b;
+    border-color: #f59e0b;
+    color: white;
+  }
+  
+  /* Hide labels in mobile */
+  .order-card-status-label {
+    display: none;
+  }
+  
+  .order-card-content { 
+    padding: 12px 14px; 
+  }
 }
 {% endblock %}
 
