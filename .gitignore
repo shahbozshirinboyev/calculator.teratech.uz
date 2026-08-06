@@ -59,3 +59,7 @@ target/
 *.tmp
 *.temp
 .cache/
+
+# SQLite
+db.sqlite3
+*.sqlite3
