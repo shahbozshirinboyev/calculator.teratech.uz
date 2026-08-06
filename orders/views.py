@@ -227,6 +227,9 @@ def order_list(request):
         for order in orders:
             order_date = order.created_at.date()
             groups[order_date].append(order)
+        # Sort each group by created_at time (newest first within the day)
+        for date in groups:
+            groups[date].sort(key=lambda x: x.created_at, reverse=True)
         # Sort groups by date descending
         sorted_groups = sorted(groups.items(), key=lambda x: x[0], reverse=True)
         # Add "is_today" flag
