@@ -16,86 +16,107 @@
 .profile-hero {
   display: flex;
   justify-content: space-between;
-  gap: 24px;
-  padding: 24px;
-  border-radius: 20px;
-  background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 14%, var(--panel)), var(--panel));
+  align-items: center;
+  gap: 20px;
+  padding: 20px 24px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 12%, var(--panel)), var(--panel));
   border: 1px solid var(--line);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 .profile-main {
   display: flex;
-  gap: 18px;
+  gap: 16px;
   align-items: center;
+  flex: 1;
+  min-width: 0;
 }
 
 .profile-avatar {
-  width: 88px;
-  height: 88px;
+  width: 64px;
+  height: 64px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   background: linear-gradient(135deg, var(--accent), var(--accent-dark));
   color: #fff;
-  font-size: 32px;
-  font-weight: 800;
-  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.14);
+  font-size: 24px;
+  font-weight: 700;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
+  flex-shrink: 0;
+}
+
+.profile-copy {
+  flex: 1;
+  min-width: 0;
 }
 
 .profile-copy h1 {
   margin: 0;
-  font-size: 28px;
-  font-weight: 800;
+  font-size: 22px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .profile-copy p {
-  margin: 6px 0 0;
+  margin: 4px 0 0;
   color: var(--muted);
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .profile-badges {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 14px;
+  gap: 6px;
+  margin-top: 8px;
 }
 
 .profile-badge {
   display: inline-flex;
   align-items: center;
-  padding: 8px 14px;
-  border-radius: 999px;
-  background: var(--bg);
-  border: 1px solid var(--line);
-  color: var(--muted);
-  font-size: 13px;
-  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--accent) 10%, var(--bg));
+  border: 1px solid color-mix(in srgb, var(--accent) 20%, var(--line));
+  color: var(--text);
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
 }
 
 .hero-actions {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
+  flex-shrink: 0;
 }
 
 .admin-button {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  padding: 12px 18px;
-  border-radius: 12px;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 10px;
   background: var(--accent);
   color: #fff;
   text-decoration: none;
-  font-weight: 700;
-  box-shadow: 0 10px 24px color-mix(in srgb, var(--accent) 28%, transparent);
-  transition: transform 0.18s ease, box-shadow 0.18s ease;
+  font-size: 13px;
+  font-weight: 600;
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--accent) 30%, transparent);
+  transition: all 0.2s ease;
+  white-space: nowrap;
 }
 
 .admin-button:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 14px 28px color-mix(in srgb, var(--accent) 36%, transparent);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px color-mix(in srgb, var(--accent) 40%, transparent);
+}
+
+.admin-button svg {
+  flex-shrink: 0;
 }
 
 .profile-card,
@@ -328,6 +349,10 @@
   border: 1px solid var(--line);
 }
 
+.mobile-board {
+  display: none;
+}
+
 .board-table-wrap {
   overflow-x: auto;
 }
@@ -452,15 +477,29 @@
   .board-table {
     min-width: 680px;
   }
+  
+  .podium-card {
+    padding: 18px 14px 14px !important;
+  }
+  
+  .podium-metrics {
+    gap: 8px !important;
+  }
+  
+  .podium-metric {
+    min-width: 70px !important;
+    padding: 8px 10px !important;
+  }
 }
 
 @media (max-width: 860px) {
   .profile-hero {
     flex-direction: column !important;
+    align-items: stretch !important;
   }
 
   .profile-main {
-    align-items: flex-start !important;
+    align-items: center !important;
   }
   
   .hero-actions {
@@ -518,6 +557,29 @@
     order: -1;
   }
   
+  .podium-card {
+    padding: 16px 12px 12px !important;
+  }
+  
+  .podium-avatar {
+    width: 64px !important;
+    height: 64px !important;
+    font-size: 22px !important;
+  }
+  
+  .podium-name {
+    font-size: 16px !important;
+  }
+  
+  .podium-metrics {
+    gap: 8px !important;
+  }
+  
+  .podium-metric {
+    min-width: 0 !important;
+    padding: 8px 10px !important;
+  }
+  
   .summary-box strong {
     font-size: 20px !important;
   }
@@ -525,35 +587,189 @@
   .board-table {
     min-width: 600px;
   }
-}
-
-@media (max-width: 520px) {
-  .profile-main {
-    flex-direction: column !important;
-    gap: 14px !important;
-  }
-
-  .profile-avatar {
-    width: 64px !important;
-    height: 64px !important;
-    font-size: 24px !important;
-  }
-
-  .profile-copy h1 {
-    font-size: 20px !important;
-  }
   
-  .profile-copy p {
+  .board-table tbody tr td {
+    padding: 12px 10px !important;
     font-size: 13px !important;
   }
   
+  .seller-avatar {
+    width: 36px !important;
+    height: 36px !important;
+    font-size: 14px !important;
+  }
+  
+  .seller-meta strong {
+    font-size: 14px !important;
+  }
+  
+  .table-value {
+    font-size: 15px !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .board-table-wrap {
+    display: none !important;
+  }
+  
+  .mobile-board {
+    display: flex !important;
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .mobile-board-card {
+    padding: 14px;
+    border-radius: 14px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+  }
+  
+  .mobile-board-card.is-current {
+    background: color-mix(in srgb, var(--accent) 86%, white);
+    color: #fff;
+    border-color: color-mix(in srgb, var(--accent) 90%, white);
+  }
+  
+  [data-theme="dark"] .mobile-board-card.is-current {
+    background: color-mix(in srgb, var(--accent) 72%, #0f172a);
+    border-color: color-mix(in srgb, var(--accent) 72%, #0f172a);
+  }
+  
+  .mobile-board-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  
+  .mobile-rank {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--accent) 10%, var(--panel));
+    font-weight: 800;
+    font-size: 15px;
+    flex-shrink: 0;
+  }
+  
+  .mobile-board-card.is-current .mobile-rank {
+    background: rgba(255, 255, 255, 0.2);
+  }
+  
+  .mobile-seller-info {
+    flex: 1;
+    min-width: 0;
+  }
+  
+  .mobile-seller-name {
+    display: block;
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  .mobile-seller-username {
+    display: block;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  
+  .mobile-board-card.is-current .mobile-seller-username {
+    color: rgba(255, 255, 255, 0.8);
+  }
+  
+  .mobile-board-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  
+  .mobile-stat {
+    padding: 10px;
+    border-radius: 10px;
+    background: var(--bg);
+    border: 1px solid var(--line);
+  }
+  
+  .mobile-board-card.is-current .mobile-stat {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.18);
+  }
+  
+  .mobile-stat-label {
+    display: block;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+  
+  .mobile-board-card.is-current .mobile-stat-label {
+    color: rgba(255, 255, 255, 0.7);
+  }
+  
+  .mobile-stat-value {
+    display: block;
+    font-size: 14px;
+    font-weight: 700;
+  }
+}
+
+@media (max-width: 520px) {
+  .profile-hero {
+    padding: 16px !important;
+  }
+  
+  .profile-main {
+    flex-direction: column !important;
+    gap: 12px !important;
+    align-items: center !important;
+    text-align: center !important;
+  }
+
+  .profile-avatar {
+    width: 56px !important;
+    height: 56px !important;
+    font-size: 22px !important;
+  }
+
+  .profile-copy h1 {
+    font-size: 18px !important;
+  }
+  
+  .profile-copy p {
+    font-size: 12px !important;
+  }
+  
   .profile-badges {
-    gap: 6px !important;
+    gap: 4px !important;
+    margin-top: 6px !important;
+    justify-content: center !important;
   }
   
   .profile-badge {
-    padding: 6px 10px !important;
-    font-size: 11px !important;
+    padding: 4px 8px !important;
+    font-size: 10px !important;
+  }
+  
+  .admin-button {
+    padding: 10px 14px !important;
+    font-size: 12px !important;
+  }
+  
+  .admin-button svg {
+    width: 16px !important;
+    height: 16px !important;
   }
   
   .section-title {
@@ -616,41 +832,10 @@
     padding: 10px !important;
   }
   
-  .board-table {
-    min-width: 520px;
-    font-size: 12px !important;
-  }
-  
-  .board-table tbody tr td {
-    padding: 10px 8px !important;
-  }
-  
-  .seller-avatar {
-    width: 32px !important;
-    height: 32px !important;
-    font-size: 13px !important;
-  }
-  
-  .seller-meta strong {
-    font-size: 13px !important;
-  }
-  
-  .seller-meta span {
-    font-size: 11px !important;
-  }
-  
   .rank-badge {
     min-width: 32px !important;
     height: 28px !important;
     font-size: 13px !important;
-  }
-  
-  .table-value {
-    font-size: 14px !important;
-  }
-  
-  .table-muted {
-    font-size: 11px !important;
   }
 }
 {% endblock %}
@@ -809,6 +994,30 @@
               {% endfor %}
             </tbody>
           </table>
+        </div>
+        
+        <div class="mobile-board" style="display: none;">
+          {% for entry in board %}
+          <div class="mobile-board-card {% if entry.is_current_user %}is-current{% endif %}">
+            <div class="mobile-board-header">
+              <div class="mobile-rank">{{ entry.rank }}</div>
+              <div class="mobile-seller-info">
+                <span class="mobile-seller-name">{{ entry.seller_name }}</span>
+                <span class="mobile-seller-username">{% if entry.is_current_user %}Sizning natijangiz{% else %}@{{ entry.seller.username }}{% endif %}</span>
+              </div>
+            </div>
+            <div class="mobile-board-stats">
+              <div class="mobile-stat">
+                <span class="mobile-stat-label">Savdo summasi</span>
+                <span class="mobile-stat-value">{{ entry.total_uzs_display }} so'm</span>
+              </div>
+              <div class="mobile-stat">
+                <span class="mobile-stat-label">Buyurtmalar</span>
+                <span class="mobile-stat-value">{{ entry.completed_orders }} ta</span>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
         </div>
       </div>
     {% else %}
