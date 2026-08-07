@@ -673,11 +673,10 @@ def order_update_status(request, pk):
             status=403,
         )
     
-    # Admin bo'lmagan foydalanuvchilar uchun validatsiya
-    if not (request.user.is_superuser or request.user.has_perm("orders.change_order")):
-        is_valid, error_msg = _validate_status_transition(order, new_status)
-        if not is_valid:
-            return JsonResponse({"error": error_msg}, status=400)
+    # Validatsiya (barcha foydalanuvchilar uchun)
+    is_valid, error_msg = _validate_status_transition(order, new_status)
+    if not is_valid:
+        return JsonResponse({"error": error_msg}, status=400)
     
     order.production_status = new_status
     # delivered_at ni DELIVERED statusiga o'tganda to'ldirish
@@ -855,19 +854,27 @@ def _save_order(request, instance=None):
         errors.append("Siz bu buyurtma uchun ushbu statusni o'zgartira olmaysiz.")
     
     # Status validatsiyasi (yangi order va edit qilish paytida)
-    if not (request.user.is_superuser or request.user.has_perm("orders.change_order")):
-        # Temporary order object for validation
-        temp_order = instance if instance else type('obj', (object,), {
-            'production_status': Order.ProductionStatus.AGREED,  # default for new orders
+    # Temporary order object for validation
+    if instance:
+        temp_order = instance
+        current_prod_status = instance.production_status
+    else:
+        # Yangi order yaratilayotgan - default status AGREED
+        temp_order = type('obj', (object,), {
+            'production_status': Order.ProductionStatus.AGREED,
             'payment_status': payment_status,
             'delivery_type': delivery_type,
         })()
-        temp_order.payment_status = payment_status
-        temp_order.delivery_type = delivery_type
-        
-        is_valid, error_msg = _validate_status_transition(temp_order, production_status)
-        if not is_valid:
-            errors.append(error_msg)
+        current_prod_status = Order.ProductionStatus.AGREED
+    
+    # Payment status ni yangilaymiz
+    temp_order.payment_status = payment_status
+    temp_order.delivery_type = delivery_type
+    
+    # Validatsiya chaqirish
+    is_valid, error_msg = _validate_status_transition(temp_order, production_status)
+    if not is_valid:
+        errors.append(error_msg)
     
     if delivery_type and (not delivery_date or not delivery_time):
         errors.append("Yetkazib berish sanasi va vaqti kiritilmadi.")
