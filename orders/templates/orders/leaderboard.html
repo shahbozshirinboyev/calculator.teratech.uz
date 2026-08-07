@@ -174,8 +174,10 @@
 @media (max-width: 640px) {
   .period-tabs { margin-left: 0; width: 100%; }
   .podium-item { width: 100px; }
-  .lb-table th:nth-child(4),
-  .lb-table td:nth-child(4) { display: none; }
+  .lb-table th:nth-child(5),
+  .lb-table td:nth-child(5),
+  .lb-table th:nth-child(6),
+  .lb-table td:nth-child(6) { display: none; }
 }
 {% endblock %}
 
@@ -235,8 +237,8 @@
             <th>Sotuvchi</th>
             <th>Dona soni</th>
             <th>Buyurtmalar</th>
-            <th>Jami (USD)</th>
             <th>Jami (so'm)</th>
+            <th>To'langan</th>
           </tr>
         </thead>
         <tbody>
@@ -268,6 +270,12 @@
             </td>
             <td>{{ entry.order_count }}</td>
             <td><strong style="color:var(--accent-dark);">{{ entry.total_uzs|floatformat:0 }} so'm</strong></td>
+            <td>
+              <strong style="color:var(--success);">{{ entry.paid_amount_uzs|floatformat:0 }} so'm</strong>
+              <div style="font-size:11px;color:var(--muted);margin-top:2px;">
+                Qoldiq: {{ entry.unpaid_amount_uzs|floatformat:0 }} so'm
+              </div>
+            </td>
           </tr>
           {% endwith %}
           {% endfor %}

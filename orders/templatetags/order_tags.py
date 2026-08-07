@@ -20,7 +20,7 @@ STATUS_ICONS = {
     "IN_PROGRESS": "🛠️",
     "READY": "✅",
     "SHIPPING": "🚚",
-    "DELIVERED": "✔️",
+    "DELIVERED": "🏁",
     "ON_HOLD": "⏸️",
     "CANCELLED": "❌",
 }

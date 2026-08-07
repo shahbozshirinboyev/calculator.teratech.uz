@@ -196,6 +196,19 @@ def profile(request):
         period_filter = Q()
         period_label = "Butun davr"
 
+    # Hamma orderlar (CANCELLED dan tashqari) uchun to'langan summalar
+    all_active_orders = Order.objects.filter(
+        sold_by=request.user,
+    ).exclude(production_status=Order.ProductionStatus.CANCELLED).filter(period_filter)
+    
+    paid_amount_uzs = Decimal("0")
+    for order in all_active_orders:
+        if order.payment_status == Order.PaymentStatus.PAID:
+            paid_amount_uzs += order.total_price_uzs
+        elif order.payment_status == Order.PaymentStatus.PARTIAL:
+            paid_amount_uzs += order.partial_amount
+    
+    # Completed orders statistikasi
     completed_orders = Order.objects.filter(
         sold_by=request.user,
         production_status=Order.ProductionStatus.DELIVERED,
@@ -258,13 +271,28 @@ def profile(request):
         .select_related("sold_by")
     )
 
+    # Boardda ham to'langan summalarni ko'rsatish
     for seller in users:
+        # Completed orders
         seller_stats = period_orders.filter(sold_by=seller).aggregate(
             total_uzs=Sum("total_price_uzs"),
             completed_orders=Count("id"),
         )
         seller_total_uzs = seller_stats["total_uzs"] or Decimal("0")
         seller_completed_orders = seller_stats["completed_orders"] or 0
+        
+        # To'langan summalar (yakunlanmagan orderlar uchun ham)
+        seller_active_orders = Order.objects.filter(
+            sold_by=seller,
+        ).exclude(production_status=Order.ProductionStatus.CANCELLED).filter(period_filter)
+        
+        seller_paid_amount_uzs = Decimal("0")
+        for order in seller_active_orders:
+            if order.payment_status == Order.PaymentStatus.PAID:
+                seller_paid_amount_uzs += order.total_price_uzs
+            elif order.payment_status == Order.PaymentStatus.PARTIAL:
+                seller_paid_amount_uzs += order.partial_amount
+        
         seller_name = seller.get_full_name().strip() or seller.username
         board.append(
             {
@@ -273,6 +301,8 @@ def profile(request):
                 "initial": seller_name[:1].upper(),
                 "total_uzs": seller_total_uzs,
                 "total_uzs_display": f"{int(seller_total_uzs):,}".replace(",", " "),
+                "paid_amount_uzs": seller_paid_amount_uzs,
+                "paid_amount_uzs_display": f"{int(seller_paid_amount_uzs):,}".replace(",", " "),
                 "completed_orders": seller_completed_orders,
                 "is_current_user": seller.pk == request.user.pk,
             }
@@ -312,6 +342,8 @@ def profile(request):
             "stats": {
                 "total_uzs": total_uzs,
                 "total_uzs_display": f"{int(total_uzs):,}".replace(",", " "),
+                "paid_amount_uzs": paid_amount_uzs,
+                "paid_amount_uzs_display": f"{int(paid_amount_uzs):,}".replace(",", " "),
                 "completed_orders": completed_count,
             },
             "all_time_stats": {

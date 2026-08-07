@@ -61,7 +61,6 @@ class Order(models.Model):
     }
     GLOBAL_PRODUCTION_STATUSES = [
         ProductionStatus.CANCELLED,
-        ProductionStatus.ON_HOLD,
     ]
     DELIVERY_STATUS_LABELS = {
         DeliveryType.DELIVERY: {

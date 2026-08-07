@@ -68,14 +68,36 @@ def _can_user_change_production_status(user, current_status=None, order=None):
 
 def _allowed_production_status_choices_for_user(user, delivery_type, current_status=None, order=None):
     choices = Order.production_status_choices_for_delivery(delivery_type)
+    
+    # Admin - barcha statuslarni ko'radi
     if user.is_superuser or user.has_perm("orders.change_order"):
         return choices
+    
+    # Agar o'zgartira olmasa - bo'sh
     if not _can_user_change_production_status(user, current_status, order):
         return []
+    
+    # Oddiy foydalanuvchi - faqat AGREED va QUEUED orasida
     allowed_statuses = {
         Order.ProductionStatus.AGREED,
         Order.ProductionStatus.QUEUED,
     }
+    
+    # Faqat oldinga o'tish uchun statuslarni filter qilish
+    if current_status:
+        status_flow = Order.production_status_flow(delivery_type)
+        if current_status in status_flow:
+            current_index = status_flow.index(current_status)
+            # Faqat hozirgi va keyingi statuslar
+            filtered_choices = []
+            for value, label in choices:
+                if value in status_flow:
+                    if status_flow.index(value) >= current_index and value in allowed_statuses:
+                        filtered_choices.append((value, label))
+                elif value in allowed_statuses:
+                    filtered_choices.append((value, label))
+            return filtered_choices
+    
     return [(value, label) for value, label in choices if value in allowed_statuses]
 
 
@@ -97,6 +119,33 @@ def _can_user_set_production_status(user, target_status, current_status=None, or
     if current_status in allowed_statuses:
         return target_status in allowed_statuses
     return bool(current_status) and target_status == current_status
+
+
+def _validate_status_transition(order, target_status):
+    """
+    Status o'zgarishini tekshiradi. A variant: Faqat oldinga o'tish, to'lov tekshiruvi.
+    Returns: (is_valid, error_message)
+    """
+    current_status = order.production_status
+    payment_status = order.payment_status
+    
+    # 1. Kelishuvda -> Navbatda: To'lov holati tekshiruvi
+    if current_status == Order.ProductionStatus.AGREED and target_status == Order.ProductionStatus.QUEUED:
+        if payment_status == Order.PaymentStatus.UNPAID:
+            return False, "To'lov holati 'To'lanmagan' bo'lsa, statusni 'Navbatda'ga o'tkazib bo'lmaydi"
+    
+    # 2. Yetkazildi statusiga har qanday to'lov holati bilan o'tish mumkin
+    # (To'lanmagan, Yetkazilganda to'lanadi, Qisman to'langan, To'langan)
+    
+    # 3. Oldinga o'tish tekshiruvi - orqaga qaytish yo'q (adminlar bundan mustasno)
+    status_flow = Order.production_status_flow(order.delivery_type)
+    if current_status in status_flow and target_status in status_flow:
+        current_index = status_flow.index(current_status)
+        target_index = status_flow.index(target_status)
+        if target_index < current_index:
+            return False, "Statusni orqaga qaytarib bo'lmaydi"
+    
+    return True, None
 
 
 def _production_status_groups_json_for_user(user):
@@ -147,15 +196,17 @@ def _format_filter_date(value):
 
 def _order_status_tabs():
     return [
-        {"value": "ALL", "icon": "📦", "label": "Barchasi"},
-        {"value": Order.ProductionStatus.AGREED, "icon": "🤝", "label": "Kelishuvda"},
-        {"value": Order.ProductionStatus.QUEUED, "icon": "📋", "label": "Navbatda"},
-        {"value": Order.ProductionStatus.IN_PROGRESS, "icon": "🛠️", "label": "Tayyorlanmoqda"},
-        {"value": Order.ProductionStatus.READY, "icon": "✅", "label": "Tayyor"},
-        {"value": Order.ProductionStatus.SHIPPING, "icon": "🚚", "label": "Yetkazilmoqda"},
-        {"value": Order.ProductionStatus.DELIVERED, "icon": "✔️", "label": "Yakunlandi"},
-        {"value": Order.ProductionStatus.ON_HOLD, "icon": "⏸️", "label": "To'xtatildi"},
-        {"value": Order.ProductionStatus.CANCELLED, "icon": "❌", "label": "Bekor qilindi"},
+        {"value": "ALL", "icon": "📦", "label": "Barchasi", "type": "main"},
+        {"type": "divider", "label": "Faol"},
+        {"value": Order.ProductionStatus.AGREED, "icon": "🤝", "label": "Kelishuvda", "type": "status"},
+        {"value": Order.ProductionStatus.QUEUED, "icon": "📋", "label": "Navbatda", "type": "status"},
+        {"value": Order.ProductionStatus.IN_PROGRESS, "icon": "🛠", "label": "Tayyorlanmoqda", "type": "status"},
+        {"value": Order.ProductionStatus.READY, "icon": "✅", "label": "Tayyor", "type": "status"},
+        {"value": Order.ProductionStatus.SHIPPING, "icon": "🚚", "label": "Yetkazilmoqda", "type": "status"},
+        {"value": Order.ProductionStatus.DELIVERED, "icon": "🏁", "label": "Yetkazildi", "type": "status"},
+        {"type": "divider", "label": "Yakuniy"},
+        {"value": "COMPLETED", "icon": "✔️", "label": "Yakunlandi", "type": "virtual"},  # Virtual: DELIVERED + PAID
+        {"value": Order.ProductionStatus.CANCELLED, "icon": "❌", "label": "Bekor qilindi", "type": "status"},
     ]
 
 
@@ -173,7 +224,7 @@ def order_list(request):
         usd_rate = 12850
 
     status_tabs = _order_status_tabs()
-    valid_status_values = {item["value"] for item in status_tabs}
+    valid_status_values = {item["value"] for item in status_tabs if item.get("type") not in ["divider"]}
     selected_status = request.GET.get("status_tab", "ALL")
     if selected_status not in valid_status_values:
         selected_status = "ALL"
@@ -210,13 +261,37 @@ def order_list(request):
 
     status_counts_map = {}
     for item in status_tabs:
+        if item.get("type") == "divider":
+            continue
         if item["value"] == "ALL":
             status_counts_map[item["value"]] = filtered_qs.count()
+        elif item["value"] == "COMPLETED":  # Virtual tab: DELIVERED + PAID
+            status_counts_map[item["value"]] = filtered_qs.filter(
+                production_status=Order.ProductionStatus.DELIVERED,
+                payment_status=Order.PaymentStatus.PAID
+            ).count()
+        elif item["value"] == Order.ProductionStatus.DELIVERED:  # Faqat to'lanmagan/qisman yetkazilganlar
+            status_counts_map[item["value"]] = filtered_qs.filter(
+                production_status=Order.ProductionStatus.DELIVERED
+            ).exclude(
+                payment_status=Order.PaymentStatus.PAID
+            ).count()
         else:
             status_counts_map[item["value"]] = filtered_qs.filter(production_status=item["value"]).count()
 
     if selected_status == "ALL":
         selected_qs = filtered_qs
+    elif selected_status == "COMPLETED":  # Virtual tab: DELIVERED + PAID
+        selected_qs = filtered_qs.filter(
+            production_status=Order.ProductionStatus.DELIVERED,
+            payment_status=Order.PaymentStatus.PAID
+        )
+    elif selected_status == Order.ProductionStatus.DELIVERED:  # Faqat to'lanmagan/qisman yetkazilganlar
+        selected_qs = filtered_qs.filter(
+            production_status=Order.ProductionStatus.DELIVERED
+        ).exclude(
+            payment_status=Order.PaymentStatus.PAID
+        )
     else:
         selected_qs = filtered_qs.filter(production_status=selected_status)
 
@@ -246,12 +321,12 @@ def order_list(request):
     return render(request, "orders/order_list.html", {
         "active_nav": "orders",
         "status_tab": selected_status,
-        "selected_status_label": next((item["label"] for item in status_tabs if item["value"] == selected_status), ""),
+        "selected_status_label": next((item["label"] for item in status_tabs if item.get("value") == selected_status), ""),
         "status_groups": status_groups,
         "status_tabs": [
             {
                 **item,
-                "count": status_counts_map.get(item["value"], 0),
+                "count": status_counts_map.get(item.get("value"), 0) if "value" in item else None,
             }
             for item in status_tabs
         ],
@@ -293,6 +368,10 @@ def _form_context(user, order, initial, extra=None):
     v_payment_type = src.get("payment_type", getattr(o, "payment_type", ""))
     v_payment_status = src.get("payment_status", getattr(o, "payment_status", ""))
     v_production_status = src.get("production_status", getattr(o, "production_status", ""))
+    
+    # Default status for new orders - AGREED
+    if not v_production_status and not o:
+        v_production_status = Order.ProductionStatus.AGREED
 
     # Create choice label maps
     delivery_label_map = dict(Order.DeliveryType.choices)
@@ -379,8 +458,37 @@ def order_create(request):
             error = str(e)
             if request.headers.get("X-Requested-With") == "XMLHttpRequest":
                 return JsonResponse({"ok": False, "error": error}, status=400)
+            
+            # Items ma'lumotlarini POST dan olish
+            initial_data = dict(request.POST.items())
+            config_labels = request.POST.getlist("config_label")
+            quantities = request.POST.getlist("quantity")
+            unit_prices_uzs = request.POST.getlist("unit_price_uzs")
+            
+            if config_labels:
+                items_data = []
+                for i, label in enumerate(config_labels):
+                    qty = int(quantities[i]) if i < len(quantities) and quantities[i].isdigit() else 1
+                    price_uzs = _parse_decimal(unit_prices_uzs[i] if i < len(unit_prices_uzs) else "0")
+                    
+                    try:
+                        from calculator.models import CalculatorSettings
+                        settings = CalculatorSettings.objects.first()
+                        usd_rate = settings.usd_rate if settings and settings.usd_rate else Decimal("12850")
+                        price_usd = price_uzs / usd_rate if usd_rate > 0 else Decimal("0")
+                    except:
+                        price_usd = Decimal("0")
+                    
+                    items_data.append({
+                        "config_label": label,
+                        "quantity": qty,
+                        "unit_price_usd": price_usd,
+                        "unit_price_uzs": price_uzs
+                    })
+                initial_data["items"] = items_data
+            
             return render(request, "orders/order_form.html",
-                          _form_context(request.user, None, request.POST, {"error": error}))
+                          _form_context(request.user, None, initial_data, {"error": error}))
 
     # GET request - URL parametrlaridan ma'lumotlarni olish
     initial = {}
@@ -457,8 +565,37 @@ def order_detail(request, pk):
             return redirect("orders:list")
         except ValueError as e:
             error = str(e)
+            
+            # Items ma'lumotlarini POST dan olish
+            initial_data = dict(request.POST.items())
+            config_labels = request.POST.getlist("config_label")
+            quantities = request.POST.getlist("quantity")
+            unit_prices_uzs = request.POST.getlist("unit_price_uzs")
+            
+            if config_labels:
+                items_data = []
+                for i, label in enumerate(config_labels):
+                    qty = int(quantities[i]) if i < len(quantities) and quantities[i].isdigit() else 1
+                    price_uzs = _parse_decimal(unit_prices_uzs[i] if i < len(unit_prices_uzs) else "0")
+                    
+                    try:
+                        from calculator.models import CalculatorSettings
+                        settings = CalculatorSettings.objects.first()
+                        usd_rate = settings.usd_rate if settings and settings.usd_rate else Decimal("12850")
+                        price_usd = price_uzs / usd_rate if usd_rate > 0 else Decimal("0")
+                    except:
+                        price_usd = Decimal("0")
+                    
+                    items_data.append({
+                        "config_label": label,
+                        "quantity": qty,
+                        "unit_price_usd": price_usd,
+                        "unit_price_uzs": price_uzs
+                    })
+                initial_data["items"] = items_data
+            
             return render(request, "orders/order_form.html",
-                          _form_context(request.user, order, request.POST, {"error": error}))
+                          _form_context(request.user, order, initial_data, {"error": error}))
 
     allowed_production_status_choices = _allowed_production_status_choices_for_user(
         request.user,
@@ -511,9 +648,18 @@ def order_update_status(request, pk):
             {"error": "Siz bu buyurtma uchun ushbu statusni o'zgartira olmaysiz."},
             status=403,
         )
+    
+    # Admin bo'lmagan foydalanuvchilar uchun validatsiya
+    if not (request.user.is_superuser or request.user.has_perm("orders.change_order")):
+        is_valid, error_msg = _validate_status_transition(order, new_status)
+        if not is_valid:
+            return JsonResponse({"error": error_msg}, status=400)
+    
     order.production_status = new_status
+    # delivered_at ni DELIVERED statusiga o'tganda to'ldirish
     if new_status == Order.ProductionStatus.DELIVERED:
-        order.delivered_at = timezone.now()
+        if not order.delivered_at:
+            order.delivered_at = timezone.now()
     order.save(update_fields=["production_status", "delivered_at", "updated_at"])
     response_data = {
         "status": order.production_status,
@@ -572,11 +718,34 @@ def leaderboard(request):
         ).aggregate(total_units=Sum("quantity"))["total_units"] or 0
 
         cancelled = Order.objects.filter(cancelled_filter, sold_by=seller).count()
+        
+        # To'langan summalarni hisoblash (yakunlanmagan orderlar uchun ham)
+        seller_orders = Order.objects.filter(active_filter, sold_by=seller)
+        paid_amount_uzs = Decimal("0")
+        paid_amount_usd = Decimal("0")
+        
+        for order in seller_orders:
+            if order.payment_status == Order.PaymentStatus.PAID:
+                paid_amount_uzs += order.total_price_uzs
+                paid_amount_usd += order.total_price_usd
+            elif order.payment_status == Order.PaymentStatus.PARTIAL:
+                paid_amount_uzs += order.partial_amount
+                # USD ga konvertatsiya
+                try:
+                    from calculator.models import CalculatorSettings
+                    settings = CalculatorSettings.objects.first()
+                    usd_rate = settings.usd_rate if settings and settings.usd_rate else Decimal("12850")
+                    paid_amount_usd += order.partial_amount / usd_rate if usd_rate > 0 else Decimal("0")
+                except:
+                    pass
 
         board.append({
             "seller": seller,
             "total_usd": agg["total_usd"] or Decimal("0"),
             "total_uzs": agg["total_uzs"] or Decimal("0"),
+            "paid_amount_uzs": paid_amount_uzs,
+            "paid_amount_usd": paid_amount_usd,
+            "unpaid_amount_uzs": (agg["total_uzs"] or Decimal("0")) - paid_amount_uzs,
             "order_count": agg["order_count"] or 0,
             "units_sold": units,
             "cancelled": cancelled,
@@ -660,6 +829,22 @@ def _save_order(request, instance=None):
         instance,
     ):
         errors.append("Siz bu buyurtma uchun ushbu statusni o'zgartira olmaysiz.")
+    
+    # Status validatsiyasi (yangi order va edit qilish paytida)
+    if not (request.user.is_superuser or request.user.has_perm("orders.change_order")):
+        # Temporary order object for validation
+        temp_order = instance if instance else type('obj', (object,), {
+            'production_status': Order.ProductionStatus.AGREED,  # default for new orders
+            'payment_status': payment_status,
+            'delivery_type': delivery_type,
+        })()
+        temp_order.payment_status = payment_status
+        temp_order.delivery_type = delivery_type
+        
+        is_valid, error_msg = _validate_status_transition(temp_order, production_status)
+        if not is_valid:
+            errors.append(error_msg)
+    
     if delivery_type and (not delivery_date or not delivery_time):
         errors.append("Yetkazib berish sanasi va vaqti kiritilmadi.")
 

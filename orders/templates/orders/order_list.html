@@ -32,6 +32,18 @@
   overflow: hidden;
 }
 
+.status-tab-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2px;
+  height: 28px;
+  background: var(--line);
+  margin: 0 6px;
+  flex-shrink: 0;
+  border-radius: 2px;
+}
+
 .status-tab {
   display: inline-flex;
   align-items: center;
@@ -571,7 +583,7 @@
 .badge-in-progress { background: #fef3c7; color: #92400e; }
 .badge-ready       { background: #d1fae5; color: #065f46; }
 .badge-shipping    { background: #ede9fe; color: #5b21b6; }
-.badge-delivered   { background: #dcfce7; color: #166534; }
+.badge-delivered   { background: #dbeafe; color: #1e40af; }
 .badge-cancelled   { background: #fee2e2; color: #991b1b; }
 
 /* Dark mode */
@@ -586,7 +598,7 @@
 [data-theme="dark"] .badge-in-progress { background: #78350f; color: #fcd34d; }
 [data-theme="dark"] .badge-ready       { background: #064e3b; color: #6ee7b7; }
 [data-theme="dark"] .badge-shipping    { background: #4c1d95; color: #c4b5fd; }
-[data-theme="dark"] .badge-delivered   { background: #14532d; color: #86efac; }
+[data-theme="dark"] .badge-delivered   { background: #1e3a8a; color: #93c5fd; }
 [data-theme="dark"] .badge-cancelled   { background: #7f1d1d; color: #fca5a5; }
 
 .seller-pill {
@@ -955,6 +967,7 @@
   .status-tab { min-height: 28px; padding: 0 4px; gap: 3px; }
   .status-tab-icon { font-size: 10px; }
   .status-tab-label { font-size: 9px; }
+  .status-tab-divider { height: 24px; width: 1.5px; margin: 0 3px; }
   .status-tab-count { min-width: 14px; height: 14px; font-size: 8px; padding: 0 3px; }
   .filters-panel { padding: 10px 12px; }
   .filters-bar > div { flex: 1 1 calc(50% - 4px); max-width: none; }
@@ -1210,11 +1223,17 @@
   <div class="status-tabs-wrap">
     <div class="status-tabs">
       {% for item in status_tabs %}
-        <button type="button" class="status-tab {% if status_tab == item.value %}active{% endif %}" onclick="switchTab('{{ item.value }}')">
-          <span class="status-tab-icon">{{ item.icon }}</span>
-          <!-- <span class="status-tab-label">{{ item.label }}</span> -->
-          <span class="status-tab-count">{{ item.count }}</span>
-        </button>
+        {% if item.type == "divider" %}
+          <span class="status-tab-divider"></span>
+        {% else %}
+          <button type="button" class="status-tab {% if status_tab == item.value %}active{% endif %}" onclick="switchTab('{{ item.value }}')">
+            <span class="status-tab-icon">{{ item.icon }}</span>
+            <!-- <span class="status-tab-label">{{ item.label }}</span> -->
+            {% if item.count is not None %}
+              <span class="status-tab-count">{{ item.count }}</span>
+            {% endif %}
+          </button>
+        {% endif %}
       {% endfor %}
     </div>
   </div>

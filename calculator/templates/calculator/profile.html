@@ -170,7 +170,7 @@
 
 .profile-summary {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 14px;
   margin-top: 16px;
 }
@@ -471,7 +471,7 @@
 
 @media (max-width: 1024px) {
   .profile-summary {
-    <!-- grid-template-columns: repeat(2, minmax(0, 1fr)) !important;x -->
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   }
   
   .board-table {
@@ -891,6 +891,10 @@
         <strong>{{ all_time_stats.total_uzs_display }} so'm</strong>
       </div>
       <div class="summary-box">
+        <span>{{ period_label }} to'langan</span>
+        <strong>{{ stats.paid_amount_uzs_display }} so'm</strong>
+      </div>
+      <div class="summary-box">
         <span>Butun davr buyurtma</span>
         <strong>{{ all_time_stats.completed_orders }} ta</strong>
       </div>
@@ -956,6 +960,7 @@
                 <th>N</th>
                 <th>Sotuvchilar</th>
                 <th>Savdo summasi</th>
+                <th>To'langan summa</th>
                 <th>Tugallangan buyurtma</th>
               </tr>
             </thead>
@@ -977,6 +982,10 @@
                 <td>
                   <div class="table-value">{{ entry.total_uzs_display }} so'm</div>
                   <div class="table-muted">{{ period_label }} davr</div>
+                </td>
+                <td>
+                  <div class="table-value">{{ entry.paid_amount_uzs_display }} so'm</div>
+                  <div class="table-muted">to'langan (yakunlanmagan ham)</div>
                 </td>
                 <td>
                   <div class="table-value">{{ entry.completed_orders }} ta</div>
