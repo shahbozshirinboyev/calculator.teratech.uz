@@ -69,13 +69,29 @@ def _can_user_change_production_status(user, current_status=None, order=None):
 def _allowed_production_status_choices_for_user(user, delivery_type, current_status=None, order=None):
     choices = Order.production_status_choices_for_delivery(delivery_type)
     
-    # Admin - barcha statuslarni ko'radi
-    if user.is_superuser or user.has_perm("orders.change_order"):
-        return choices
-    
     # Agar o'zgartira olmasa - bo'sh
     if not _can_user_change_production_status(user, current_status, order):
         return []
+    
+    # Admin - barcha statuslarni ko'radi, lekin faqat oldinga va CANCELLED
+    if user.is_superuser or user.has_perm("orders.change_order"):
+        if current_status:
+            status_flow = Order.production_status_flow(delivery_type)
+            if current_status in status_flow:
+                current_index = status_flow.index(current_status)
+                # Faqat hozirgi va keyingi statuslar + CANCELLED
+                filtered_choices = []
+                for value, label in choices:
+                    if value == Order.ProductionStatus.CANCELLED:
+                        # CANCELLED har doim ko'rinadi
+                        filtered_choices.append((value, label))
+                    elif value in status_flow:
+                        status_index = status_flow.index(value)
+                        # Faqat hozirgi yoki keyingi statuslar
+                        if status_index >= current_index:
+                            filtered_choices.append((value, label))
+                return filtered_choices
+        return choices
     
     # Oddiy foydalanuvchi - faqat AGREED va QUEUED orasida
     allowed_statuses = {
@@ -88,11 +104,15 @@ def _allowed_production_status_choices_for_user(user, delivery_type, current_sta
         status_flow = Order.production_status_flow(delivery_type)
         if current_status in status_flow:
             current_index = status_flow.index(current_status)
-            # Faqat hozirgi va keyingi statuslar
+            # Faqat hozirgi va keyingi statuslar + CANCELLED
             filtered_choices = []
             for value, label in choices:
-                if value in status_flow:
-                    if status_flow.index(value) >= current_index and value in allowed_statuses:
+                if value == Order.ProductionStatus.CANCELLED:
+                    # CANCELLED har doim ko'rinadi
+                    filtered_choices.append((value, label))
+                elif value in status_flow:
+                    status_index = status_flow.index(value)
+                    if status_index >= current_index and value in allowed_statuses:
                         filtered_choices.append((value, label))
                 elif value in allowed_statuses:
                     filtered_choices.append((value, label))
@@ -137,7 +157,11 @@ def _validate_status_transition(order, target_status):
     # 2. Yetkazildi statusiga har qanday to'lov holati bilan o'tish mumkin
     # (To'lanmagan, Yetkazilganda to'lanadi, Qisman to'langan, To'langan)
     
-    # 3. Oldinga o'tish tekshiruvi - orqaga qaytish yo'q (adminlar bundan mustasno)
+    # 3. CANCELLED (Bekor qilindi) - har qanday statusdan o'tish mumkin
+    if target_status == Order.ProductionStatus.CANCELLED:
+        return True, None
+    
+    # 4. Oldinga o'tish tekshiruvi - orqaga qaytish yo'q
     status_flow = Order.production_status_flow(order.delivery_type)
     if current_status in status_flow and target_status in status_flow:
         current_index = status_flow.index(current_status)
