@@ -1466,16 +1466,24 @@ updateSummary();
   }
 })();
 
-// Phone number input formatting
+// Phone number input formatting (display only)
 (function() {
   const phoneInput = document.getElementById('customer_phone');
   if (!phoneInput) return;
 
+  // Bazadan kelgan qiymatni saqlab qolamiz
+  let originalValue = phoneInput.value || phoneInput.getAttribute('value') || '';
+  
   function normalizePhoneDigits(rawValue) {
+    // Faqat raqamlarni olish
     let digits = String(rawValue || '').replace(/\D/g, '');
+    
+    // Agar 998 bilan boshlansa
     if (digits.startsWith('998')) {
-      digits = digits.slice(3);
+      return digits.slice(3, 12); // 998 dan keyin 9 ta raqam
     }
+    
+    // Maksimal 9 ta raqam
     return digits.slice(0, 9);
   }
 
@@ -1497,16 +1505,21 @@ updateSummary();
     return digits ? `+998 ${parts.join(' ')}` : '';
   }
 
-  function syncPhoneInput(rawValue) {
+  function syncPhoneInput(rawValue, updateOriginal = false) {
     const digits = normalizePhoneDigits(rawValue);
     phoneInput.dataset.phoneDigits = digits;
     phoneInput.value = formatPhoneDigits(digits);
+    
+    if (updateOriginal) {
+      originalValue = phoneInput.value;
+    }
   }
 
-  syncPhoneInput(phoneInput.getAttribute('value') || phoneInput.value);
+  // Initial format
+  syncPhoneInput(originalValue);
 
   phoneInput.addEventListener('input', function() {
-    syncPhoneInput(phoneInput.value);
+    syncPhoneInput(phoneInput.value, true);
   });
 
   phoneInput.addEventListener('keydown', function(e) {
@@ -1516,12 +1529,13 @@ updateSummary();
       e.preventDefault();
       phoneInput.dataset.phoneDigits = '';
       phoneInput.value = '';
+      originalValue = '';
       return;
     }
     const digits = phoneInput.dataset.phoneDigits || '';
     if (!digits) return;
     e.preventDefault();
-    syncPhoneInput(digits.slice(0, -1));
+    syncPhoneInput(digits.slice(0, -1), true);
   });
 
   phoneInput.addEventListener('focus', function() {
@@ -1533,18 +1547,19 @@ updateSummary();
   phoneInput.addEventListener('blur', function() {
     if (!phoneInput.dataset.phoneDigits) {
       phoneInput.value = '';
+      originalValue = '';
     }
   });
 
-  // Custom validation on form submit
+  // Form submit - bazaga formatli saqlaymiz
   const form = document.getElementById('order-form');
 
   if (form) {
     form.addEventListener('submit', function(e) {
-      const unmasked = phoneInput.dataset.phoneDigits || '';
+      const digits = phoneInput.dataset.phoneDigits || '';
 
       // Validate: must have exactly 9 digits
-      if (unmasked.length !== 9) {
+      if (digits.length !== 9) {
         e.preventDefault();
         phoneInput.setCustomValidity('Telefon raqami to\'liq kiritilishi kerak (9 ta raqam)');
         phoneInput.reportValidity();
@@ -1554,12 +1569,13 @@ updateSummary();
 
       phoneInput.setCustomValidity('');
 
-      // Replace the input value with clean 9 digits for database storage
-      phoneInput.value = unmasked;
+      // Bazaga +998XXXXXXXXX formatda saqlaymiz
+      phoneInput.value = '+998' + digits;
 
       return true;
     });
   }
+  
   phoneInput.addEventListener('input', function() {
     if (phoneInput.validity.customError) {
       phoneInput.setCustomValidity('');
