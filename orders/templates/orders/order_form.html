@@ -698,7 +698,7 @@
         </div>
 
         <div class="form-actions">
-          <button type="submit">{% if order %}Saqlash{% else %}Buyurtma yaratish{% endif %}</button>
+          <button type="submit" id="submit-order-btn">{% if order %}Saqlash{% else %}Buyurtma yaratish{% endif %}</button>
           <a href="{% if order %}{% url 'orders:detail' order.pk %}{% else %}{% url 'orders:list' %}{% endif %}"
              style="display:inline-flex;align-items:center;padding:10px 16px;border-radius:6px;background:var(--btn-secondary-bg);color:var(--btn-secondary-color);border:1px solid var(--btn-secondary-border);font-weight:700;text-decoration:none;font-size:14px;">
             Bekor qilish
@@ -1585,7 +1585,25 @@ updateSummary();
 
 const orderFormEl2 = document.getElementById('order-form');
 if (orderFormEl2) {
-  orderFormEl2.addEventListener('submit', function() {
+  let isSubmitting = false;
+  
+  orderFormEl2.addEventListener('submit', function(e) {
+    // Duplicate submit ni oldini olish
+    if (isSubmitting) {
+      e.preventDefault();
+      return false;
+    }
+    
+    isSubmitting = true;
+    
+    // Submit buttonni disable qilish
+    const submitBtn = document.getElementById('submit-order-btn');
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.style.opacity = '0.6';
+      submitBtn.style.cursor = 'not-allowed';
+    }
+    
     document.querySelectorAll('input[name="quantity"]').forEach(input => {
       input.value = normalizeQuantity(input.value);
     });
@@ -1596,7 +1614,227 @@ if (orderFormEl2) {
     if (partialAmountInput) {
       partialAmountInput.value = normalizeMoney(partialAmountInput.value);
     }
+    
+    // Loading overlay ni ko'rsatish
+    showLoadingOverlay();
   });
 }
+
+// Loading overlay funksiyalari
+function showLoadingOverlay() {
+  // Agar allaqachon mavjud bo'lsa, qayta yaratmaymiz
+  if (document.getElementById('order-loading-overlay')) return;
+  
+  // Matnni aniqlash - yangi order yoki edit
+  const loadingText = IS_EXISTING_ORDER ? 'Buyurtma saqlanmoqda...' : 'Buyurtma yaratilmoqda...';
+  
+  const overlay = document.createElement('div');
+  overlay.id = 'order-loading-overlay';
+  overlay.innerHTML = `
+    <div class="loading-content">
+      <div class="loading-text">${loadingText}</div>
+      <div class="loading-progress-bar">
+        <div class="loading-progress-fill"></div>
+      </div>
+      <div class="loading-subtext"><span class="loading-percent">0</span>%</div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  
+  // Animatsiya uchun kichik kechikish
+  setTimeout(() => {
+    overlay.classList.add('active');
+    startFakeProgress();
+  }, 10);
+}
+
+function startFakeProgress() {
+  const progressFill = document.querySelector('.loading-progress-fill');
+  const percentText = document.querySelector('.loading-percent');
+  
+  if (!progressFill || !percentText) return;
+  
+  let progress = 0;
+  const intervals = [
+    { from: 0, to: 20, duration: 300 },    // 0-20%: tez
+    { from: 20, to: 50, duration: 500 },   // 20-50%: o'rtacha
+    { from: 50, to: 70, duration: 700 },   // 50-70%: sekinroq
+    { from: 70, to: 85, duration: 1000 },  // 70-85%: sekin
+    { from: 85, to: 92, duration: 1500 },  // 85-92%: juda sekin
+  ];
+  
+  let currentInterval = 0;
+  
+  function updateProgress() {
+    if (currentInterval >= intervals.length) {
+      // 92% da to'xtab turadi (response kelguncha)
+      return;
+    }
+    
+    const interval = intervals[currentInterval];
+    const steps = interval.to - interval.from;
+    const stepDuration = interval.duration / steps;
+    
+    let step = 0;
+    const timer = setInterval(() => {
+      if (step < steps) {
+        progress++;
+        progressFill.style.width = progress + '%';
+        percentText.textContent = progress;
+        step++;
+      } else {
+        clearInterval(timer);
+        currentInterval++;
+        updateProgress();
+      }
+    }, stepDuration);
+  }
+  
+  updateProgress();
+  
+  // Form submit bo'lgandan keyin, response kelganda 100% ga etkazish
+  // Bu qismni form event listener ichida chaqiramiz
+  window.completeProgress = function() {
+    const fill = document.querySelector('.loading-progress-fill');
+    const percent = document.querySelector('.loading-percent');
+    
+    if (fill && percent) {
+      // 100% ga tez sakrash
+      fill.style.transition = 'width 0.3s ease-out';
+      fill.style.width = '100%';
+      percent.textContent = '100';
+      
+      // 100% ga yetgandan keyin overlay yopiladi
+      setTimeout(() => {
+        hideLoadingOverlay();
+      }, 400);
+    }
+  };
+}
+
+function hideLoadingOverlay() {
+  const overlay = document.getElementById('order-loading-overlay');
+  if (overlay) {
+    overlay.classList.remove('active');
+    setTimeout(() => {
+      overlay.remove();
+    }, 300);
+  }
+  
+  // Global function ni tozalash
+  if (window.completeProgress) {
+    delete window.completeProgress;
+  }
+}
+
+// Agar sahifa load bo'lganda hali overlay mavjud bo'lsa (redirect bo'lganda)
+window.addEventListener('load', function() {
+  // Agar redirect bo'lgan bo'lsa, 100% ga etkazib overlay ni yopamiz
+  if (window.completeProgress) {
+    window.completeProgress();
+  } else {
+    hideLoadingOverlay();
+  }
+});
 </script>
+
+<style>
+#order-loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999999;
+  opacity: 0;
+  transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#order-loading-overlay.active {
+  opacity: 1;
+}
+
+.loading-content {
+  text-align: center;
+  animation: fadeInUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  max-width: 420px;
+  width: 90%;
+  padding: 48px 32px;
+}
+
+.loading-text {
+  font-size: 26px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 32px;
+  letter-spacing: -0.02em;
+}
+
+.loading-progress-bar {
+  width: 100%;
+  max-width: 360px;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 999px;
+  overflow: hidden;
+  margin: 0 auto 16px;
+  position: relative;
+}
+
+.loading-progress-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--accent), var(--accent-dark));
+  border-radius: 999px;
+  transition: width 0.1s linear;
+  box-shadow: 0 0 16px var(--accent);
+}
+
+.loading-subtext {
+  font-size: 32px;
+  color: #fff;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Mobile responsive */
+@media (max-width: 640px) {
+  .loading-content {
+    padding: 40px 24px;
+  }
+  
+  .loading-text {
+    font-size: 22px;
+    margin-bottom: 28px;
+  }
+  
+  .loading-progress-bar {
+    max-width: 300px;
+    height: 6px;
+  }
+  
+  .loading-subtext {
+    font-size: 28px;
+  }
+}
+</style>
+
 {% endblock %}
