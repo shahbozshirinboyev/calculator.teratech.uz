@@ -128,9 +128,9 @@
   align-items: flex-end;
 }
 .filters-bar > div {
-  display: flex;
+  <!-- display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 4px; -->
   position: relative;
   flex: 1 1 130px;
   min-width: 0;
@@ -280,6 +280,30 @@
 .filter-chip-clear:hover {
   background: color-mix(in srgb, var(--danger) 14%, var(--panel));
   border-color: color-mix(in srgb, var(--danger) 55%, var(--line));
+}
+
+.export-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 0 14px;
+  border-radius: 8px;
+  background: var(--panel);
+  color: var(--accent-dark);
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--line));
+  font-weight: 700;
+  font-size: 12px;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+  font-family: inherit;
+}
+
+.export-btn:hover {
+  transform: translateY(-1px);
+  background: color-mix(in srgb, var(--accent) 10%, var(--panel));
+  border-color: var(--accent);
 }
 
 .new-order-btn {
@@ -963,6 +987,210 @@
   opacity: 1;
 }
 
+/* Export Modal Styles */
+.export-modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.export-modal-overlay.show {
+  display: flex;
+}
+
+.export-modal-content {
+  background: #ffffff;
+  color: var(--text);
+  max-width: 460px;
+  width: 100%;
+  padding: 32px;
+  border-radius: 18px;
+  border: 1px solid color-mix(in srgb, var(--line) 82%, #ffffff);
+  box-shadow: 0 28px 60px rgba(15, 23, 42, 0.18), 0 10px 24px rgba(15, 23, 42, 0.1);
+  transform: scale(0.95);
+  transition: transform 0.2s ease-out, opacity 0.2s ease-out;
+  opacity: 0;
+}
+
+[data-theme="dark"] .export-modal-content {
+  background: var(--panel);
+  border-color: color-mix(in srgb, var(--line) 88%, transparent);
+  box-shadow: 0 28px 60px rgba(2, 6, 23, 0.42), 0 10px 24px rgba(2, 6, 23, 0.28);
+}
+
+.export-modal-overlay.show .export-modal-content {
+  transform: scale(1);
+  opacity: 1;
+}
+
+.export-modal-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.export-modal-icon {
+  font-size: 48px;
+  line-height: 1;
+  margin-bottom: 14px;
+}
+
+.export-modal-title {
+  margin: 0 0 8px;
+  font-size: 22px;
+  line-height: 1.25;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+[data-theme="dark"] .export-modal-title {
+  color: var(--text);
+}
+
+.export-modal-subtitle {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #64748b;
+}
+
+[data-theme="dark"] .export-modal-subtitle {
+  color: var(--muted);
+}
+
+.export-modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.export-date-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.export-date-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.export-date-input {
+  width: 100%;
+  min-height: 42px;
+  padding: 10px 14px;
+  border: 1px solid color-mix(in srgb, var(--line) 90%, transparent);
+  border-radius: 10px;
+  background: var(--panel);
+  color: var(--text);
+  font-size: 14px;
+  font-family: inherit;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.export-date-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 14%, transparent);
+}
+
+.export-modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.export-modal-btn {
+  flex: 1;
+  min-height: 42px;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+  border: none;
+}
+
+.export-modal-btn-cancel {
+  background: var(--panel);
+  color: var(--muted);
+  border: 1px solid var(--line);
+}
+
+.export-modal-btn-cancel:hover {
+  background: var(--bg);
+  color: var(--text);
+}
+
+.export-modal-btn-submit {
+  background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(15, 118, 110, 0.22);
+}
+
+.export-modal-btn-submit:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(15, 118, 110, 0.28);
+}
+
+.export-modal-btn-submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Export Loading State */
+.export-loading {
+  text-align: center;
+  padding: 20px 0;
+}
+
+.export-loading-spinner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.export-loading-spinner span {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 12px var(--accent);
+  animation: pulse-dot 1.2s ease-in-out infinite;
+}
+
+.export-loading-spinner span:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.export-loading-spinner span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.export-loading-spinner span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+.export-loading-text {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: 0.01em;
+}
+
 @media (max-width: 640px) {
   .status-tab { min-height: 28px; padding: 0 4px; gap: 3px; }
   .status-tab-icon { font-size: 10px; }
@@ -1181,6 +1409,14 @@
           </svg>
           Yangi buyurtma
         </a>
+        {% if status_tab == 'COMPLETED' %}
+        <button type="button" onclick="openExportModal()" class="export-btn">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+            <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+            <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
+          </svg>
+        </button>
+        {% endif %}
       </div>
     </div>
 
@@ -1273,6 +1509,63 @@
       <button type="button" onclick="confirmCardDelete()" class="delete-confirm-btn">
         Ha, o'chirish
       </button>
+    </div>
+  </div>
+</div>
+
+<!-- Export Modal -->
+<div id="export-modal" class="export-modal-overlay">
+  <div class="export-modal-content">
+    <div id="export-modal-form-view">
+      <div class="export-modal-header">
+        <div class="export-modal-icon">📊</div>
+        <h3 class="export-modal-title">Excel ga export</h3>
+        <p class="export-modal-subtitle">Yakunlangan buyurtmalar ro'yxatini yuklab olish</p>
+      </div>
+      
+      <form id="export-form" class="export-modal-form" onsubmit="submitExport(event)">
+        <div class="export-date-field">
+          <label class="export-date-label" for="export-date-from">Boshlanish sanasi</label>
+          <input 
+            type="date" 
+            id="export-date-from" 
+            name="export_date_from" 
+            class="export-date-input" 
+            required
+          >
+        </div>
+        
+        <div class="export-date-field">
+          <label class="export-date-label" for="export-date-to">Tugash sanasi</label>
+          <input 
+            type="date" 
+            id="export-date-to" 
+            name="export_date_to" 
+            class="export-date-input" 
+            required
+          >
+        </div>
+        
+        <div class="export-modal-actions">
+          <button type="button" onclick="closeExportModal()" class="export-modal-btn export-modal-btn-cancel">
+            Bekor qilish
+          </button>
+          <button type="submit" class="export-modal-btn export-modal-btn-submit">
+            Export qilish
+          </button>
+        </div>
+      </form>
+    </div>
+    
+    <div id="export-modal-loading-view" style="display: none;">
+      <div class="export-loading">
+        <div class="export-loading-spinner">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+        <div class="export-loading-text">Tayyorlanmoqda...</div>
+      </div>
     </div>
   </div>
 </div>
@@ -1494,12 +1787,103 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  const exportModal = document.getElementById('export-modal');
+  if (exportModal) {
+    exportModal.addEventListener('click', (e) => {
+      if (e.target === exportModal) {
+        closeExportModal();
+      }
+    });
+  }
+
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
       closeCardDeleteModal();
+      closeExportModal();
     }
   });
+  
+  // Bugungi sana va 30 kun avval default qiymat
+  const today = new Date();
+  const dateFrom = new Date(today);
+  dateFrom.setDate(dateFrom.getDate() - 30);
+  
+  const dateFromInput = document.getElementById('export-date-from');
+  const dateToInput = document.getElementById('export-date-to');
+  
+  if (dateFromInput) {
+    dateFromInput.value = dateFrom.toISOString().split('T')[0];
+  }
+  if (dateToInput) {
+    dateToInput.value = today.toISOString().split('T')[0];
+  }
 });
+
+// Export Modal Functions
+function openExportModal() {
+  const modal = document.getElementById('export-modal');
+  const formView = document.getElementById('export-modal-form-view');
+  const loadingView = document.getElementById('export-modal-loading-view');
+  
+  if (!modal || !formView || !loadingView) return;
+  
+  // Reset to form view
+  formView.style.display = 'block';
+  loadingView.style.display = 'none';
+  
+  modal.classList.add('show');
+}
+
+function closeExportModal() {
+  const modal = document.getElementById('export-modal');
+  if (modal) {
+    modal.classList.remove('show');
+  }
+}
+
+function submitExport(event) {
+  event.preventDefault();
+  
+  const form = event.target;
+  const dateFrom = form.export_date_from.value;
+  const dateTo = form.export_date_to.value;
+  
+  if (!dateFrom || !dateTo) {
+    alert('Iltimos, sanalarni tanlang');
+    return;
+  }
+  
+  // Validate date range
+  if (new Date(dateFrom) > new Date(dateTo)) {
+    alert('Boshlanish sanasi tugash sanasidan katta bo\'lmasligi kerak');
+    return;
+  }
+  
+  // Show loading view
+  const formView = document.getElementById('export-modal-form-view');
+  const loadingView = document.getElementById('export-modal-loading-view');
+  
+  if (formView && loadingView) {
+    formView.style.display = 'none';
+    loadingView.style.display = 'block';
+  }
+  
+  // Create download URL
+  const url = `/orders/export/excel/?export_date_from=${encodeURIComponent(dateFrom)}&export_date_to=${encodeURIComponent(dateTo)}`;
+  
+  // Download file
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `yakunlangan_orderlar_${dateFrom}_${dateTo}.xlsx`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  
+  // Close modal after short delay
+  setTimeout(() => {
+    closeExportModal();
+  }, 1500);
+}
 </script>
 {% csrf_token %}
 {% endblock %}

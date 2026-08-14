@@ -706,8 +706,257 @@ def order_delete(request, pk):
 
 
 @login_required
+def export_orders_excel(request):
+    """
+    COMPLETED statusidagi orderlarni Excel ga export qilish
+    """
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, Alignment, PatternFill, numbers
+    from django.http import HttpResponse
+    from datetime import datetime
+    import re
+    
+    def format_phone_number(phone):
+        """
+        Telefon raqamni +998 (XX) XXX-XX-XX formatiga o'zgartirish
+        Input: 943456789 yoki +998943456789 yoki boshqa format
+        Output: +998 (94) 345-67-89
+        """
+        if not phone:
+            return ''
+        
+        # Faqat raqamlarni olish
+        digits = re.sub(r'\D', '', str(phone))
+        
+        # Agar 998 bilan boshlanmasa, uni qo'shish
+        if not digits.startswith('998'):
+            digits = '998' + digits
+        
+        # 998 dan keyingi raqamlar
+        if len(digits) >= 12:
+            # Format: +998 (XX) XXX-XX-XX
+            code = digits[3:5]
+            part1 = digits[5:8]
+            part2 = digits[8:10]
+            part3 = digits[10:12]
+            return f'+998 ({code}) {part1}-{part2}-{part3}'
+        
+        # Agar format noto'g'ri bo'lsa, asl qiymatni qaytarish
+        return phone
+    
+    # Sanalarni olish
+    date_from_str = request.GET.get('export_date_from', '')
+    date_to_str = request.GET.get('export_date_to', '')
+    
+    if not date_from_str or not date_to_str:
+        return JsonResponse({'error': 'Sanalar kiritilmagan'}, status=400)
+    
+    try:
+        date_from = datetime.strptime(date_from_str, '%Y-%m-%d').date()
+        date_to = datetime.strptime(date_to_str, '%Y-%m-%d').date()
+    except ValueError:
+        return JsonResponse({'error': 'Noto\'g\'ri sana formati'}, status=400)
+    
+    # Orderlarni filter qilish
+    orders_qs = Order.objects.filter(
+        production_status=Order.ProductionStatus.DELIVERED,
+        payment_status=Order.PaymentStatus.PAID,
+        created_at__date__gte=date_from,
+        created_at__date__lte=date_to
+    ).select_related('sold_by').prefetch_related('items').order_by('created_at')
+    
+    # Faqat o'z orderlarini export qilish (admin bo'lmasa)
+    if not (request.user.is_superuser or request.user.has_perm('orders.view_order')):
+        orders_qs = orders_qs.filter(sold_by=request.user)
+    
+    # Excel yaratish
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Yakunlangan Orderlar"
+    
+    # Header styling
+    header_fill = PatternFill(start_color='0F766E', end_color='0F766E', fill_type='solid')
+    header_font = Font(bold=True, color='FFFFFF', size=11)
+    header_alignment = Alignment(horizontal='center', vertical='center')
+    
+    # Header qatorlari
+    headers = [
+        'Order #',
+        'Sana',
+        'Mijoz',
+        'Telefon',
+        'Manzil',
+        'Yetkazish turi',
+        'To\'lov turi',
+        'To\'lov holati',
+        'Konfiguratsiya',
+        'Soni',
+        'Narxi (so\'m)',
+        'Jami summa (so\'m)',
+        'Izoh',
+        'Sotuvchi',
+    ]
+    
+    for col_num, header in enumerate(headers, 1):
+        cell = ws.cell(row=1, column=col_num)
+        cell.value = header
+        cell.fill = header_fill
+        cell.font = header_font
+        cell.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
+    
+    # Ma'lumotlarni yozish
+    row_num = 2
+    for order in orders_qs:
+        # Manzilni birlashtirish
+        address_parts = []
+        if order.region:
+            address_parts.append(order.region)
+        if order.district:
+            address_parts.append(order.district)
+        if order.city:
+            address_parts.append(order.city)
+        if order.landmark:
+            address_parts.append(order.landmark)
+        full_address = ', '.join(address_parts)
+        
+        # Telefon raqamni formatlash
+        formatted_phone = format_phone_number(order.customer_phone)
+        
+        # Orderning barcha itemlarini olish
+        items = list(order.items.all())
+        
+        if items:
+            # Orderning boshlanish qatori
+            start_row = row_num
+            
+            # Birinchi item uchun to'liq ma'lumot
+            first_item = items[0]
+            ws.cell(row=row_num, column=1, value=order.display_order_number)
+            ws.cell(row=row_num, column=2, value=order.created_at.strftime('%d.%m.%Y %H:%M'))
+            ws.cell(row=row_num, column=3, value=order.customer_name)
+            ws.cell(row=row_num, column=4, value=formatted_phone)
+            ws.cell(row=row_num, column=5, value=full_address)
+            ws.cell(row=row_num, column=6, value=order.get_delivery_type_display())
+            ws.cell(row=row_num, column=7, value=order.get_payment_type_display())
+            ws.cell(row=row_num, column=8, value=order.get_payment_status_display())
+            ws.cell(row=row_num, column=9, value=first_item.config_label)
+            ws.cell(row=row_num, column=10, value=first_item.quantity)
+            
+            # Narxi - number format bilan
+            price_cell = ws.cell(row=row_num, column=11, value=float(first_item.unit_price_uzs))
+            price_cell.number_format = '#,##0'
+            
+            # Jami summa - number format bilan
+            total_cell = ws.cell(row=row_num, column=12, value=float(order.total_price_uzs))
+            total_cell.number_format = '#,##0'
+            
+            ws.cell(row=row_num, column=13, value=order.notes or '')
+            ws.cell(row=row_num, column=14, value=order.sold_by.get_full_name() or order.sold_by.username)
+            row_num += 1
+            
+            # Qolgan itemlar uchun faqat konfiguratsiya, soni va narxi
+            for item in items[1:]:
+                ws.cell(row=row_num, column=9, value=item.config_label)
+                ws.cell(row=row_num, column=10, value=item.quantity)
+                
+                # Narxi - number format bilan
+                item_price_cell = ws.cell(row=row_num, column=11, value=float(item.unit_price_uzs))
+                item_price_cell.number_format = '#,##0'
+                
+                row_num += 1
+            
+            # Agar bir nechta item bo'lsa, umumiy ustunlarni merge qilish
+            end_row = row_num - 1
+            if end_row > start_row:
+                # Order #, Sana, Mijoz, Telefon, Manzil, Yetkazish, To'lov turi, To'lov holati, Jami summa, Izoh, Sotuvchi
+                ws.merge_cells(start_row=start_row, start_column=1, end_row=end_row, end_column=1)  # Order #
+                ws.merge_cells(start_row=start_row, start_column=2, end_row=end_row, end_column=2)  # Sana
+                ws.merge_cells(start_row=start_row, start_column=3, end_row=end_row, end_column=3)  # Mijoz
+                ws.merge_cells(start_row=start_row, start_column=4, end_row=end_row, end_column=4)  # Telefon
+                ws.merge_cells(start_row=start_row, start_column=5, end_row=end_row, end_column=5)  # Manzil
+                ws.merge_cells(start_row=start_row, start_column=6, end_row=end_row, end_column=6)  # Yetkazish turi
+                ws.merge_cells(start_row=start_row, start_column=7, end_row=end_row, end_column=7)  # To'lov turi
+                ws.merge_cells(start_row=start_row, start_column=8, end_row=end_row, end_column=8)  # To'lov holati
+                ws.merge_cells(start_row=start_row, start_column=12, end_row=end_row, end_column=12) # Jami summa
+                ws.merge_cells(start_row=start_row, start_column=13, end_row=end_row, end_column=13) # Izoh
+                ws.merge_cells(start_row=start_row, start_column=14, end_row=end_row, end_column=14) # Sotuvchi
+                
+                # Merge qilingan celllarni chapdan tekislash va vertikal top
+                for col in [1, 2, 3, 4, 5, 6, 7, 8, 12, 13, 14]:
+                    cell = ws.cell(row=start_row, column=col)
+                    cell.alignment = Alignment(horizontal='left', vertical='top', wrap_text=True)
+            
+            # Merge qilinmagan celllarni ham chapdan tekislash
+            for r in range(start_row, end_row + 1):
+                for col in [9, 10, 11]:
+                    cell = ws.cell(row=r, column=col)
+                    cell.alignment = Alignment(horizontal='left', vertical='top', wrap_text=True)
+        else:
+            # Agar itemlar bo'lmasa (bo'lmasligi kerak, lekin xavfsizlik uchun)
+            ws.cell(row=row_num, column=1, value=order.display_order_number)
+            ws.cell(row=row_num, column=2, value=order.created_at.strftime('%d.%m.%Y %H:%M'))
+            ws.cell(row=row_num, column=3, value=order.customer_name)
+            ws.cell(row=row_num, column=4, value=formatted_phone)
+            ws.cell(row=row_num, column=5, value=full_address)
+            ws.cell(row=row_num, column=6, value=order.get_delivery_type_display())
+            ws.cell(row=row_num, column=7, value=order.get_payment_type_display())
+            ws.cell(row=row_num, column=8, value=order.get_payment_status_display())
+            ws.cell(row=row_num, column=9, value='')
+            ws.cell(row=row_num, column=10, value='')
+            ws.cell(row=row_num, column=11, value='')
+            
+            # Jami summa - number format bilan
+            total_cell = ws.cell(row=row_num, column=12, value=float(order.total_price_uzs))
+            total_cell.number_format = '#,##0'
+            
+            ws.cell(row=row_num, column=13, value=order.notes or '')
+            ws.cell(row=row_num, column=14, value=order.sold_by.get_full_name() or order.sold_by.username)
+            
+            # Alignment qo'shish
+            for col in range(1, 15):
+                cell = ws.cell(row=row_num, column=col)
+                cell.alignment = Alignment(horizontal='left', vertical='top', wrap_text=True)
+            
+            row_num += 1
+    
+    # Column widthlarni sozlash
+    column_widths = {
+        'A': 15,  # Order #
+        'B': 18,  # Sana
+        'C': 20,  # Mijoz
+        'D': 20,  # Telefon
+        'E': 45,  # Manzil (to'liq)
+        'F': 18,  # Yetkazish turi
+        'G': 15,  # To'lov turi
+        'H': 18,  # To'lov holati
+        'I': 50,  # Konfiguratsiya
+        'J': 10,  # Soni
+        'K': 15,  # Narxi
+        'L': 18,  # Jami summa
+        'M': 30,  # Izoh
+        'N': 20,  # Sotuvchi
+    }
+    for col, width in column_widths.items():
+        ws.column_dimensions[col].width = width
+    
+    # Response yaratish
+    response = HttpResponse(
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    filename = f'yakunlangan_orderlar_{date_from_str}_{date_to_str}.xlsx'
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    
+    wb.save(response)
+    return response
+
+
+@login_required
 def leaderboard(request):
-    period = request.GET.get("period", "today")
+    from django.db.models import Sum, Count
+    from django.utils import timezone
+    from datetime import timedelta
+
+    period = request.GET.get("period", "all")
     now = timezone.now()
 
     if period == "today":

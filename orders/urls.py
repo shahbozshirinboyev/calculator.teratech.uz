@@ -10,6 +10,7 @@ urlpatterns = [
     path("<int:pk>/", views.order_detail, name="detail"),
     path("<int:pk>/status/", views.order_update_status, name="update_status"),
     path("<int:pk>/delete/", views.order_delete, name="delete"),
+    path("export/excel/", views.export_orders_excel, name="export_excel"),
     path("leaderboard/", views.leaderboard, name="leaderboard"),
     path("profile/", views.seller_profile, name="profile"),
 ]
