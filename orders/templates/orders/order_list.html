@@ -127,28 +127,35 @@
   gap: 8px;
   align-items: flex-end;
 }
+
 .filters-bar > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
   position: relative;
-  flex: 1 1 130px;
+  flex: 0 0 auto;
   min-width: 0;
-  max-width: 170px;
 }
+
+.filters-bar > div.filter-select {
+  flex: 1 1 180px;
+}
+
+.filters-bar > div.filter-text {
+  flex: 1 1 180px;
+}
+
 .filters-bar > div.filter-date {
   flex: 0 1 148px;
-  max-width: 148px;
-  min-width: 148px;
 }
-.filters-bar > div.filter-text {
-  flex: 0 1 160px;
-  max-width: 160px;
-  min-width: 160px;
-}
+
+/* Filter action (export va yangi buyurtma) */
 .filters-bar > div.filter-action {
   flex: 0 0 auto;
-  max-width: none;
-  min-width: auto;
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
   margin-left: auto;
-  justify-content: flex-end;
 }
 .filters-bar > div.filter-select::after {
   content: "";
@@ -292,7 +299,9 @@
 .export-btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
+  flex: 1;
   min-height: 34px;
   padding: 0 14px;
   border-radius: 8px;
@@ -316,7 +325,9 @@
 .new-order-btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
+  flex: 1;
   min-height: 34px;
   padding: 0 14px;
   border-radius: 8px;
@@ -1205,12 +1216,38 @@
   .status-tab-divider { height: 24px; width: 1.5px; margin: 0 3px; }
   .status-tab-count { min-width: 14px; height: 14px; font-size: 8px; padding: 0 3px; }
   .filters-panel { padding: 10px 12px; }
-  .filters-bar > div { flex: 1 1 calc(50% - 4px); max-width: none; }
-  .filters-bar > div.filter-date { flex: 1 1 calc(50% - 4px); min-width: 0; }
-  .filters-bar > div.filter-text { flex: 1 1 calc(50% - 4px); max-width: none; min-width: 0; }
-  .filters-bar > div.filter-action { width: 100%; margin-left: 0; }
-  .new-order-btn { width: 100%; justify-content: center; }
-  .export-btn { width: 100%; justify-content: center; margin-bottom: 8px; }
+  
+  /* Mobile da 2 ustunli grid */
+  .filters-bar {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+  
+  .filters-bar > div.filter-select {
+    grid-column: 1 / 2;
+  }
+  
+  .filters-bar > div.filter-text {
+    grid-column: 2 / 3;
+  }
+  
+  .filters-bar > div.filter-date:nth-of-type(3) {
+    grid-column: 1 / 2;
+  }
+  
+  .filters-bar > div.filter-date:nth-of-type(4) {
+    grid-column: 2 / 3;
+  }
+  
+  .filters-bar > div.filter-action {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    margin-left: 0;
+  }
+  
+  .new-order-btn { flex: 1; justify-content: center; }
+  .export-btn { flex: 1; justify-content: center; }
   .active-filters { gap: 5px; }
   .filter-chip-clear { margin-left: 0; width: 100%; justify-content: center; }
   .order-header-side { margin-left: 0; justify-content: space-between; }
