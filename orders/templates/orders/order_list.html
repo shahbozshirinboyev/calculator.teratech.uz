@@ -128,9 +128,6 @@
   align-items: flex-end;
 }
 .filters-bar > div {
-  <!-- display: flex;
-  flex-direction: column;
-  gap: 4px; -->
   position: relative;
   flex: 1 1 130px;
   min-width: 0;
@@ -140,6 +137,11 @@
   flex: 0 1 148px;
   max-width: 148px;
   min-width: 148px;
+}
+.filters-bar > div.filter-text {
+  flex: 0 1 160px;
+  max-width: 160px;
+  min-width: 160px;
 }
 .filters-bar > div.filter-action {
   flex: 0 0 auto;
@@ -176,11 +178,11 @@
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='none'%3E%3Crect x='2.25' y='3.25' width='11.5' height='10.5' rx='2' stroke='%2394A3B8' stroke-width='1.5'/%3E%3Cpath d='M5 2.5V4.25M11 2.5V4.25M2.75 6H13.25' stroke='%2394A3B8' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
 }
 .filters-bar select,
-.filters-bar input[type="date"] {
+.filters-bar input[type="date"],
+.filters-bar input[type="text"] {
   width: 100%;
   min-height: 34px;
   font-size: 12px;
-  padding: 5px 34px 5px 10px;
   border: 1px solid color-mix(in srgb, var(--line) 90%, transparent);
   border-radius: 8px;
   background: var(--panel);
@@ -193,9 +195,11 @@
   appearance: none;
   -webkit-appearance: none;
   background-image: none;
+  padding: 5px 34px 5px 10px;
 }
 .filters-bar select:focus,
-.filters-bar input[type="date"]:focus {
+.filters-bar input[type="date"]:focus,
+.filters-bar input[type="text"]:focus {
   outline: none;
   border-color: color-mix(in srgb, var(--accent) 28%, var(--line));
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 12%, transparent);
@@ -203,8 +207,11 @@
 .filters-bar input[type="date"] {
   appearance: none;
   -webkit-appearance: none;
-  padding-right: 36px;
+  padding: 5px 36px 5px 10px;
   font-variant-numeric: tabular-nums;
+}
+.filters-bar input[type="text"] {
+  padding: 5px 10px;
 }
 .filters-bar input[type="date"]::-webkit-calendar-picker-indicator {
   position: absolute;
@@ -1200,8 +1207,10 @@
   .filters-panel { padding: 10px 12px; }
   .filters-bar > div { flex: 1 1 calc(50% - 4px); max-width: none; }
   .filters-bar > div.filter-date { flex: 1 1 calc(50% - 4px); min-width: 0; }
+  .filters-bar > div.filter-text { flex: 1 1 calc(50% - 4px); max-width: none; min-width: 0; }
   .filters-bar > div.filter-action { width: 100%; margin-left: 0; }
   .new-order-btn { width: 100%; justify-content: center; }
+  .export-btn { width: 100%; justify-content: center; margin-bottom: 8px; }
   .active-filters { gap: 5px; }
   .filter-chip-clear { margin-left: 0; width: 100%; justify-content: center; }
   .order-header-side { margin-left: 0; justify-content: space-between; }
@@ -1376,23 +1385,16 @@
           </select>
         </div>
       {% endif %}
-      <div class="filter-select">
-        <span class="filter-label">Yetkazish</span>
-        <select name="delivery_type" onchange="this.form.submit()">
-          <option value="">Barchasi</option>
-          {% for val, label in delivery_choices %}
-            <option value="{{ val }}" {% if filters.delivery_type == val %}selected{% endif %}>{{ label }}</option>
-          {% endfor %}
-        </select>
-      </div>
-      <div class="filter-select">
-        <span class="filter-label">To'lov statusi</span>
-        <select name="payment_status" onchange="this.form.submit()">
-          <option value="">Barchasi</option>
-          {% for val, label in payment_status_choices %}
-            <option value="{{ val }}" {% if filters.payment_status == val %}selected{% endif %}>{{ label }}</option>
-          {% endfor %}
-        </select>
+      <div class="filter-text">
+        <span class="filter-label">Telefon raqam</span>
+        <input 
+          type="text" 
+          id="filter-phone-input"
+          name="customer_phone" 
+          value="{{ filters.customer_phone }}" 
+          placeholder="+998 XX XXX XX XX" 
+          maxlength="19"
+        >
       </div>
       <div class="filter-date">
         <span class="filter-label">Dan</span>
@@ -1420,7 +1422,7 @@
       </div>
     </div>
 
-    {% if filters.sold_by or filters.delivery_type or filters.payment_status or filters.date_from or filters.date_to %}
+    {% if filters.sold_by or filters.customer_phone or filters.date_from or filters.date_to %}
       <div class="active-filters">
         <span class="active-filters-label">Faol</span>
         {% if filters.sold_by %}
@@ -1430,19 +1432,8 @@
             {% endif %}
           {% endfor %}
         {% endif %}
-        {% if filters.delivery_type %}
-          {% for val, label in delivery_choices %}
-            {% if filters.delivery_type == val %}
-              <span class="filter-chip"><span class="filter-chip-key">Yetkazish</span> {{ label }}</span>
-            {% endif %}
-          {% endfor %}
-        {% endif %}
-        {% if filters.payment_status %}
-          {% for val, label in payment_status_choices %}
-            {% if filters.payment_status == val %}
-              <span class="filter-chip"><span class="filter-chip-key">To'lov</span> {{ label }}</span>
-            {% endif %}
-          {% endfor %}
+        {% if filters.customer_phone %}
+          <span class="filter-chip"><span class="filter-chip-key">Telefon</span> {{ filters.customer_phone }}</span>
         {% endif %}
         {% if filters.date_from %}
           <span class="filter-chip"><span class="filter-chip-key">Dan</span> {{ filters.date_from_display }}</span>
@@ -1817,7 +1808,75 @@ document.addEventListener('DOMContentLoaded', () => {
   if (dateToInput) {
     dateToInput.value = today.toISOString().split('T')[0];
   }
+  
+  // Telefon inputni formatlash
+  const phoneInput = document.getElementById('filter-phone-input');
+  if (phoneInput) {
+    // Initial format qilish
+    if (phoneInput.value) {
+      phoneInput.value = formatPhoneNumber(phoneInput.value);
+    }
+    
+    phoneInput.addEventListener('input', function(e) {
+      let input = e.target.value;
+      let formatted = formatPhoneNumber(input);
+      e.target.value = formatted;
+    });
+    
+    // Enter yoki focusout da form submit
+    phoneInput.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        document.getElementById('filter-form').submit();
+      }
+    });
+    
+    phoneInput.addEventListener('blur', function(e) {
+      const currentValue = e.target.value.replace(/\D/g, '');
+      if (currentValue.length > 0) {
+        document.getElementById('filter-form').submit();
+      }
+    });
+  }
 });
+
+// Telefon formatlash funksiyasi
+function formatPhoneNumber(value) {
+  // Faqat raqamlarni olish
+  let numbers = value.replace(/\D/g, '');
+  
+  // Agar 998 bilan boshlanmasa va raqamlar kiritilgan bo'lsa, 998 qo'shish
+  if (numbers.length > 0 && !numbers.startsWith('998')) {
+    numbers = '998' + numbers;
+  }
+  
+  // 998 dan keyingi raqamlarni cheklash (max 9 ta)
+  if (numbers.startsWith('998')) {
+    numbers = '998' + numbers.substring(3, 12);
+  } else {
+    numbers = numbers.substring(0, 12);
+  }
+  
+  // Formatlash: +998 XX XXX XX XX
+  let formatted = '';
+  if (numbers.length > 0) {
+    formatted = '+' + numbers.substring(0, 3); // +998
+    if (numbers.length > 3) {
+      formatted += ' ' + numbers.substring(3, 5); // XX
+    }
+    if (numbers.length > 5) {
+      formatted += ' ' + numbers.substring(5, 8); // XXX
+    }
+    if (numbers.length > 8) {
+      formatted += ' ' + numbers.substring(8, 10); // XX
+    }
+    if (numbers.length > 10) {
+      formatted += ' ' + numbers.substring(10, 12); // XX
+    }
+  }
+  
+  return formatted;
+}
 
 // Export Modal Functions
 function openExportModal() {

@@ -263,18 +263,31 @@ def order_list(request):
 
     # Common filters
     sold_by = request.GET.get("sold_by")
-    delivery_type = request.GET.get("delivery_type")
-    payment_status = request.GET.get("payment_status")
+    customer_phone = request.GET.get("customer_phone", "").strip()
     date_from = request.GET.get("date_from")
     date_to = request.GET.get("date_to")
 
     def apply_filters(qs):
         if sold_by and can_view_all_orders:
             qs = qs.filter(sold_by_id=sold_by)
-        if delivery_type:
-            qs = qs.filter(delivery_type=delivery_type)
-        if payment_status:
-            qs = qs.filter(payment_status=payment_status)
+        if customer_phone:
+            # Faqat raqamlarni olish va qidirish
+            import re
+            digits_only = re.sub(r'\D', '', customer_phone)
+            if digits_only:
+                # Ikki xil qidirish: to'liq format va qisqa format
+                from django.db.models import Q
+                # 998 bilan boshlangan raqamni ham, boshlangani yo'qni ham qidirish
+                if digits_only.startswith('998') and len(digits_only) > 3:
+                    # 998991234567 -> 991234567 ham qidirish
+                    short_number = digits_only[3:]
+                    qs = qs.filter(
+                        Q(customer_phone__icontains=digits_only) | 
+                        Q(customer_phone__icontains=short_number)
+                    )
+                else:
+                    # Oddiy qidirish
+                    qs = qs.filter(customer_phone__icontains=digits_only)
         if date_from:
             qs = qs.filter(created_at__date__gte=date_from)
         if date_to:
@@ -360,8 +373,7 @@ def order_list(request):
         "filters": {
             "status_tab": selected_status,
             "sold_by": sold_by,
-            "delivery_type": delivery_type,
-            "payment_status": payment_status,
+            "customer_phone": customer_phone,
             "date_from": date_from,
             "date_to": date_to,
             "date_from_display": _format_filter_date(date_from),
