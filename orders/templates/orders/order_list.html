@@ -61,6 +61,7 @@
   white-space: nowrap;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
   transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+  position: relative;
 }
 
 .status-tab:hover {
@@ -111,6 +112,61 @@
 .status-tab.active .status-tab-count {
   background: rgba(255, 255, 255, 0.16);
   color: #ffffff;
+}
+
+/* Modern Tooltip Styles */
+.custom-tooltip {
+  position: fixed;
+  padding: 8px 14px;
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+  border-radius: 8px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  z-index: 10000;
+  box-shadow: 
+    0 6px 20px rgba(15, 118, 110, 0.4), 
+    0 2px 8px rgba(15, 118, 110, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  letter-spacing: 0.01em;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  transform: translateY(-4px);
+}
+
+.custom-tooltip.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.custom-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 6px solid var(--accent-dark);
+}
+
+[data-theme="dark"] .custom-tooltip {
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
+  box-shadow: 
+    0 6px 20px rgba(20, 184, 166, 0.5), 
+    0 2px 8px rgba(20, 184, 166, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+[data-theme="dark"] .custom-tooltip::after {
+  border-top-color: var(--accent-dark);
 }
 
 .filters-panel {
@@ -1503,7 +1559,7 @@
         {% if item.type == "divider" %}
           <span class="status-tab-divider"></span>
         {% else %}
-          <button type="button" class="status-tab {% if status_tab == item.value %}active{% endif %}" onclick="switchTab('{{ item.value }}')">
+          <button type="button" class="status-tab {% if status_tab == item.value %}active{% endif %}" onclick="switchTab('{{ item.value }}')" data-tooltip="{{ item.label }}">
             <span class="status-tab-icon">{{ item.icon }}</span>
             <!-- <span class="status-tab-label">{{ item.label }}</span> -->
             {% if item.count is not None %}
@@ -1888,6 +1944,9 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
+  
+  // ── Modern Tooltip System ──
+  initTooltips();
 });
 
 // Telefon formatlash funksiyasi
@@ -1993,6 +2052,70 @@ function submitExport(event) {
     closeExportModal();
   }, 1500);
 }
+
+// ── Modern Tooltip Functions ──
+function initTooltips() {
+  let tooltipElement = null;
+  let hideTimeout = null;
+
+  function createTooltip() {
+    const tooltip = document.createElement('div');
+    tooltip.className = 'custom-tooltip';
+    document.body.appendChild(tooltip);
+    return tooltip;
+  }
+
+  function showTooltip(element, text) {
+    if (!tooltipElement) {
+      tooltipElement = createTooltip();
+    }
+
+    clearTimeout(hideTimeout);
+    
+    tooltipElement.textContent = text;
+    tooltipElement.style.display = 'block';
+
+    const rect = element.getBoundingClientRect();
+    const tooltipRect = tooltipElement.getBoundingClientRect();
+    
+    const left = rect.left + (rect.width / 2) - (tooltipRect.width / 2);
+    const top = rect.top - tooltipRect.height - 10;
+    
+    tooltipElement.style.left = Math.max(10, left) + 'px';
+    tooltipElement.style.top = top + 'px';
+    
+    requestAnimationFrame(() => {
+      tooltipElement.classList.add('show');
+    });
+  }
+
+  function hideTooltip() {
+    if (!tooltipElement) return;
+    
+    tooltipElement.classList.remove('show');
+    hideTimeout = setTimeout(() => {
+      if (tooltipElement) {
+        tooltipElement.style.display = 'none';
+      }
+    }, 200);
+  }
+
+  // Status tabs uchun tooltip
+  const statusTabs = document.querySelectorAll('.status-tab[data-tooltip]');
+  statusTabs.forEach(tab => {
+    tab.addEventListener('mouseenter', function() {
+      const tooltipText = this.getAttribute('data-tooltip');
+      if (tooltipText) {
+        showTooltip(this, tooltipText);
+      }
+    });
+
+    tab.addEventListener('mouseleave', function() {
+      hideTooltip();
+    });
+  });
+}
+
 </script>
 {% csrf_token %}
 {% endblock %}
