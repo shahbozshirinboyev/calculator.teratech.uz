@@ -239,6 +239,7 @@ def order_list(request):
     from calculator.models import CalculatorSettings
     from django.utils import timezone
     from collections import defaultdict
+    from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
     # USD kursini olish
     try:
@@ -257,9 +258,9 @@ def order_list(request):
     can_view_all_orders = _can_user_view_all_orders(request.user)
 
     if can_view_all_orders:
-        orders_qs = Order.objects.all().prefetch_related("items").select_related("sold_by").order_by("-updated_at")
+        orders_qs = Order.objects.all().prefetch_related("items").select_related("sold_by").order_by("-created_at")
     else:
-        orders_qs = Order.objects.filter(sold_by=request.user).prefetch_related("items").select_related("sold_by").order_by("-updated_at")
+        orders_qs = Order.objects.filter(sold_by=request.user).prefetch_related("items").select_related("sold_by").order_by("-created_at")
 
     # Common filters
     sold_by = request.GET.get("sold_by")
@@ -332,6 +333,17 @@ def order_list(request):
     else:
         selected_qs = filtered_qs.filter(production_status=selected_status)
 
+    # Pagination
+    page_number = request.GET.get('page', 1)
+    paginator = Paginator(selected_qs, 20)  # 20 ta buyurtma har bir sahifada
+    
+    try:
+        page_obj = paginator.get_page(page_number)
+    except PageNotAnInteger:
+        page_obj = paginator.get_page(1)
+    except EmptyPage:
+        page_obj = paginator.get_page(paginator.num_pages)
+
     # Group orders by date
     def group_by_date(orders):
         groups = defaultdict(list)
@@ -347,7 +359,7 @@ def order_list(request):
         # Add "is_today" flag
         return [(date, _attach_order_permissions(request.user, orders), date == today) for date, orders in sorted_groups]
 
-    status_groups = group_by_date(selected_qs)
+    status_groups = group_by_date(page_obj.object_list)
 
     # For superusers, show all regular sellers in filter; for others, no seller filter
     if can_view_all_orders:
@@ -360,6 +372,7 @@ def order_list(request):
         "status_tab": selected_status,
         "selected_status_label": next((item["label"] for item in status_tabs if item.get("value") == selected_status), ""),
         "status_groups": status_groups,
+        "page_obj": page_obj,
         "status_tabs": [
             {
                 **item,

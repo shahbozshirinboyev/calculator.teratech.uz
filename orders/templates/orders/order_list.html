@@ -169,6 +169,257 @@
   border-top-color: var(--accent-dark);
 }
 
+/* Pagination Styles */
+.pagination-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  margin-top: 24px;
+  padding: 20px 16px;
+  background: color-mix(in srgb, var(--panel) 88%, transparent);
+  border: 1px solid color-mix(in srgb, var(--line) 78%, transparent);
+  border-radius: 12px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.pagination-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  min-height: 40px;
+  padding: 8px;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--line) 88%, transparent);
+  background: var(--panel);
+  color: var(--text);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+.pagination-btn:hover:not(.disabled) {
+  background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+  border-color: transparent;
+  color: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(15, 118, 110, 0.22);
+}
+
+[data-theme="dark"] .pagination-btn:hover:not(.disabled) {
+  box-shadow: 0 4px 12px rgba(20, 184, 166, 0.28);
+}
+
+.pagination-btn.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.pagination-numbers {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.pagination-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  min-height: 40px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--line) 88%, transparent);
+  background: var(--panel);
+  color: var(--text);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+.pagination-number:hover:not(.active) {
+  background: color-mix(in srgb, var(--accent) 12%, var(--panel));
+  border-color: color-mix(in srgb, var(--accent) 30%, var(--line));
+  color: var(--accent-dark);
+  transform: translateY(-1px);
+}
+
+.pagination-number.active {
+  background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+  border-color: transparent;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(15, 118, 110, 0.22);
+  cursor: default;
+  pointer-events: none;
+}
+
+[data-theme="dark"] .pagination-number.active {
+  box-shadow: 0 4px 12px rgba(20, 184, 166, 0.28);
+}
+
+.pagination-ellipsis {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  padding: 0 4px;
+  color: var(--muted);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.pagination-jump {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: color-mix(in srgb, var(--bg) 60%, var(--panel));
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
+}
+
+.pagination-jump-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.pagination-jump-input {
+  width: 70px;
+  min-height: 36px;
+  padding: 6px 10px;
+  border: 1px solid color-mix(in srgb, var(--line) 90%, transparent);
+  border-radius: 8px;
+  background: var(--panel);
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.pagination-jump-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 14%, transparent);
+}
+
+.pagination-jump-input::placeholder {
+  color: var(--muted);
+  opacity: 0.6;
+}
+
+.pagination-jump-btn {
+  min-height: 36px;
+  padding: 6px 16px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+  border: none;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(15, 118, 110, 0.18);
+}
+
+.pagination-jump-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(15, 118, 110, 0.28);
+}
+
+[data-theme="dark"] .pagination-jump-btn {
+  box-shadow: 0 2px 8px rgba(20, 184, 166, 0.2);
+}
+
+[data-theme="dark"] .pagination-jump-btn:hover {
+  box-shadow: 0 4px 12px rgba(20, 184, 166, 0.32);
+}
+
+.pagination-summary {
+  font-size: 13px;
+  color: var(--muted);
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+.pagination-summary strong {
+  color: var(--accent-dark);
+  font-weight: 700;
+}
+
+@media (max-width: 640px) {
+  .pagination-wrapper {
+    padding: 16px 12px;
+  }
+  
+  .pagination {
+    gap: 6px;
+  }
+  
+  .pagination-btn {
+    min-width: 36px;
+    min-height: 36px;
+    padding: 6px;
+  }
+  
+  .pagination-btn svg {
+    width: 12px;
+    height: 12px;
+  }
+  
+  .pagination-number {
+    min-width: 36px;
+    min-height: 36px;
+    padding: 6px 10px;
+    font-size: 13px;
+  }
+  
+  .pagination-jump {
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+    width: 100%;
+  }
+  
+  .pagination-jump-label {
+    font-size: 12px;
+  }
+  
+  .pagination-jump-input {
+    width: 100%;
+  }
+  
+  .pagination-jump-btn {
+    width: 100%;
+  }
+  
+  .pagination-summary {
+    font-size: 12px;
+  }
+}
+
 .filters-panel {
   margin-bottom: 12px;
   padding: 12px 14px;
@@ -1586,6 +1837,103 @@
         {% endfor %}
       </div>
     {% endfor %}
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+      <div class="pagination-wrapper">
+        <div class="pagination">
+          <!-- First & Previous -->
+          {% if page_obj.has_previous %}
+            <a href="?page=1&status_tab={{ status_tab }}{% if filters.sold_by %}&sold_by={{ filters.sold_by }}{% endif %}{% if filters.customer_phone %}&customer_phone={{ filters.customer_phone }}{% endif %}{% if filters.date_from %}&date_from={{ filters.date_from }}{% endif %}{% if filters.date_to %}&date_to={{ filters.date_to }}{% endif %}" class="pagination-btn pagination-first" title="Birinchi sahifa">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M11.854 3.646a.5.5 0 0 1 0 .708L8.207 8l3.647 3.646a.5.5 0 0 1-.708.708l-4-4a.5.5 0 0 1 0-.708l4-4a.5.5 0 0 1 .708 0M4.5 1a.5.5 0 0 0-.5.5v13a.5.5 0 0 0 1 0v-13a.5.5 0 0 0-.5-.5"/>
+              </svg>
+            </a>
+            <a href="?page={{ page_obj.previous_page_number }}&status_tab={{ status_tab }}{% if filters.sold_by %}&sold_by={{ filters.sold_by }}{% endif %}{% if filters.customer_phone %}&customer_phone={{ filters.customer_phone }}{% endif %}{% if filters.date_from %}&date_from={{ filters.date_from }}{% endif %}{% if filters.date_to %}&date_to={{ filters.date_to }}{% endif %}" class="pagination-btn pagination-prev" title="Oldingi sahifa">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0"/>
+              </svg>
+            </a>
+          {% else %}
+            <span class="pagination-btn pagination-first disabled">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M11.854 3.646a.5.5 0 0 1 0 .708L8.207 8l3.647 3.646a.5.5 0 0 1-.708.708l-4-4a.5.5 0 0 1 0-.708l4-4a.5.5 0 0 1 .708 0M4.5 1a.5.5 0 0 0-.5.5v13a.5.5 0 0 0 1 0v-13a.5.5 0 0 0-.5-.5"/>
+              </svg>
+            </span>
+            <span class="pagination-btn pagination-prev disabled">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0"/>
+              </svg>
+            </span>
+          {% endif %}
+
+          <!-- Page Numbers with Ellipsis -->
+          <div class="pagination-numbers">
+            {% with ''|center:page_obj.paginator.num_pages as range %}
+              {% for i in range %}
+                {% with forloop.counter as page_num %}
+                  {% if page_num == 1 or page_num == page_obj.paginator.num_pages or page_num == page_obj.number or page_num == page_obj.number|add:"-1" or page_num == page_obj.number|add:"-2" or page_num == page_obj.number|add:"1" or page_num == page_obj.number|add:"2" %}
+                    {% if page_num == page_obj.number %}
+                      <span class="pagination-number active">{{ page_num }}</span>
+                    {% else %}
+                      <a href="?page={{ page_num }}&status_tab={{ status_tab }}{% if filters.sold_by %}&sold_by={{ filters.sold_by }}{% endif %}{% if filters.customer_phone %}&customer_phone={{ filters.customer_phone }}{% endif %}{% if filters.date_from %}&date_from={{ filters.date_from }}{% endif %}{% if filters.date_to %}&date_to={{ filters.date_to }}{% endif %}" class="pagination-number">{{ page_num }}</a>
+                    {% endif %}
+                  {% elif page_num == page_obj.number|add:"-3" or page_num == page_obj.number|add:"3" %}
+                    <span class="pagination-ellipsis">...</span>
+                  {% endif %}
+                {% endwith %}
+              {% endfor %}
+            {% endwith %}
+          </div>
+
+          <!-- Next & Last -->
+          {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}&status_tab={{ status_tab }}{% if filters.sold_by %}&sold_by={{ filters.sold_by }}{% endif %}{% if filters.customer_phone %}&customer_phone={{ filters.customer_phone }}{% endif %}{% if filters.date_from %}&date_from={{ filters.date_from }}{% endif %}{% if filters.date_to %}&date_to={{ filters.date_to }}{% endif %}" class="pagination-btn pagination-next" title="Keyingi sahifa">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708"/>
+              </svg>
+            </a>
+            <a href="?page={{ page_obj.paginator.num_pages }}&status_tab={{ status_tab }}{% if filters.sold_by %}&sold_by={{ filters.sold_by }}{% endif %}{% if filters.customer_phone %}&customer_phone={{ filters.customer_phone }}{% endif %}{% if filters.date_from %}&date_from={{ filters.date_from }}{% endif %}{% if filters.date_to %}&date_to={{ filters.date_to }}{% endif %}" class="pagination-btn pagination-last" title="Oxirgi sahifa">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M4.146 3.646a.5.5 0 0 0 0 .708L7.793 8l-3.647 3.646a.5.5 0 0 0 .708.708l4-4a.5.5 0 0 0 0-.708l-4-4a.5.5 0 0 0-.708 0M11.5 1a.5.5 0 0 1 .5.5v13a.5.5 0 0 1-1 0v-13a.5.5 0 0 1 .5-.5"/>
+              </svg>
+            </a>
+          {% else %}
+            <span class="pagination-btn pagination-next disabled">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708"/>
+              </svg>
+            </span>
+            <span class="pagination-btn pagination-last disabled">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M4.146 3.646a.5.5 0 0 0 0 .708L7.793 8l-3.647 3.646a.5.5 0 0 0 .708.708l4-4a.5.5 0 0 0 0-.708l-4-4a.5.5 0 0 0-.708 0M11.5 1a.5.5 0 0 1 .5.5v13a.5.5 0 0 1-1 0v-13a.5.5 0 0 1 .5-.5"/>
+              </svg>
+            </span>
+          {% endif %}
+        </div>
+
+        <!-- Jump to Page Input -->
+        <div class="pagination-jump">
+          <label for="page-jump-input" class="pagination-jump-label">Sahifaga o'tish:</label>
+          <input 
+            type="number" 
+            id="page-jump-input" 
+            class="pagination-jump-input" 
+            min="1" 
+            max="{{ page_obj.paginator.num_pages }}" 
+            placeholder="{{ page_obj.number }}"
+            onkeypress="handlePageJump(event, {{ page_obj.paginator.num_pages }})"
+          >
+          <button type="button" class="pagination-jump-btn" onclick="jumpToPage({{ page_obj.paginator.num_pages }})">
+            O'tish
+          </button>
+        </div>
+
+        <div class="pagination-summary">
+          Jami: <strong>{{ page_obj.paginator.count }}</strong> ta buyurtma
+        </div>
+      </div>
+    {% endif %}
   {% else %}
     <div class="empty-state">{% if status_tab == "ALL" %}Buyurtma yo'q{% else %}{{ selected_status_label }} statusida buyurtma yo'q{% endif %}</div>
   {% endif %}
@@ -2114,6 +2462,28 @@ function initTooltips() {
       hideTooltip();
     });
   });
+}
+
+// ── Page Jump Functions ──
+function jumpToPage(maxPages) {
+  const input = document.getElementById('page-jump-input');
+  const pageNum = parseInt(input.value);
+  
+  if (!pageNum || pageNum < 1 || pageNum > maxPages) {
+    alert(`Iltimos, 1 dan ${maxPages} gacha raqam kiriting`);
+    return;
+  }
+  
+  const currentUrl = new URL(window.location.href);
+  currentUrl.searchParams.set('page', pageNum);
+  window.location.href = currentUrl.toString();
+}
+
+function handlePageJump(event, maxPages) {
+  if (event.key === 'Enter') {
+    event.preventDefault();
+    jumpToPage(maxPages);
+  }
 }
 
 </script>
