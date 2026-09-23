@@ -123,6 +123,17 @@ class Order(models.Model):
         max_digits=16, decimal_places=0, default=0, verbose_name="Qisman to'langan summa"
     )
 
+    # Aralash to'lov uchun fieldlar
+    cash_amount = models.DecimalField(
+        max_digits=16, decimal_places=0, default=0, verbose_name="Naqd to'lov summasi"
+    )
+    card_amount = models.DecimalField(
+        max_digits=16, decimal_places=0, default=0, verbose_name="Karta orqali to'lov summasi"
+    )
+    bank_transfer_amount = models.DecimalField(
+        max_digits=16, decimal_places=0, default=0, verbose_name="Bank orqali to'lov summasi"
+    )
+
     notes = models.TextField(blank=True, verbose_name="Izoh")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -146,6 +157,18 @@ class Order(models.Model):
         if self.partial_amount:
             return self.total_price_uzs - self.partial_amount
         return self.total_price_uzs
+
+    @property
+    def mixed_payment_total(self):
+        """Aralash to'lovning umumiy summasi"""
+        return self.cash_amount + self.card_amount + self.bank_transfer_amount
+
+    @property
+    def is_mixed_payment_valid(self):
+        """Aralash to'lov summasi jami summa bilan to'g'ri keladimi"""
+        if self.payment_type == self.PaymentType.CASH_CARD:
+            return self.mixed_payment_total == self.total_price_uzs
+        return True
 
     def __str__(self):
         return self.display_order_number

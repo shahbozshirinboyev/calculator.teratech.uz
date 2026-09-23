@@ -814,6 +814,9 @@ def export_orders_excel(request):
         'Yetkazish turi',
         'To\'lov turi',
         'To\'lov holati',
+        'Naqd to\'lov',
+        'Karta orqali',
+        'Bank orqali',
         'Konfiguratsiya',
         'Soni',
         'Narxi (so\'m)',
@@ -864,28 +867,46 @@ def export_orders_excel(request):
             ws.cell(row=row_num, column=6, value=order.get_delivery_type_display())
             ws.cell(row=row_num, column=7, value=order.get_payment_type_display())
             ws.cell(row=row_num, column=8, value=order.get_payment_status_display())
-            ws.cell(row=row_num, column=9, value=first_item.config_label)
-            ws.cell(row=row_num, column=10, value=first_item.quantity)
+            
+            # Aralash to'lov ustunlari
+            if order.payment_type == Order.PaymentType.CASH_CARD:
+                # Naqd to'lov
+                cash_cell = ws.cell(row=row_num, column=9, value=float(order.cash_amount))
+                cash_cell.number_format = '#,##0'
+                # Karta orqali
+                card_cell = ws.cell(row=row_num, column=10, value=float(order.card_amount))
+                card_cell.number_format = '#,##0'
+                # Bank orqali
+                bank_cell = ws.cell(row=row_num, column=11, value=float(order.bank_transfer_amount))
+                bank_cell.number_format = '#,##0'
+            else:
+                # Bo'sh qoldirish
+                ws.cell(row=row_num, column=9, value='')
+                ws.cell(row=row_num, column=10, value='')
+                ws.cell(row=row_num, column=11, value='')
+            
+            ws.cell(row=row_num, column=12, value=first_item.config_label)
+            ws.cell(row=row_num, column=13, value=first_item.quantity)
             
             # Narxi - number format bilan
-            price_cell = ws.cell(row=row_num, column=11, value=float(first_item.unit_price_uzs))
+            price_cell = ws.cell(row=row_num, column=14, value=float(first_item.unit_price_uzs))
             price_cell.number_format = '#,##0'
             
             # Jami summa - number format bilan
-            total_cell = ws.cell(row=row_num, column=12, value=float(order.total_price_uzs))
+            total_cell = ws.cell(row=row_num, column=15, value=float(order.total_price_uzs))
             total_cell.number_format = '#,##0'
             
-            ws.cell(row=row_num, column=13, value=order.notes or '')
-            ws.cell(row=row_num, column=14, value=order.sold_by.get_full_name() or order.sold_by.username)
+            ws.cell(row=row_num, column=16, value=order.notes or '')
+            ws.cell(row=row_num, column=17, value=order.sold_by.get_full_name() or order.sold_by.username)
             row_num += 1
             
             # Qolgan itemlar uchun faqat konfiguratsiya, soni va narxi
             for item in items[1:]:
-                ws.cell(row=row_num, column=9, value=item.config_label)
-                ws.cell(row=row_num, column=10, value=item.quantity)
+                ws.cell(row=row_num, column=12, value=item.config_label)
+                ws.cell(row=row_num, column=13, value=item.quantity)
                 
                 # Narxi - number format bilan
-                item_price_cell = ws.cell(row=row_num, column=11, value=float(item.unit_price_uzs))
+                item_price_cell = ws.cell(row=row_num, column=14, value=float(item.unit_price_uzs))
                 item_price_cell.number_format = '#,##0'
                 
                 row_num += 1
@@ -893,7 +914,7 @@ def export_orders_excel(request):
             # Agar bir nechta item bo'lsa, umumiy ustunlarni merge qilish
             end_row = row_num - 1
             if end_row > start_row:
-                # Order #, Sana, Mijoz, Telefon, Manzil, Yetkazish, To'lov turi, To'lov holati, Jami summa, Izoh, Sotuvchi
+                # Order #, Sana, Mijoz, Telefon, Manzil, Yetkazish, To'lov turi, To'lov holati, Aralash to'lov (3ta), Jami summa, Izoh, Sotuvchi
                 ws.merge_cells(start_row=start_row, start_column=1, end_row=end_row, end_column=1)  # Order #
                 ws.merge_cells(start_row=start_row, start_column=2, end_row=end_row, end_column=2)  # Sana
                 ws.merge_cells(start_row=start_row, start_column=3, end_row=end_row, end_column=3)  # Mijoz
@@ -902,18 +923,21 @@ def export_orders_excel(request):
                 ws.merge_cells(start_row=start_row, start_column=6, end_row=end_row, end_column=6)  # Yetkazish turi
                 ws.merge_cells(start_row=start_row, start_column=7, end_row=end_row, end_column=7)  # To'lov turi
                 ws.merge_cells(start_row=start_row, start_column=8, end_row=end_row, end_column=8)  # To'lov holati
-                ws.merge_cells(start_row=start_row, start_column=12, end_row=end_row, end_column=12) # Jami summa
-                ws.merge_cells(start_row=start_row, start_column=13, end_row=end_row, end_column=13) # Izoh
-                ws.merge_cells(start_row=start_row, start_column=14, end_row=end_row, end_column=14) # Sotuvchi
+                ws.merge_cells(start_row=start_row, start_column=9, end_row=end_row, end_column=9)  # Naqd to'lov
+                ws.merge_cells(start_row=start_row, start_column=10, end_row=end_row, end_column=10)  # Karta orqali
+                ws.merge_cells(start_row=start_row, start_column=11, end_row=end_row, end_column=11)  # Bank orqali
+                ws.merge_cells(start_row=start_row, start_column=15, end_row=end_row, end_column=15) # Jami summa
+                ws.merge_cells(start_row=start_row, start_column=16, end_row=end_row, end_column=16) # Izoh
+                ws.merge_cells(start_row=start_row, start_column=17, end_row=end_row, end_column=17) # Sotuvchi
                 
                 # Merge qilingan celllarni chapdan tekislash va vertikal top
-                for col in [1, 2, 3, 4, 5, 6, 7, 8, 12, 13, 14]:
+                for col in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 15, 16, 17]:
                     cell = ws.cell(row=start_row, column=col)
                     cell.alignment = Alignment(horizontal='left', vertical='top', wrap_text=True)
             
             # Merge qilinmagan celllarni ham chapdan tekislash
             for r in range(start_row, end_row + 1):
-                for col in [9, 10, 11]:
+                for col in [12, 13, 14]:
                     cell = ws.cell(row=r, column=col)
                     cell.alignment = Alignment(horizontal='left', vertical='top', wrap_text=True)
         else:
@@ -926,19 +950,33 @@ def export_orders_excel(request):
             ws.cell(row=row_num, column=6, value=order.get_delivery_type_display())
             ws.cell(row=row_num, column=7, value=order.get_payment_type_display())
             ws.cell(row=row_num, column=8, value=order.get_payment_status_display())
-            ws.cell(row=row_num, column=9, value='')
-            ws.cell(row=row_num, column=10, value='')
-            ws.cell(row=row_num, column=11, value='')
+            
+            # Aralash to'lov ustunlari
+            if order.payment_type == Order.PaymentType.CASH_CARD:
+                cash_cell = ws.cell(row=row_num, column=9, value=float(order.cash_amount))
+                cash_cell.number_format = '#,##0'
+                card_cell = ws.cell(row=row_num, column=10, value=float(order.card_amount))
+                card_cell.number_format = '#,##0'
+                bank_cell = ws.cell(row=row_num, column=11, value=float(order.bank_transfer_amount))
+                bank_cell.number_format = '#,##0'
+            else:
+                ws.cell(row=row_num, column=9, value='')
+                ws.cell(row=row_num, column=10, value='')
+                ws.cell(row=row_num, column=11, value='')
+            
+            ws.cell(row=row_num, column=12, value='')
+            ws.cell(row=row_num, column=13, value='')
+            ws.cell(row=row_num, column=14, value='')
             
             # Jami summa - number format bilan
-            total_cell = ws.cell(row=row_num, column=12, value=float(order.total_price_uzs))
+            total_cell = ws.cell(row=row_num, column=15, value=float(order.total_price_uzs))
             total_cell.number_format = '#,##0'
             
-            ws.cell(row=row_num, column=13, value=order.notes or '')
-            ws.cell(row=row_num, column=14, value=order.sold_by.get_full_name() or order.sold_by.username)
+            ws.cell(row=row_num, column=16, value=order.notes or '')
+            ws.cell(row=row_num, column=17, value=order.sold_by.get_full_name() or order.sold_by.username)
             
             # Alignment qo'shish
-            for col in range(1, 15):
+            for col in range(1, 18):
                 cell = ws.cell(row=row_num, column=col)
                 cell.alignment = Alignment(horizontal='left', vertical='top', wrap_text=True)
             
@@ -954,12 +992,15 @@ def export_orders_excel(request):
         'F': 18,  # Yetkazish turi
         'G': 15,  # To'lov turi
         'H': 18,  # To'lov holati
-        'I': 50,  # Konfiguratsiya
-        'J': 10,  # Soni
-        'K': 15,  # Narxi
-        'L': 18,  # Jami summa
-        'M': 30,  # Izoh
-        'N': 20,  # Sotuvchi
+        'I': 15,  # Naqd to'lov
+        'J': 15,  # Karta orqali
+        'K': 15,  # Bank orqali
+        'L': 50,  # Konfiguratsiya
+        'M': 10,  # Soni
+        'N': 15,  # Narxi
+        'O': 18,  # Jami summa
+        'P': 30,  # Izoh
+        'Q': 20,  # Sotuvchi
     }
     for col, width in column_widths.items():
         ws.column_dimensions[col].width = width
@@ -1086,6 +1127,11 @@ def _save_order(request, instance=None):
     delivery_date_str = post.get("delivery_date", "").strip()
     delivery_time = post.get("delivery_time", "").strip()
     partial_amount_str = post.get("partial_amount", "0").strip()
+    
+    # Aralash to'lov maydonlarini olish
+    cash_amount_str = post.get("cash_amount", "0").strip()
+    card_amount_str = post.get("card_amount", "0").strip()
+    bank_transfer_amount_str = post.get("bank_transfer_amount", "0").strip()
 
     notes = post.get("notes", "").strip()
 
@@ -1101,6 +1147,16 @@ def _save_order(request, instance=None):
 
     clean_partial = "".join(c for c in partial_amount_str if c.isdigit() or c in ".,")
     partial_amount = _parse_decimal(clean_partial, Decimal("0"))
+    
+    # Aralash to'lov summalarini tozalash va parse qilish
+    clean_cash = "".join(c for c in cash_amount_str if c.isdigit() or c in ".,")
+    cash_amount = _parse_decimal(clean_cash, Decimal("0"))
+    
+    clean_card = "".join(c for c in card_amount_str if c.isdigit() or c in ".,")
+    card_amount = _parse_decimal(clean_card, Decimal("0"))
+    
+    clean_bank = "".join(c for c in bank_transfer_amount_str if c.isdigit() or c in ".,")
+    bank_transfer_amount = _parse_decimal(clean_bank, Decimal("0"))
 
     if not customer_name:
         errors.append("Mijoz ismi kiritilmadi.")
@@ -1184,6 +1240,19 @@ def _save_order(request, instance=None):
 
     if not items_data:
         errors.append("Kamida bitta mahsulot qo'shing.")
+    
+    # Aralash to'lov validatsiyasi
+    if payment_type == Order.PaymentType.CASH_CARD:
+        if payment_status == Order.PaymentStatus.PAID:
+            # To'langan - aralash to'lov yig'indisi jami summaga teng bo'lishi kerak
+            mixed_total = cash_amount + card_amount + bank_transfer_amount
+            if mixed_total != total_price_uzs:
+                errors.append(f"Aralash to'lovning yig'indisi jami summaga teng emas. Jami: {total_price_uzs} so'm, Kiritilgan: {mixed_total} so'm")
+        elif payment_status == Order.PaymentStatus.PARTIAL:
+            # Qisman to'langan - aralash to'lov yig'indisi qisman to'langan summaga teng bo'lishi kerak
+            mixed_total = cash_amount + card_amount + bank_transfer_amount
+            if mixed_total != partial_amount:
+                errors.append(f"Aralash to'lovning yig'indisi qisman to'langan summaga teng emas. Qisman to'langan: {partial_amount} so'm, Kiritilgan: {mixed_total} so'm")
 
     if errors:
         raise ValueError(" | ".join(errors))
@@ -1209,6 +1278,17 @@ def _save_order(request, instance=None):
     order.delivery_time = delivery_time
     order.partial_amount = partial_amount if payment_status == Order.PaymentStatus.PARTIAL else Decimal("0")
     order.notes = notes
+    
+    # Aralash to'lov ma'lumotlarini saqlash
+    if payment_type == Order.PaymentType.CASH_CARD and (payment_status == Order.PaymentStatus.PAID or payment_status == Order.PaymentStatus.PARTIAL):
+        order.cash_amount = cash_amount
+        order.card_amount = card_amount
+        order.bank_transfer_amount = bank_transfer_amount
+    else:
+        # Agar aralash to'lov emas bo'lsa, nolga o'rnatish
+        order.cash_amount = Decimal("0")
+        order.card_amount = Decimal("0")
+        order.bank_transfer_amount = Decimal("0")
 
     if order.production_status == Order.ProductionStatus.DELIVERED and not order.delivered_at:
         order.delivered_at = timezone.now()

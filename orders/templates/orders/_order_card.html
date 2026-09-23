@@ -92,7 +92,7 @@
       <div class="order-payment-status-line">
         <span class="badge {{ order.payment_status|payment_badge }}">
           {% if order.payment_status == 'PARTIAL' and order.partial_amount %}
-            Qisman to'langan: {{ order.partial_amount|format_uzs }} so'm
+            Qisman: {{ order.partial_amount|format_uzs }} so'm | Qoldiq: {{ order.remaining_amount|format_uzs }} so'm
           {% else %}
             {{ order.get_payment_status_display }}
           {% endif %}

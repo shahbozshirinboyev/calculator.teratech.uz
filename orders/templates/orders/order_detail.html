@@ -254,7 +254,31 @@
           <div class="detail-row"><span>To'lov turi:</span><strong>{{ order.get_payment_type_display }}</strong></div>
           <div class="detail-row"><span>To'lov statusi:</span><strong>{{ order.get_payment_status_display }}</strong></div>
         </div>
-        {% if order.payment_status == 'PARTIAL' %}
+        
+        {% if order.payment_type == 'CASH_CARD' and order.payment_status == 'PARTIAL' %}
+          <!-- Aralash to'lov PARTIAL uchun -->
+          <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line);">
+            <div style="font-size: 12px; color: var(--accent-dark); font-weight: 700; margin-bottom: 8px;">ARALASH TO'LOV TAFSILOTLARI</div>
+            <div class="detail-row-group">
+              <div class="detail-row"><span>Naqd to'lov:</span><strong>{{ order.cash_amount|format_uzs }} so'm</strong></div>
+              <div class="detail-row"><span>Karta orqali:</span><strong>{{ order.card_amount|format_uzs }} so'm</strong></div>
+              <div class="detail-row"><span>Bank orqali:</span><strong>{{ order.bank_transfer_amount|format_uzs }} so'm</strong></div>
+              <div class="detail-row"><span>To'langan summa:</span><strong style="color: var(--accent-dark);">{{ order.partial_amount|format_uzs }} so'm</strong></div>
+              <div class="detail-row"><span>Qoldiq summa:</span><strong style="color:var(--danger);">{{ order.total_price_uzs|remaining:order.partial_amount|format_uzs }} so'm</strong></div>
+            </div>
+          </div>
+        {% elif order.payment_type == 'CASH_CARD' and order.payment_status == 'PAID' %}
+          <!-- Aralash to'lov PAID uchun -->
+          <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line);">
+            <div style="font-size: 12px; color: var(--accent-dark); font-weight: 700; margin-bottom: 8px;">ARALASH TO'LOV TAFSILOTLARI</div>
+            <div class="detail-row-group">
+              <div class="detail-row"><span>Naqd to'lov:</span><strong>{{ order.cash_amount|format_uzs }} so'm</strong></div>
+              <div class="detail-row"><span>Karta orqali:</span><strong>{{ order.card_amount|format_uzs }} so'm</strong></div>
+              <div class="detail-row"><span>Bank orqali:</span><strong>{{ order.bank_transfer_amount|format_uzs }} so'm</strong></div>
+            </div>
+          </div>
+        {% elif order.payment_status == 'PARTIAL' %}
+          <!-- Oddiy PARTIAL (CASH_CARD emas) -->
           <div class="detail-row-group">
             <div class="detail-row"><span>To'langan summa:</span><strong>{{ order.partial_amount|format_uzs }} so'm</strong></div>
             <div class="detail-row"><span>Qoldiq summa:</span><strong style="color:var(--danger);">{{ order.total_price_uzs|remaining:order.partial_amount|format_uzs }} so'm</strong></div>

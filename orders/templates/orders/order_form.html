@@ -124,6 +124,16 @@
   grid-template-columns: 1fr 1fr 1fr;
   gap: 14px;
 }
+.mixed-payment-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.mixed-payment-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 14px;
+}
 .field {
   display: flex;
   flex-direction: column;
@@ -423,6 +433,7 @@
   .summary-panel { position: static; }
   .form-row, .form-row.three { grid-template-columns: 1fr; }
   .partial-payment-fields { grid-template-columns: 1fr; }
+  .mixed-payment-fields { grid-template-columns: 1fr; }
   .item-row { grid-template-columns: minmax(0, 1fr) 132px 150px 38px; }
   .order-page-header {
     flex-direction: column;
@@ -634,6 +645,42 @@
                 <div class="field">
                   <label>Qoldiq summasi (Auto)</label>
                   <input type="text" id="remaining-amount-input" readonly style="background: var(--bg); font-weight: 700; color: var(--danger);" value="0 so'm">
+                </div>
+              </div>
+            </div>
+            
+            <!-- Aralash to'lov uchun -->
+            <div id="mixed-payment-group" class="mixed-payment-group highlight-group" style="display: none;">
+              <div class="highlight-group-title">Aralash to'lov tafsilotlari</div>
+              <div class="mixed-payment-notice" style="margin-bottom: 12px; padding: 10px 12px; background: color-mix(in srgb, var(--accent) 8%, var(--bg)); border-left: 3px solid var(--accent); border-radius: 6px; font-size: 13px; color: var(--text);">
+                <strong>Eslatma:</strong> Naqd, Karta va Bank orqali to'lovlarning yig'indisi jami summaga teng bo'lishi kerak.
+              </div>
+              <div class="mixed-payment-fields">
+                <div class="field">
+                  <label>Naqd to'lov (so'm)</label>
+                  <input type="text" name="cash_amount" id="cash-amount-input" value="{{ order.cash_amount|default:0 }}" inputmode="numeric" class="money-input">
+                </div>
+                <div class="field">
+                  <label>Karta orqali (so'm)</label>
+                  <input type="text" name="card_amount" id="card-amount-input" value="{{ order.card_amount|default:0 }}" inputmode="numeric" class="money-input">
+                </div>
+                <div class="field">
+                  <label>Bank orqali (so'm)</label>
+                  <input type="text" name="bank_transfer_amount" id="bank-transfer-input" value="{{ order.bank_transfer_amount|default:0 }}" inputmode="numeric" class="money-input">
+                </div>
+              </div>
+              <div class="mixed-payment-fields" style="margin-top: 8px;">
+                <div class="field">
+                  <label>Jami summa (Auto)</label>
+                  <input type="text" id="mixed-total-amount-input" readonly style="background: var(--bg); font-weight: 700;" value="0 so'm">
+                </div>
+                <div class="field">
+                  <label>Kiritilgan summa (Auto)</label>
+                  <input type="text" id="mixed-entered-total-input" readonly style="background: var(--bg); font-weight: 700;" value="0 so'm">
+                </div>
+                <div class="field">
+                  <label>Farq (Auto)</label>
+                  <input type="text" id="mixed-difference-input" readonly style="background: var(--bg); font-weight: 700;" value="0 so'm">
                 </div>
               </div>
             </div>
@@ -948,22 +995,192 @@ function recalcRemainingAmount() {
   if (remainingInput) {
     remainingInput.value = `${formatInteger(remaining)} so'm`;
   }
+  
+  // Update mixed payment totals as well
+  recalcMixedPayment();
+}
+
+function recalcMixedPayment() {
+  // Calculate total sum from items
+  let totalSum = 0;
+  const allRows = document.querySelectorAll('#items-container .item-row');
+  allRows.forEach(row => {
+    const qty = normalizeQuantity(row.querySelector('[name="quantity"]')?.value || '1');
+    const priceUzs = normalizeMoney(row.querySelector('[name="unit_price_uzs"]')?.value || '0');
+    totalSum += priceUzs * qty;
+  });
+  
+  // Get payment status to determine target amount
+  const paymentStatusValue = document.getElementById('payment-status-hidden')?.value;
+  const paymentTypeValue = document.getElementById('payment-type-hidden')?.value;
+  
+  // CASH_CARD turi emasligini tekshirish
+  if (paymentTypeValue !== 'CASH_CARD') {
+    return; // Agar aralash to'lov bo'lmasa, chiqib ketamiz
+  }
+  
+  // Get mixed payment amounts
+  const cashAmount = normalizeMoney(document.getElementById('cash-amount-input')?.value || '0');
+  const cardAmount = normalizeMoney(document.getElementById('card-amount-input')?.value || '0');
+  const bankAmount = normalizeMoney(document.getElementById('bank-transfer-input')?.value || '0');
+  
+  const enteredTotal = cashAmount + cardAmount + bankAmount;
+  
+  // Target amount: PAID da jami summa, PARTIAL da kiritilgan summa (qisman to'langan)
+  let targetAmount = totalSum;
+  let targetLabel = 'Jami summa';
+  if (paymentStatusValue === 'PARTIAL') {
+    // PARTIAL holatida kiritilgan summa = qisman to'langan summa
+    targetAmount = enteredTotal; // Kiritilgan summa
+    targetLabel = 'Kiritilgan summa';
+  }
+  
+  const difference = targetAmount - enteredTotal;
+  
+  // Update display fields
+  const mixedTotalInput = document.getElementById('mixed-total-amount-input');
+  if (mixedTotalInput) {
+    if (paymentStatusValue === 'PARTIAL') {
+      // PARTIAL da jami summani ko'rsatamiz
+      mixedTotalInput.value = `${formatInteger(totalSum)} so'm`;
+    } else {
+      mixedTotalInput.value = `${formatInteger(totalSum)} so'm`;
+    }
+  }
+  
+  const mixedEnteredInput = document.getElementById('mixed-entered-total-input');
+  if (mixedEnteredInput) {
+    mixedEnteredInput.value = `${formatInteger(enteredTotal)} so'm`;
+    
+    // PARTIAL da rangni jami summa bilan solishtiramiz
+    if (paymentStatusValue === 'PARTIAL') {
+      // Kiritilgan summa jami summadan kam yoki teng bo'lishi kerak
+      if (enteredTotal > 0 && enteredTotal <= totalSum) {
+        mixedEnteredInput.style.color = 'var(--accent-dark)';
+      } else if (enteredTotal > totalSum) {
+        mixedEnteredInput.style.color = 'var(--danger)';
+      } else {
+        mixedEnteredInput.style.color = 'var(--text)';
+      }
+    } else {
+      // PAID da kiritilgan summa jami summaga teng bo'lishi kerak
+      if (enteredTotal === totalSum && totalSum > 0) {
+        mixedEnteredInput.style.color = 'var(--accent-dark)';
+      } else {
+        mixedEnteredInput.style.color = 'var(--danger)';
+      }
+    }
+  }
+  
+  const mixedDifferenceInput = document.getElementById('mixed-difference-input');
+  if (mixedDifferenceInput) {
+    const diff = totalSum - enteredTotal;
+    
+    if (diff === 0) {
+      mixedDifferenceInput.value = '0 so\'m';
+      mixedDifferenceInput.style.color = 'var(--accent-dark)';
+    } else if (diff > 0) {
+      // Kam kiritilgan
+      mixedDifferenceInput.value = `${formatInteger(diff)} so'm`;
+      if (paymentStatusValue === 'PARTIAL') {
+        mixedDifferenceInput.style.color = 'var(--accent-dark)'; // PARTIAL da qoldiq - normal holat
+      } else {
+        mixedDifferenceInput.style.color = 'var(--danger)'; // PAID da qoldiq - xato
+      }
+    } else {
+      // Ko'p kiritilgan
+      mixedDifferenceInput.value = `${formatInteger(Math.abs(diff))} so'm`;
+      mixedDifferenceInput.style.color = 'var(--danger)';
+    }
+  }
+  
+  // PARTIAL holatida partial_amount inputga yashirin qiymat yozamiz
+  if (paymentStatusValue === 'PARTIAL') {
+    const partialInput = document.getElementById('partial-amount-input');
+    if (partialInput) {
+      partialInput.value = enteredTotal;
+    }
+  }
 }
 
 function handlePaymentStatusChange(val) {
-  const group = document.getElementById('partial-payment-group');
+  const partialGroup = document.getElementById('partial-payment-group');
+  const mixedGroup = document.getElementById('mixed-payment-group');
   const partialInput = document.getElementById('partial-amount-input');
-  if (!group || !partialInput) return;
+  
+  // Get payment type
+  const paymentTypeValue = document.getElementById('payment-type-hidden')?.value;
+  
+  if (!partialGroup || !mixedGroup || !partialInput) return;
 
-  if (val === 'PARTIAL') {
-    group.style.display = 'flex';
-    partialInput.setAttribute('required', 'required');
-    recalcRemainingAmount();
-  } else {
-    group.style.display = 'none';
-    partialInput.removeAttribute('required');
-    partialInput.value = '';
-    recalcRemainingAmount();
+  // Reset both groups
+  partialGroup.style.display = 'none';
+  mixedGroup.style.display = 'none';
+  partialInput.removeAttribute('required');
+  
+  // CASH, CARD, TRANSFER turi uchun
+  if (paymentTypeValue !== 'CASH_CARD') {
+    if (val === 'PARTIAL') {
+      // PARTIAL status - 3ta qisman to'lov input ko'rsatish
+      partialGroup.style.display = 'flex';
+      partialInput.setAttribute('required', 'required');
+      recalcRemainingAmount();
+    } else {
+      // UNPAID, ON_DELIVERY, ON_PICKUP, PAID - hech narsa ko'rsatmaslik
+      partialInput.value = '';
+      recalcRemainingAmount();
+    }
+    
+    // Mixed payment inputlarni tozalash
+    document.getElementById('cash-amount-input').value = '';
+    document.getElementById('card-amount-input').value = '';
+    document.getElementById('bank-transfer-input').value = '';
+  } 
+  // CASH_CARD turi uchun
+  else {
+    if (val === 'UNPAID' || val === 'ON_DELIVERY' || val === 'ON_PICKUP') {
+      // Hech qanday input ko'rsatmaslik
+      partialInput.value = '';
+      document.getElementById('cash-amount-input').value = '';
+      document.getElementById('card-amount-input').value = '';
+      document.getElementById('bank-transfer-input').value = '';
+    } else if (val === 'PARTIAL') {
+      // PARTIAL - FAQAT 6ta aralash to'lov input (qisman to'lov tafsilotlari YOPIQ)
+      partialInput.setAttribute('required', 'required');
+      mixedGroup.style.display = 'flex';
+      updateMixedPaymentLabels(val);
+      recalcMixedPayment();
+    } else if (val === 'PAID') {
+      // PAID - FAQAT 6ta aralash to'lov input
+      partialInput.value = '';
+      mixedGroup.style.display = 'flex';
+      updateMixedPaymentLabels(val);
+      recalcMixedPayment();
+    }
+  }
+}
+
+function handlePaymentTypeChange(val) {
+  const paymentStatusValue = document.getElementById('payment-status-hidden')?.value;
+  
+  // To'lov turi o'zgarsa, to'lov statusini qayta tekshirish
+  handlePaymentStatusChange(paymentStatusValue);
+}
+
+function updateMixedPaymentLabels(paymentStatus) {
+  const titleEl = document.querySelector('#mixed-payment-group .highlight-group-title');
+  const noticeEl = document.querySelector('#mixed-payment-group .mixed-payment-notice');
+  
+  if (paymentStatus === 'PAID') {
+    if (titleEl) titleEl.textContent = 'Aralash to\'lov tafsilotlari (To\'langan)';
+    if (noticeEl) {
+      noticeEl.innerHTML = '<strong>Eslatma:</strong> Naqd, Karta va Bank orqali to\'lovlarning yig\'indisi <strong>jami summaga</strong> teng bo\'lishi kerak.';
+    }
+  } else if (paymentStatus === 'PARTIAL') {
+    if (titleEl) titleEl.textContent = 'Aralash to\'lov tafsilotlari (Qisman to\'langan)';
+    if (noticeEl) {
+      noticeEl.innerHTML = '<strong>Eslatma:</strong> Naqd, Karta va Bank orqali to\'lovlarning yig\'indisi <strong>qisman to\'langan summaga</strong> teng bo\'lishi kerak.';
+    }
   }
 }
 
@@ -1346,12 +1563,14 @@ updateSummary();
     createAutocomplete(paymentTypeInput, paymentTypeDropdown, paymentTypeOptions, (selectedLabel) => {
       if (paymentTypeHidden) {
         paymentTypeHidden.value = paymentTypeLabelToValue[selectedLabel] || '';
+        handlePaymentTypeChange(paymentTypeHidden.value);
       }
       updateSummary();
     });
     paymentTypeInput.addEventListener('autocomplete:invalid', function() {
       if (paymentTypeHidden) paymentTypeHidden.value = '';
       paymentTypeInput.value = '';
+      handlePaymentTypeChange('');
       updateSummary();
     });
   }
@@ -1457,11 +1676,13 @@ updateSummary();
       const val = normalizeMoney(this.value);
       this.value = val ? formatInteger(val) : '';
       recalcRemainingAmount();
+      recalcMixedPayment(); // Qisman to'lov o'zgarganda aralash to'lovni ham yangilash
     });
     partialAmountInput.addEventListener('blur', function() {
       const val = normalizeMoney(this.value);
       this.value = val ? formatInteger(val) : '';
       recalcRemainingAmount();
+      recalcMixedPayment();
     });
   }
 })();
@@ -1583,11 +1804,129 @@ updateSummary();
   });
 })();
 
+// Mixed payment inputs setup
+(function() {
+  const cashInput = document.getElementById('cash-amount-input');
+  const cardInput = document.getElementById('card-amount-input');
+  const bankInput = document.getElementById('bank-transfer-input');
+  
+  if (cashInput) {
+    // Format initial value
+    const initCashVal = normalizeMoney(cashInput.value);
+    cashInput.value = initCashVal ? formatInteger(initCashVal) : '';
+    
+    cashInput.addEventListener('input', function() {
+      const value = normalizeMoney(this.value);
+      this.value = value ? formatInteger(value) : '';
+      recalcMixedPayment();
+    });
+    cashInput.addEventListener('blur', function() {
+      const value = normalizeMoney(this.value);
+      this.value = value ? formatInteger(value) : '';
+      recalcMixedPayment();
+    });
+  }
+  
+  if (cardInput) {
+    // Format initial value
+    const initCardVal = normalizeMoney(cardInput.value);
+    cardInput.value = initCardVal ? formatInteger(initCardVal) : '';
+    
+    cardInput.addEventListener('input', function() {
+      const value = normalizeMoney(this.value);
+      this.value = value ? formatInteger(value) : '';
+      recalcMixedPayment();
+    });
+    cardInput.addEventListener('blur', function() {
+      const value = normalizeMoney(this.value);
+      this.value = value ? formatInteger(value) : '';
+      recalcMixedPayment();
+    });
+  }
+  
+  if (bankInput) {
+    // Format initial value
+    const initBankVal = normalizeMoney(bankInput.value);
+    bankInput.value = initBankVal ? formatInteger(initBankVal) : '';
+    
+    bankInput.addEventListener('input', function() {
+      const value = normalizeMoney(this.value);
+      this.value = value ? formatInteger(value) : '';
+      recalcMixedPayment();
+    });
+    bankInput.addEventListener('blur', function() {
+      const value = normalizeMoney(this.value);
+      this.value = value ? formatInteger(value) : '';
+      recalcMixedPayment();
+    });
+  }
+})();
+
 const orderFormEl2 = document.getElementById('order-form');
 if (orderFormEl2) {
   let isSubmitting = false;
   
   orderFormEl2.addEventListener('submit', function(e) {
+    // Mixed payment validation
+    const paymentTypeValue = document.getElementById('payment-type-hidden')?.value;
+    const paymentStatusValue = document.getElementById('payment-status-hidden')?.value;
+    
+    if (paymentTypeValue === 'CASH_CARD' && paymentStatusValue === 'PAID') {
+      // PAID holatida: aralash to'lovlar jami summaga teng bo'lishi kerak
+      let totalSum = 0;
+      const allRows = document.querySelectorAll('#items-container .item-row');
+      allRows.forEach(row => {
+        const qty = normalizeQuantity(row.querySelector('[name="quantity"]')?.value || '1');
+        const priceUzs = normalizeMoney(row.querySelector('[name="unit_price_uzs"]')?.value || '0');
+        totalSum += priceUzs * qty;
+      });
+      
+      const cashAmount = normalizeMoney(document.getElementById('cash-amount-input')?.value || '0');
+      const cardAmount = normalizeMoney(document.getElementById('card-amount-input')?.value || '0');
+      const bankAmount = normalizeMoney(document.getElementById('bank-transfer-input')?.value || '0');
+      const enteredTotal = cashAmount + cardAmount + bankAmount;
+      
+      if (enteredTotal !== totalSum) {
+        e.preventDefault();
+        alert(`Aralash to'lovning yig'indisi jami summaga teng emas!\n\nJami summa: ${formatInteger(totalSum)} so'm\nKiritilgan: ${formatInteger(enteredTotal)} so'm\nFarq: ${formatInteger(Math.abs(totalSum - enteredTotal))} so'm`);
+        return false;
+      }
+    }
+    
+    if (paymentTypeValue === 'CASH_CARD' && paymentStatusValue === 'PARTIAL') {
+      // PARTIAL holatida: aralash to'lovlar jami summadan kam yoki teng bo'lishi kerak
+      let totalSum = 0;
+      const allRows = document.querySelectorAll('#items-container .item-row');
+      allRows.forEach(row => {
+        const qty = normalizeQuantity(row.querySelector('[name="quantity"]')?.value || '1');
+        const priceUzs = normalizeMoney(row.querySelector('[name="unit_price_uzs"]')?.value || '0');
+        totalSum += priceUzs * qty;
+      });
+      
+      const cashAmount = normalizeMoney(document.getElementById('cash-amount-input')?.value || '0');
+      const cardAmount = normalizeMoney(document.getElementById('card-amount-input')?.value || '0');
+      const bankAmount = normalizeMoney(document.getElementById('bank-transfer-input')?.value || '0');
+      const enteredTotal = cashAmount + cardAmount + bankAmount;
+      
+      if (enteredTotal > totalSum) {
+        e.preventDefault();
+        alert(`Qisman to'lov jami summadan oshib ketdi!\n\nJami summa: ${formatInteger(totalSum)} so'm\nKiritilgan: ${formatInteger(enteredTotal)} so'm`);
+        return false;
+      }
+      
+      if (enteredTotal === 0) {
+        e.preventDefault();
+        alert('Qisman to\'lov uchun kamida bitta to\'lov usulini kiriting!');
+        return false;
+      }
+      
+      // partial_amount inputga yashirin qiymatni yozib qo'yamiz
+      const partialInput = document.getElementById('partial-amount-input');
+      if (partialInput) {
+        partialInput.value = enteredTotal;
+      }
+    }
+    
     // Duplicate submit ni oldini olish
     if (isSubmitting) {
       e.preventDefault();
@@ -1611,7 +1950,7 @@ if (orderFormEl2) {
       input.value = normalizeMoney(input.value);
     });
     const partialAmountInput = document.getElementById('partial-amount-input');
-    if (partialAmountInput) {
+    if (partialAmountInput && paymentTypeValue !== 'CASH_CARD') {
       partialAmountInput.value = normalizeMoney(partialAmountInput.value);
     }
     
